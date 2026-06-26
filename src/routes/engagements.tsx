@@ -54,6 +54,17 @@ function EngagementsPage() {
     },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.from("engagements").update({ status: "completed" }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["engagements"] });
+      qc.invalidateQueries({ queryKey: ["engagements-all"] });
+    },
+  });
+
   const addMutation = useMutation({
     mutationFn: async (payload: any) => {
       const { error } = await supabase.from("engagements").insert(payload);
