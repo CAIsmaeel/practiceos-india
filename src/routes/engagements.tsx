@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Engagement, type Client } from "@/lib/supabase";
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Archive } from "lucide-react";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/engagements")({
