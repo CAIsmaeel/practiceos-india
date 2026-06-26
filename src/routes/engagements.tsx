@@ -104,6 +104,10 @@ function EngagementsPage() {
         </div>
       </div>
 
+      const filtered = showCompleted
+        ? engagements
+        : engagements?.filter((e) => e.status !== "completed");
+
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-slate-600 text-left">
@@ -114,6 +118,7 @@ function EngagementsPage() {
               <th className="px-5 py-3 font-medium">Deadline</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 font-medium">Assigned To</th>
+              <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
