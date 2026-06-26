@@ -84,12 +84,24 @@ function EngagementsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Engagements</h1>
           <p className="text-slate-500 text-sm">Track all client engagements</p>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-        >
-          <Plus size={16} /> Add Engagement
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCompleted((v) => !v)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border ${
+              showCompleted
+                ? "bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
+                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            {showCompleted ? "Hide Completed" : "Show Completed"}
+          </button>
+          <button
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+          >
+            <Plus size={16} /> Add Engagement
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
