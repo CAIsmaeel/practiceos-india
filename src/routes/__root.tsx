@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "PracticeOS — Practice Management for CA Firms" },
+      { name: "description", content: "Manage clients, engagements, deadlines and tasks — built for Indian CA and professional services firms." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "PracticeOS — Practice Management for CA Firms" },
+      { property: "og:description", content: "Manage clients, engagements, deadlines and tasks — built for Indian CA and professional services firms." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "PracticeOS — Practice Management for CA Firms" },
+      { name: "twitter:description", content: "Manage clients, engagements, deadlines and tasks — built for Indian CA and professional services firms." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/543878fe-0c38-45c3-8874-6394cc0b0860/id-preview-07274e0d--80b1b061-1b82-42cc-9df1-41bc5de20286.lovable.app-1782460343895.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/543878fe-0c38-45c3-8874-6394cc0b0860/id-preview-07274e0d--80b1b061-1b82-42cc-9df1-41bc5de20286.lovable.app-1782460343895.png" },
     ],
     links: [
       {
