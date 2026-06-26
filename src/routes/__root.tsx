@@ -113,13 +113,19 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { Sidebar } from "../components/Sidebar";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="min-h-screen bg-white md:pl-64">
+        <Sidebar />
+        <main className="p-4 md:p-8">
+          <Outlet />
+        </main>
+      </div>
     </QueryClientProvider>
   );
 }
