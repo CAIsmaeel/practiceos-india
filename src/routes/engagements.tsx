@@ -118,12 +118,12 @@ function EngagementsPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
             )}
-            {!isLoading && engagements?.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No engagements yet.</td></tr>
+            {!isLoading && filtered?.length === 0 && (
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No engagements found.</td></tr>
             )}
-            {engagements?.map((e) => (
+            {filtered?.map((e) => (
               <tr key={e.id} className="hover:bg-slate-50">
                 <td className="px-5 py-3 font-medium text-slate-900">{e.clients?.name ?? "—"}</td>
                 <td className="px-5 py-3 text-slate-700">{e.title}</td>
@@ -137,6 +137,18 @@ function EngagementsPage() {
                   </span>
                 </td>
                 <td className="px-5 py-3 text-slate-700">{e.assigned_to ?? "—"}</td>
+                <td className="px-5 py-3">
+                  {e.status !== "completed" && (
+                    <button
+                      onClick={() => archiveMutation.mutate({ id: e.id })}
+                      disabled={archiveMutation.isPending}
+                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                      title="Archive"
+                    >
+                      <Archive size={14} /> Archive
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
