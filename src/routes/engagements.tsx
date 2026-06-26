@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Engagement, type Client } from "@/lib/supabase";
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Archive } from "lucide-react";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/engagements")({
@@ -32,6 +32,7 @@ const statusColors: Record<string, string> = {
 function EngagementsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const { data: engagements, isLoading } = useQuery({
     queryKey: ["engagements"],
@@ -45,11 +46,26 @@ function EngagementsPage() {
     },
   });
 
+  const filtered = showCompleted
+    ? engagements
+    : engagements?.filter((e) => e.status !== "completed");
+
   const { data: clients } = useQuery({
     queryKey: ["clients-for-select"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("id, name").order("name");
       return (data ?? []) as Pick<Client, "id" | "name">[];
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.from("engagements").update({ status: "completed" }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["engagements"] });
+      qc.invalidateQueries({ queryKey: ["engagements-all"] });
     },
   });
 
@@ -72,12 +88,24 @@ function EngagementsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Engagements</h1>
           <p className="text-slate-500 text-sm">Track all client engagements</p>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
-        >
-          <Plus size={16} /> Add Engagement
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCompleted((v) => !v)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border ${
+              showCompleted
+                ? "bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
+                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            {showCompleted ? "Hide Completed" : "Show Completed"}
+          </button>
+          <button
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+          >
+            <Plus size={16} /> Add Engagement
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
@@ -90,16 +118,17 @@ function EngagementsPage() {
               <th className="px-5 py-3 font-medium">Deadline</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 font-medium">Assigned To</th>
+              <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
             )}
-            {!isLoading && engagements?.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No engagements yet.</td></tr>
+            {!isLoading && filtered?.length === 0 && (
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No engagements found.</td></tr>
             )}
-            {engagements?.map((e) => (
+            {filtered?.map((e: Engagement) => (
               <tr key={e.id} className="hover:bg-slate-50">
                 <td className="px-5 py-3 font-medium text-slate-900">{e.clients?.name ?? "—"}</td>
                 <td className="px-5 py-3 text-slate-700">{e.title}</td>
@@ -113,6 +142,18 @@ function EngagementsPage() {
                   </span>
                 </td>
                 <td className="px-5 py-3 text-slate-700">{e.assigned_to ?? "—"}</td>
+                <td className="px-5 py-3">
+                  {e.status !== "completed" && (
+                    <button
+                      onClick={() => archiveMutation.mutate({ id: e.id })}
+                      disabled={archiveMutation.isPending}
+                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                      title="Archive"
+                    >
+                      <Archive size={14} /> Archive
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
