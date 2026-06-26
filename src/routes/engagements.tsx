@@ -46,6 +46,10 @@ function EngagementsPage() {
     },
   });
 
+  const filtered = showCompleted
+    ? engagements
+    : engagements?.filter((e) => e.status !== "completed");
+
   const { data: clients } = useQuery({
     queryKey: ["clients-for-select"],
     queryFn: async () => {
@@ -104,10 +108,6 @@ function EngagementsPage() {
         </div>
       </div>
 
-      const filtered = showCompleted
-        ? engagements
-        : engagements?.filter((e) => e.status !== "completed");
-
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-slate-600 text-left">
@@ -128,7 +128,7 @@ function EngagementsPage() {
             {!isLoading && filtered?.length === 0 && (
               <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No engagements found.</td></tr>
             )}
-            {filtered?.map((e) => (
+            {filtered?.map((e: Engagement) => (
               <tr key={e.id} className="hover:bg-slate-50">
                 <td className="px-5 py-3 font-medium text-slate-900">{e.clients?.name ?? "—"}</td>
                 <td className="px-5 py-3 text-slate-700">{e.title}</td>
