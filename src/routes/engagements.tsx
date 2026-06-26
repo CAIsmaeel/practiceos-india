@@ -32,6 +32,7 @@ const statusColors: Record<string, string> = {
 function EngagementsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const { data: engagements, isLoading } = useQuery({
     queryKey: ["engagements"],
