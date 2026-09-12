@@ -7,6 +7,7 @@ const navItems = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/leads", label: "Leads", icon: UserPlus },
   { to: "/engagements", label: "Engagements", icon: Briefcase },
+  { to: "/documents", label: "Documents", icon: FileText },
   { to: "/tasks", label: "Tasks", icon: ListChecks },
 ];
 
