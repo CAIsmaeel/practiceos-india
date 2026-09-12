@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Briefcase, ListChecks, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, Briefcase, ListChecks, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
