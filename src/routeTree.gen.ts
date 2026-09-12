@@ -9,31 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TasksRouteImport } from './routes/tasks'
-import { Route as LeadsRouteImport } from './routes/leads'
-import { Route as EngagementsRouteImport } from './routes/engagements'
-import { Route as DocumentsRouteImport } from './routes/documents'
-import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientsRouteImport } from './routes/clients'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as EngagementsRouteImport } from './routes/engagements'
+import { Route as InvoicesRouteImport } from './routes/invoices'
+import { Route as LeadsRouteImport } from './routes/leads'
+import { Route as TasksRouteImport } from './routes/tasks'
 
-const TasksRoute = TasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LeadsRoute = LeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EngagementsRoute = EngagementsRouteImport.update({
-  id: '/engagements',
-  path: '/engagements',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentsRoute = DocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -41,9 +27,29 @@ const ClientsRoute = ClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngagementsRoute = EngagementsRouteImport.update({
+  id: '/engagements',
+  path: '/engagements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesRoute = InvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeadsRoute = LeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/engagements': typeof EngagementsRoute
+  '/invoices': typeof InvoicesRoute
   '/leads': typeof LeadsRoute
   '/tasks': typeof TasksRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/engagements': typeof EngagementsRoute
+  '/invoices': typeof InvoicesRoute
   '/leads': typeof LeadsRoute
   '/tasks': typeof TasksRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/engagements': typeof EngagementsRoute
+  '/invoices': typeof InvoicesRoute
   '/leads': typeof LeadsRoute
   '/tasks': typeof TasksRoute
 }
@@ -79,16 +88,25 @@ export interface FileRouteTypes {
     | '/clients'
     | '/documents'
     | '/engagements'
+    | '/invoices'
     | '/leads'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clients' | '/documents' | '/engagements' | '/leads' | '/tasks'
+  to:
+    | '/'
+    | '/clients'
+    | '/documents'
+    | '/engagements'
+    | '/invoices'
+    | '/leads'
+    | '/tasks'
   id:
     | '__root__'
     | '/'
     | '/clients'
     | '/documents'
     | '/engagements'
+    | '/invoices'
     | '/leads'
     | '/tasks'
   fileRoutesById: FileRoutesById
@@ -98,38 +116,18 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRoute
   DocumentsRoute: typeof DocumentsRoute
   EngagementsRoute: typeof EngagementsRoute
+  InvoicesRoute: typeof InvoicesRoute
   LeadsRoute: typeof LeadsRoute
   TasksRoute: typeof TasksRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tasks': {
-      id: '/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof TasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/leads': {
-      id: '/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof LeadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/engagements': {
-      id: '/engagements'
-      path: '/engagements'
-      fullPath: '/engagements'
-      preLoaderRoute: typeof EngagementsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/documents': {
-      id: '/documents'
-      path: '/documents'
-      fullPath: '/documents'
-      preLoaderRoute: typeof DocumentsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -139,11 +137,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engagements': {
+      id: '/engagements'
+      path: '/engagements'
+      fullPath: '/engagements'
+      preLoaderRoute: typeof EngagementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices': {
+      id: '/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof InvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leads': {
+      id: '/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof LeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -154,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsRoute: ClientsRoute,
   DocumentsRoute: DocumentsRoute,
   EngagementsRoute: EngagementsRoute,
+  InvoicesRoute: InvoicesRoute,
   LeadsRoute: LeadsRoute,
   TasksRoute: TasksRoute,
 }

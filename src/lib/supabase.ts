@@ -46,3 +46,17 @@ export type Task = {
   created_at: string;
   engagements?: { title: string } | null;
 };
+
+export type InvoiceStatus = "Pending" | "Overdue" | "Paid";
+
+export type Invoice = {
+  id: string;
+  client_id: string;
+  amount: number;
+  due_date: string | null;
+  status: string;
+  payment_date: string | null;
+  reminder_count: number;
+  created_at: string;
+  clients?: { name: string; firm_name: string | null } | null;
+};

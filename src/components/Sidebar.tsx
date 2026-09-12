@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: "/leads", label: "Leads", icon: UserPlus },
   { to: "/engagements", label: "Engagements", icon: Briefcase },
   { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/invoices", label: "Invoices", icon: Receipt },
   { to: "/tasks", label: "Tasks", icon: ListChecks },
 ];
 
