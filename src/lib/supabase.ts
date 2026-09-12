@@ -12,6 +12,12 @@ export type Client = {
   email: string | null;
   phone: string | null;
   created_at: string;
+  status: string | null;
+  pan_number: string | null;
+  gst_number: string | null;
+  whatsapp_number: string | null;
+  client_type: string | null;
+  notes: string | null;
 };
 
 export type EngagementType =
@@ -58,5 +64,41 @@ export type Invoice = {
   payment_date: string | null;
   reminder_count: number;
   created_at: string;
+  invoice_number: string | null;
+  description: string | null;
+  base_amount: number | null;
+  gst_rate: number | null;
+  gst_amount: number | null;
+  total_amount: number | null;
+  notes: string | null;
   clients?: { name: string; firm_name: string | null } | null;
+};
+
+export type Settings = {
+  id: string;
+  firm_name: string | null;
+  logo_url: string | null;
+  ca_registration_number: string | null;
+  gst_number: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  updated_at: string;
+};
+
+export type QueryLog = {
+  id: string;
+  channel: string | null;
+  contact: string | null;
+  query_text: string | null;
+  ai_response: string | null;
+  created_at: string;
+};
+
+export type ErrorLog = {
+  id: string;
+  workflow_name: string | null;
+  node_name: string | null;
+  error_message: string | null;
+  created_at: string;
 };

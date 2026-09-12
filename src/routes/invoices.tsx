@@ -16,12 +16,14 @@ const statusColors: Record<string, string> = {
   Paid: "bg-green-100 text-green-800",
 };
 
+const GST_RATES = [0, 5, 9, 12, 18];
+
 function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 2,
-  minimumFractionDigits: 0,
+    minimumFractionDigits: 0,
   }).format(amount);
 }
 
@@ -81,10 +83,11 @@ function InvoicesPage() {
     let overdueAmount = 0;
     for (const inv of invoices) {
       if (inv.status === "Paid") continue;
-      outstanding += Number(inv.amount);
+      const total = Number(inv.total_amount ?? inv.amount ?? 0);
+      outstanding += total;
       if (inv.due_date && isBefore(new Date(inv.due_date), today)) {
         overdueCount += 1;
-        overdueAmount += Number(inv.amount);
+        overdueAmount += total;
       }
     }
     return { outstanding, overdueCount, overdueAmount };
@@ -146,52 +149,49 @@ function InvoicesPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-slate-600 text-left">
             <tr>
+              <th className="px-5 py-3 font-medium">Invoice No</th>
               <th className="px-5 py-3 font-medium">Client</th>
-              <th className="px-5 py-3 font-medium">Amount</th>
+              <th className="px-5 py-3 font-medium">Base Amount</th>
+              <th className="px-5 py-3 font-medium">GST</th>
+              <th className="px-5 py-3 font-medium">Total (₹)</th>
               <th className="px-5 py-3 font-medium">Due Date</th>
               <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Reminders</th>
               <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading && (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-slate-500">
-                  Loading...
-                </td>
+                <td colSpan={8} className="px-5 py-8 text-center text-slate-500">Loading...</td>
               </tr>
             )}
             {!isLoading && sorted.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-slate-500">
-                  No invoices yet.
-                </td>
+                <td colSpan={8} className="px-5 py-8 text-center text-slate-500">No invoices yet.</td>
               </tr>
             )}
             {sorted.map((inv) => {
               const displayStatus = getDisplayStatus(inv);
+              const base = Number(inv.base_amount ?? inv.amount ?? 0);
+              const gst = Number(inv.gst_amount ?? 0);
+              const total = Number(inv.total_amount ?? inv.amount ?? 0);
               return (
                 <tr key={inv.id} className="hover:bg-slate-50">
                   <td className="px-5 py-3 font-medium text-slate-900">
-                    {inv.clients?.name ?? "—"}
+                    {inv.invoice_number ?? "—"}
                   </td>
-                  <td className="px-5 py-3 text-slate-700 font-medium">
-                    {formatINR(Number(inv.amount))}
-                  </td>
+                  <td className="px-5 py-3 text-slate-700">{inv.clients?.name ?? "—"}</td>
+                  <td className="px-5 py-3 text-slate-700">{formatINR(base)}</td>
+                  <td className="px-5 py-3 text-slate-700">{formatINR(gst)}</td>
+                  <td className="px-5 py-3 font-medium text-slate-900">{formatINR(total)}</td>
                   <td className="px-5 py-3 text-slate-700">
                     {inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "—"}
                   </td>
                   <td className="px-5 py-3">
-                    <span
-                      className={`px-2 py-1 rounded-md text-xs font-medium ${
-                        statusColors[displayStatus] ?? "bg-gray-100 text-gray-700"
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${statusColors[displayStatus] ?? "bg-gray-100 text-gray-700"}`}>
                       {displayStatus}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-slate-700">{inv.reminder_count ?? 0}</td>
                   <td className="px-5 py-3">
                     {inv.status !== "Paid" && (
                       <button
@@ -235,35 +235,47 @@ function InvoiceModal({
 }) {
   const [form, setForm] = useState({
     client_id: "",
-    amount: "",
+    description: "",
+    base_amount: "",
+    gst_rate: "0",
     due_date: "",
+    notes: "",
   });
+
+  const base = parseFloat(form.base_amount) || 0;
+  const rate = parseFloat(form.gst_rate) || 0;
+  const gstAmount = (base * rate) / 100;
+  const totalAmount = base + gstAmount;
+  const cgst = rate > 0 ? gstAmount / 2 : 0;
+  const sgst = rate > 0 ? gstAmount / 2 : 0;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
           <h2 className="font-semibold text-slate-900">Create Invoice</h2>
-          <button onClick={onClose}>
-            <X size={18} />
-          </button>
+          <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit({
               client_id: form.client_id,
-              amount: parseFloat(form.amount),
+              description: form.description || null,
+              base_amount: base,
+              gst_rate: rate,
+              gst_amount: gstAmount,
+              total_amount: totalAmount,
+              amount: totalAmount,
               due_date: form.due_date || null,
+              notes: form.notes || null,
               status: "Pending",
             });
           }}
           className="p-5 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Client <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Client <span className="text-red-500">*</span></label>
             <select
               required
               value={form.client_id}
@@ -272,25 +284,64 @@ function InvoiceModal({
             >
               <option value="">Select a client</option>
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Amount (₹) <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Service Description</label>
+            <input
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="e.g. GST Return Filing — Q2"
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Base Amount (₹) <span className="text-red-500">*</span></label>
             <input
               required
               type="number"
               min="0"
               step="0.01"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              value={form.base_amount}
+              onChange={(e) => setForm({ ...form, base_amount: e.target.value })}
               className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">GST Rate</label>
+            <select
+              value={form.gst_rate}
+              onChange={(e) => setForm({ ...form, gst_rate: e.target.value })}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {GST_RATES.map((r) => (
+                <option key={r} value={r}>{r}%</option>
+              ))}
+            </select>
+          </div>
+          <div className="bg-slate-50 rounded-md p-3 space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500">GST Amount</span>
+              <span className="font-medium text-slate-700">{formatINR(gstAmount)}</span>
+            </div>
+            {rate > 0 && (
+              <>
+                <div className="flex justify-between text-xs text-slate-500 pl-3">
+                  <span>CGST ({rate / 2}%)</span>
+                  <span>{formatINR(cgst)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500 pl-3">
+                  <span>SGST ({rate / 2}%)</span>
+                  <span>{formatINR(sgst)}</span>
+                </div>
+              </>
+            )}
+            <div className="flex justify-between border-t border-slate-200 pt-1.5">
+              <span className="font-medium text-slate-700">Total Amount</span>
+              <span className="font-bold text-slate-900">{formatINR(totalAmount)}</span>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
@@ -301,19 +352,20 @@ function InvoiceModal({
               className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              rows={2}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
-            >
+            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60">
               {pending ? "Saving..." : "Create Invoice"}
             </button>
           </div>

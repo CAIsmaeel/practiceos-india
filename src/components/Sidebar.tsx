@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, Activity } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -12,16 +14,31 @@ const navItems = [
   { to: "/tasks", label: "Tasks", icon: ListChecks },
 ];
 
+const systemItems = [
+  { to: "/activity", label: "Activity", icon: Activity },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
 export function Sidebar() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("settings").select("firm_name, logo_url").limit(1).maybeSingle();
+      return data as { firm_name: string | null; logo_url: string | null } | null;
+    },
+  });
+
+  const firmName = settings?.firm_name || "PracticeOS";
+  const logoUrl = settings?.logo_url;
+
   return (
     <>
-      {/* Mobile top bar */}
       <div className="md:hidden flex items-center justify-between bg-slate-800 text-white px-4 h-14">
         <div className="flex items-center gap-2 font-semibold">
-          <span className="text-blue-400">₹</span> PracticeOS
+          <span className="text-blue-400">₹</span> {firmName}
         </div>
         <button onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? <X size={22} /> : <Menu size={22} />}
@@ -34,18 +51,21 @@ export function Sidebar() {
         } md:block bg-slate-800 text-slate-100 w-full md:w-64 md:min-h-screen md:fixed md:top-0 md:left-0 md:flex md:flex-col`}
       >
         <div className="hidden md:flex items-center gap-2 px-6 h-16 border-b border-slate-700">
-          <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center text-white font-bold">
-            ₹
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-md object-cover" />
+          ) : (
+            <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center text-white font-bold">
+              ₹
+            </div>
+          )}
           <div>
-            <div className="font-semibold leading-tight">PracticeOS</div>
+            <div className="font-semibold leading-tight">{firmName}</div>
             <div className="text-xs text-slate-400">CA Practice Manager</div>
           </div>
         </div>
-        <nav className="p-3 space-y-1">
+        <nav className="p-3 space-y-1 flex-1">
           {navItems.map((item) => {
-            const active =
-              item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+            const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
@@ -53,9 +73,7 @@ export function Sidebar() {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-blue-500 text-white"
-                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                  active ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-slate-700 hover:text-white"
                 }`}
               >
                 <Icon size={18} />
@@ -64,6 +82,26 @@ export function Sidebar() {
             );
           })}
         </nav>
+        <div className="p-3 border-t border-slate-700 space-y-1">
+          <p className="px-3 pb-1 text-xs font-medium text-slate-500 uppercase tracking-wider">System</p>
+          {systemItems.map((item) => {
+            const active = pathname.startsWith(item.to);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  active ? "bg-blue-500 text-white" : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                }`}
+              >
+                <Icon size={18} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
       </aside>
     </>
   );
