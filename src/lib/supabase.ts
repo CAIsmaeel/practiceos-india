@@ -48,6 +48,7 @@ export type Task = {
   engagement_id: string;
   title: string;
   assigned_to: string | null;
+  due_date: string | null;
   is_complete: boolean;
   created_at: string;
   engagements?: { title: string } | null;
@@ -77,8 +78,9 @@ export type Invoice = {
 export type Settings = {
   id: string;
   firm_name: string | null;
-  logo_url: string | null;
-  ca_registration_number: string | null;
+  logo_url?: string | null;
+  ca_reg_number: string | null;
+  ca_registration_number?: string | null;
   gst_number: string | null;
   address: string | null;
   phone: string | null;

@@ -4,9 +4,6 @@ Build a practice management web app called PracticeOS for Indian CA firms.
 
 Use React with Tailwind CSS. Connect to Supabase.
 
-Supabase URL: https://xjcknltsldywczvqmzwp.supabase.co
-
-Supabase Anon Key: sb_publishable_TJWY8tPSJP60FBZCq2oYpA_9NNNb7VX
 
 The app should have:
 

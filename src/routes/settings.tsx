@@ -12,63 +12,73 @@ function SettingsPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState({
     firm_name: "",
-    logo_url: "",
-    ca_registration_number: "",
+    ca_reg_number: "",
     gst_number: "",
     address: "",
     phone: "",
     email: "",
   });
-  const [savedId, setSavedId] = useState<string | null>(null);
 
-  const { data: settings } = useQuery({
+  const { data: settingsRow } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("settings").select("*").limit(1).maybeSingle();
-      if (error) throw error;
-      return data as Settings | null;
+      const { data } = await supabase.from("settings").select("*").limit(1);
+      return data?.[0] ?? null;
     },
   });
 
   useEffect(() => {
-    if (settings) {
+    if (settingsRow) {
       setForm({
-        firm_name: settings.firm_name ?? "",
-        logo_url: settings.logo_url ?? "",
-        ca_registration_number: settings.ca_registration_number ?? "",
-        gst_number: settings.gst_number ?? "",
-        address: settings.address ?? "",
-        phone: settings.phone ?? "",
-        email: settings.email ?? "",
+        firm_name: settingsRow.firm_name ?? "",
+        ca_reg_number: settingsRow.ca_reg_number ?? "",
+        gst_number: settingsRow.gst_number ?? "",
+        address: settingsRow.address ?? "",
+        phone: settingsRow.phone ?? "",
+        email: settingsRow.email ?? "",
       });
-      setSavedId(settings.id);
     }
-  }, [settings]);
+  }, [settingsRow]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, updated_at: new Date().toISOString() };
-      if (savedId) {
-        const { error } = await supabase.from("settings").update(payload).eq("id", savedId);
-        if (error) throw error;
+      const firm_name = form.firm_name;
+      const ca_reg_number = form.ca_reg_number;
+      const gst_number = form.gst_number;
+      const address = form.address;
+      const phone = form.phone;
+      const email = form.email;
+
+      const existing = await supabase.from("settings").select("id").limit(1);
+      const id = existing?.data?.[0]?.id;
+
+      if (id) {
+        await supabase
+          .from("settings")
+          .update({
+            firm_name,
+            ca_reg_number,
+            gst_number,
+            address,
+            phone,
+            email,
+          })
+          .eq("id", id);
       } else {
-        const { data, error } = await supabase.from("settings").insert(payload).select().single();
-        if (error) throw error;
-        setSavedId(data.id);
+        await supabase.from("settings").insert({
+          firm_name,
+          ca_reg_number,
+          gst_number,
+          address,
+          phone,
+          email,
+        });
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["settings"] });
     },
   });
-
-  const handleLogoUpload = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm((f) => ({ ...f, logo_url: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -92,24 +102,6 @@ function SettingsPage() {
             placeholder="Your firm name"
             className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Firm Logo</label>
-          <div className="flex items-center gap-4">
-            {form.logo_url && (
-              <img src={form.logo_url} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-slate-200" />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleLogoUpload(file);
-              }}
-              className="text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

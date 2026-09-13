@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -8,6 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/lib/supabase";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -119,17 +121,40 @@ function RootShell({ children }: { children: ReactNode }) {
 
 import { Sidebar } from "../components/Sidebar";
 
+function AppLayout() {
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("firm_name")
+        .limit(1)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  const firmName = settings?.firm_name || "CA Practice Manager";
+
+  return (
+    <div className="min-h-screen bg-white md:pl-64">
+      <Sidebar firmName={firmName} />
+      <main className="p-4 md:p-8">
+        <Outlet />
+      </main>
+      <Toaster richColors position="top-right" />
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-white md:pl-64">
-        <Sidebar />
-        <main className="p-4 md:p-8">
-          <Outlet />
-        </main>
-      </div>
+      <AppLayout />
     </QueryClientProvider>
   );
 }

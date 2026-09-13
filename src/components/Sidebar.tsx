@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, Activity } from "lucide-react";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 const navItems = [
@@ -19,26 +19,30 @@ const systemItems = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ firmName = "CA Practice Manager" }: { firmName?: string }) {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data } = await supabase.from("settings").select("firm_name, logo_url").limit(1).maybeSingle();
-      return data as { firm_name: string | null; logo_url: string | null } | null;
+      const { data } = await supabase.from("settings").select("firm_name").limit(1);
+      return data?.[0] ?? null;
     },
+    staleTime: 0,
   });
 
-  const firmName = settings?.firm_name || "PracticeOS";
-  const logoUrl = settings?.logo_url;
+  const displayFirmName = settings?.firm_name ?? firmName ?? "CA Practice Manager";
 
   return (
     <>
       <div className="md:hidden flex items-center justify-between bg-slate-800 text-white px-4 h-14">
         <div className="flex items-center gap-2 font-semibold">
-          <span className="text-blue-400">₹</span> {firmName}
+          <span className="text-blue-400">₹</span>
+          <div className="leading-tight">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-300">PracticeOS</div>
+            <div>{displayFirmName}</div>
+          </div>
         </div>
         <button onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? <X size={22} /> : <Menu size={22} />}
@@ -50,17 +54,13 @@ export function Sidebar() {
           open ? "block" : "hidden"
         } md:block bg-slate-800 text-slate-100 w-full md:w-64 md:min-h-screen md:fixed md:top-0 md:left-0 md:flex md:flex-col`}
       >
-        <div className="hidden md:flex items-center gap-2 px-6 h-16 border-b border-slate-700">
-          {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-md object-cover" />
-          ) : (
-            <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center text-white font-bold">
-              ₹
-            </div>
-          )}
-          <div>
-            <div className="font-semibold leading-tight">{firmName}</div>
-            <div className="text-xs text-slate-400">CA Practice Manager</div>
+        <div className="hidden md:flex items-center gap-3 px-6 h-16 border-b border-slate-700">
+          <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center text-white font-bold">
+            ₹
+          </div>
+          <div className="leading-tight">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">PracticeOS</div>
+            <div className="font-semibold text-white">{displayFirmName}</div>
           </div>
         </div>
         <nav className="p-3 space-y-1 flex-1">
