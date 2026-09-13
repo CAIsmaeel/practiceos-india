@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase, type Settings } from "@/lib/supabase";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/settings")({
@@ -9,89 +9,103 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     firm_name: "",
-    ca_reg_number: "",
     gst_number: "",
+    ca_reg_number: "",
     address: "",
+    state: "",
+    bank_name: "",
+    bank_account_no: "",
+    bank_ifsc: "",
+    invoice_prefix: "INV",
     phone: "",
     email: "",
   });
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const { data: settingsRow } = useQuery({
+  const { data: firmSettingsRow } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data } = await supabase.from("settings").select("*").limit(1);
-      return data?.[0] ?? null;
+      const { data, error } = await supabase
+        .from("settings")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .limit(1);
+      if (error) throw error;
+      return (data?.[0] ?? null) as FirmSettings | null;
     },
   });
 
   useEffect(() => {
-    if (settingsRow) {
+    if (firmSettingsRow) {
       setForm({
-        firm_name: settingsRow.firm_name ?? "",
-        ca_reg_number: settingsRow.ca_reg_number ?? "",
-        gst_number: settingsRow.gst_number ?? "",
-        address: settingsRow.address ?? "",
-        phone: settingsRow.phone ?? "",
-        email: settingsRow.email ?? "",
+        firm_name: firmSettingsRow.firm_name ?? "",
+        gst_number: firmSettingsRow.gst_number ?? "",
+        ca_reg_number: firmSettingsRow.ca_reg_number ?? "",
+        address: firmSettingsRow.address ?? "",
+        state: firmSettingsRow.state ?? "",
+        bank_name: firmSettingsRow.bank_name ?? "",
+        bank_account_no: firmSettingsRow.bank_account_no ?? "",
+        bank_ifsc: firmSettingsRow.bank_ifsc ?? "",
+        invoice_prefix: firmSettingsRow.invoice_prefix ?? "INV",
+        phone: firmSettingsRow.phone ?? "",
+        email: firmSettingsRow.email ?? "",
       });
     }
-  }, [settingsRow]);
+  }, [firmSettingsRow]);
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const firm_name = form.firm_name;
-      const ca_reg_number = form.ca_reg_number;
-      const gst_number = form.gst_number;
-      const address = form.address;
-      const phone = form.phone;
-      const email = form.email;
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setIsSaving(true);
 
-      const existing = await supabase.from("settings").select("id").limit(1);
-      const id = existing?.data?.[0]?.id;
+    try {
+      const { data: rows } = await supabase
+        .from("settings")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1);
 
-      if (id) {
-        await supabase
+      const existingId = rows?.[0]?.id;
+
+      if (existingId) {
+        const { error } = await supabase
           .from("settings")
           .update({
-            firm_name,
-            ca_reg_number,
-            gst_number,
-            address,
-            phone,
-            email,
+            firm_name: form.firm_name,
+            ca_reg_number: form.ca_reg_number,
+            gst_number: form.gst_number,
+            address: form.address,
+            phone: form.phone,
+            email: form.email,
           })
-          .eq("id", id);
-      } else {
-        await supabase.from("settings").insert({
-          firm_name,
-          ca_reg_number,
-          gst_number,
-          address,
-          phone,
-          email,
-        });
+          .eq("id", existingId);
+        if (error) throw error;
       }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["settings"] });
-    },
-  });
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+    } catch (err) {
+      setError("Save failed: " + String(err));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-500 text-sm">Configure your firm details</p>
+        <h1 className="text-2xl font-bold text-slate-900">Firm Settings</h1>
+        <p className="text-slate-500 text-sm">Configure billing and invoice metadata for your practice</p>
       </div>
 
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          saveMutation.mutate();
-        }}
+        onSubmit={handleSave}
         className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-5"
       >
         <div>
@@ -99,26 +113,25 @@ function SettingsPage() {
           <input
             value={form.firm_name}
             onChange={(e) => setForm({ ...form, firm_name: e.target.value })}
-            placeholder="Your firm name"
+            placeholder="Practice Name"
             className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">CA Registration Number</label>
-            <input
-              value={form.ca_registration_number}
-              onChange={(e) => setForm({ ...form, ca_registration_number: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">GST Number</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">GSTIN</label>
             <input
               value={form.gst_number}
               onChange={(e) => setForm({ ...form, gst_number: e.target.value.toUpperCase() })}
-              maxLength={15}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">PAN</label>
+            <input
+              value={form.ca_reg_number}
+              onChange={(e) => setForm({ ...form, ca_reg_number: e.target.value.toUpperCase() })}
               className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
             />
           </div>
@@ -136,6 +149,53 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
+            <input
+              value={form.state}
+              onChange={(e) => setForm({ ...form, state: e.target.value })}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Invoice Prefix</label>
+            <input
+              value={form.invoice_prefix}
+              onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value.toUpperCase() })}
+              placeholder="INV"
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
+            <input
+              value={form.bank_name}
+              onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bank Account No</label>
+            <input
+              value={form.bank_account_no}
+              onChange={(e) => setForm({ ...form, bank_account_no: e.target.value })}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bank IFSC</label>
+            <input
+              value={form.bank_ifsc}
+              onChange={(e) => setForm({ ...form, bank_ifsc: e.target.value.toUpperCase() })}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
             <input
               value={form.phone}
@@ -143,29 +203,29 @@ function SettingsPage() {
               className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            disabled={saveMutation.isPending}
+            disabled={isSaving}
             className="px-5 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
           >
-            {saveMutation.isPending ? "Saving..." : "Save Settings"}
+            {isSaving ? "Saving..." : "Save Firm Settings"}
           </button>
         </div>
-        {saveMutation.isSuccess && (
-          <p className="text-sm text-green-600 text-right">Settings saved successfully.</p>
-        )}
+        {error && <p className="text-sm text-red-600 text-right">{error}</p>}
+        {saved && <p className="text-sm text-green-600 text-right">Firm settings saved successfully.</p>}
       </form>
     </div>
   );

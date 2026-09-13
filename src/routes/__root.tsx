@@ -123,15 +123,14 @@ import { Sidebar } from "../components/Sidebar";
 
 function AppLayout() {
   const { data: settings } = useQuery({
-    queryKey: ["settings"],
+    queryKey: ["firm-settings"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("settings")
+        .from("firm_settings")
         .select("firm_name")
-        .limit(1)
-        .single();
+        .limit(1);
       if (error) throw error;
-      return data;
+      return data?.[0] ?? null;
     },
     staleTime: 30_000,
   });

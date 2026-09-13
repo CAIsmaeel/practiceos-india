@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as ClientsRouteImport } from './routes/clients'
+import { Route as ComplianceRouteImport } from './routes/compliance'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EngagementsRouteImport } from './routes/engagements'
 import { Route as InvoicesRouteImport } from './routes/invoices'
@@ -32,6 +33,11 @@ const ActivityRoute = ActivityRouteImport.update({
 const ClientsRoute = ClientsRouteImport.update({
   id: '/clients',
   path: '/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceRoute = ComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/clients': typeof ClientsRoute
+  '/compliance': typeof ComplianceRoute
   '/documents': typeof DocumentsRoute
   '/engagements': typeof EngagementsRoute
   '/invoices': typeof InvoicesRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/clients': typeof ClientsRoute
+  '/compliance': typeof ComplianceRoute
   '/documents': typeof DocumentsRoute
   '/engagements': typeof EngagementsRoute
   '/invoices': typeof InvoicesRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/clients': typeof ClientsRoute
+  '/compliance': typeof ComplianceRoute
   '/documents': typeof DocumentsRoute
   '/engagements': typeof EngagementsRoute
   '/invoices': typeof InvoicesRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/clients'
+    | '/compliance'
     | '/documents'
     | '/engagements'
     | '/invoices'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/clients'
+    | '/compliance'
     | '/documents'
     | '/engagements'
     | '/invoices'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/clients'
+    | '/compliance'
     | '/documents'
     | '/engagements'
     | '/invoices'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
   ClientsRoute: typeof ClientsRoute
+  ComplianceRoute: typeof ComplianceRoute
   DocumentsRoute: typeof DocumentsRoute
   EngagementsRoute: typeof EngagementsRoute
   InvoicesRoute: typeof InvoicesRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/clients'
       fullPath: '/clients'
       preLoaderRoute: typeof ClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance': {
+      id: '/compliance'
+      path: '/compliance'
+      fullPath: '/compliance'
+      preLoaderRoute: typeof ComplianceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
   ClientsRoute: ClientsRoute,
+  ComplianceRoute: ComplianceRoute,
   DocumentsRoute: DocumentsRoute,
   EngagementsRoute: EngagementsRoute,
   InvoicesRoute: InvoicesRoute,

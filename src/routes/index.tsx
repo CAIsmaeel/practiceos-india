@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Users, Briefcase, Calendar, AlertTriangle, FileText } from "lucide-react";
-import { format, addDays, isAfter, isBefore } from "date-fns";
+import { format, addDays, isAfter, isBefore, differenceInCalendarDays, startOfDay } from "date-fns";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Dashboard — PracticeOS" }] }),
@@ -53,28 +53,32 @@ function Dashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("engagements")
-        .select("*, clients(name, firm_name)")
+        .select("*, clients!inner(name, firm_name, status)")
+        .neq("clients.status", "deleted")
+        .neq("clients.status", "archived")
         .order("deadline", { ascending: true });
       return data ?? [];
     },
   });
 
-  const { data: tasksDue } = useQuery({
+  const { data: tasksDueCount } = useQuery({
     queryKey: ["tasks-due-week"],
     queryFn: async () => {
-      const today = new Date();
-      const weekFromNow = addDays(today, 7);
-      // tasks themselves don't have deadlines; use engagement deadlines for "tasks due"
-      const { data } = await supabase
-        .from("tasks")
-        .select("*, engagements(deadline)")
-        .eq("is_complete", false);
-      return (data ?? []).filter((t: any) => {
-        const d = t.engagements?.deadline;
-        if (!d) return false;
-        const dt = new Date(d);
-        return isAfter(dt, today) && isBefore(dt, weekFromNow);
-      }).length;
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const next7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+        const { count } = await supabase
+          .from("tasks")
+          .select("*", { count: "exact", head: true })
+          .gte("due_date", today)
+          .lte("due_date", next7)
+          .eq("is_complete", false);
+
+        return count ?? 0;
+      } catch {
+        return 0;
+      }
     },
   });
 
@@ -108,17 +112,37 @@ function Dashboard() {
     },
   });
 
+  const { data: invoices } = useQuery({
+    queryKey: ["dashboard-invoices"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("invoices")
+        .select("id, amount, total_amount, status, due_date")
+        .order("due_date", { ascending: true, nullsFirst: false });
+      return (data ?? []) as Array<{
+        id: string;
+        amount: number | null;
+        total_amount: number | null;
+        status: string | null;
+        due_date: string | null;
+      }>;
+    },
+  });
+
   const { data: overdueInvoicesCount } = useQuery({
     queryKey: ["overdue-invoices-count"],
     queryFn: async () => {
       try {
-        const today = new Date().toISOString().split("T")[0];
-        const { count } = await supabase
+        const today = new Date();
+        const { data } = await supabase
           .from("invoices")
-          .select("*", { count: "exact", head: true })
-          .lt("due_date", today)
-          .neq("status", "Paid");
-        return count ?? 0;
+          .select("id, status, due_date")
+          .not("status", "eq", "Paid");
+
+        return (data ?? []).filter((invoice: any) => {
+          if (!invoice.due_date || invoice.status === "Paid") return false;
+          return new Date(invoice.due_date) < today;
+        }).length;
       } catch {
         return 0;
       }
@@ -141,23 +165,52 @@ function Dashboard() {
     },
   });
 
-  const { data: upcoming } = useQuery({
-    queryKey: ["upcoming-deadlines"],
+  const { data: upcomingCompliance } = useQuery({
+    queryKey: ["dashboard-upcoming-compliance"],
     queryFn: async () => {
       try {
-        const today = new Date().toISOString().split("T")[0];
-        const next7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        const today = format(startOfDay(new Date()), "yyyy-MM-dd");
+        const next7 = format(startOfDay(addDays(new Date(), 7)), "yyyy-MM-dd");
 
         const { data } = await supabase
-          .from("engagements")
-          .select("id, title, deadline, status, clients(name)")
-          .gte("deadline", today)
-          .lte("deadline", next7)
-          .not("status", "in", '("completed","billed")')
-          .order("deadline", { ascending: true });
-        return data ?? [];
+          .from("compliance_items")
+          .select("id, compliance_type, due_date, status, clients!inner(name, status)")
+          .eq("status", "pending")
+          .neq("clients.status", "deleted")
+          .neq("clients.status", "archived")
+          .gte("due_date", today)
+          .lte("due_date", next7)
+          .order("due_date", { ascending: true });
+
+        return (data ?? []).map((item: any) => ({
+          id: item.id,
+          clientName: item.clients?.name ?? "—",
+          complianceType: item.compliance_type ?? "—",
+          dueDate: item.due_date,
+          status: item.status,
+        }));
       } catch {
         return [];
+      }
+    },
+  });
+
+  const { data: overdueComplianceCount } = useQuery({
+    queryKey: ["dashboard-overdue-compliance-count"],
+    queryFn: async () => {
+      try {
+        const today = format(startOfDay(new Date()), "yyyy-MM-dd");
+        const { count } = await supabase
+          .from("compliance_items")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+          .neq("clients.status", "deleted")
+          .neq("clients.status", "archived")
+          .lt("due_date", today);
+
+        return count ?? 0;
+      } catch {
+        return 0;
       }
     },
   });
@@ -168,13 +221,19 @@ function Dashboard() {
     engagements?.filter((e: any) => e.status !== "completed" && e.status !== "billed")
       .length ?? 0;
   const overdueCount =
-    engagements?.filter(
+    (engagements?.filter(
       (e: any) =>
         e.deadline &&
         isBefore(new Date(e.deadline), now) &&
         e.status !== "completed" &&
         e.status !== "billed",
-    ).length ?? 0;
+    ).length ?? 0) + (overdueComplianceCount ?? 0);
+  const totalOutstanding =
+    (invoices ?? []).reduce((sum, invoice) => {
+      if (invoice.status === "Paid") return sum;
+      const amount = Number(invoice.total_amount ?? invoice.amount ?? 0);
+      return sum + amount;
+    }, 0);
 
   return (
     <div className="space-y-6">
@@ -188,6 +247,12 @@ function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={clients ?? 0} icon={Users} color="bg-blue-500" />
         <StatCard
+          label="Total Outstanding"
+          value={new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(totalOutstanding)}
+          icon={Briefcase}
+          color="bg-indigo-500"
+        />
+        <StatCard
           label="Active Engagements"
           value={activeCount}
           icon={Briefcase}
@@ -195,12 +260,12 @@ function Dashboard() {
         />
         <StatCard
           label="Tasks Due This Week"
-          value={tasksDue ?? 0}
+          value={tasksDueCount ?? 0}
           icon={Calendar}
           color="bg-amber-500"
         />
         <StatCard
-          label="Overdue Engagements"
+          label="Overdue Items"
           value={overdueCount}
           icon={AlertTriangle}
           color="bg-red-500"
@@ -230,25 +295,41 @@ function Dashboard() {
           <h2 className="font-semibold text-slate-900">Upcoming Deadlines (Next 7 days)</h2>
         </div>
         <div className="divide-y divide-slate-100">
-          {(upcoming ?? []).length === 0 && (
+          {(upcomingCompliance ?? []).length === 0 && (
             <p className="px-5 py-8 text-center text-sm text-slate-500">
               No upcoming deadlines.
             </p>
           )}
-          {(upcoming ?? []).map((e: any) => (
-            <div key={e.id} className="flex items-center justify-between py-3 px-1">
-              <div>
-                <p className="font-medium text-slate-900 text-sm">{e.title}</p>
-                <p className="text-xs text-slate-500">{e.clients?.name ?? "—"}</p>
+          {(upcomingCompliance ?? []).map((item: any) => {
+            const dueDate = item.dueDate ? new Date(item.dueDate) : null;
+            const daysRemaining = dueDate ? differenceInCalendarDays(startOfDay(dueDate), startOfDay(new Date())) : 0;
+            const dueLabel = daysRemaining === 0 ? "Due today" : daysRemaining === 1 ? "Due in 1 day" : `Due in ${daysRemaining} days`;
+            const isUrgent = daysRemaining <= 1;
+
+            return (
+              <div
+                key={item.id}
+                className={`flex items-center justify-between py-3 px-4 ${isUrgent ? "bg-red-50/60 border-l-4 border-red-400" : "bg-amber-50/60 border-l-4 border-amber-300"}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-slate-900 text-sm truncate">{item.clientName}</p>
+                  <p className="text-xs text-slate-500">{item.complianceType}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      isUrgent ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {dueLabel}
+                  </span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {dueDate ? format(dueDate, "dd MMM yyyy") : "—"}
+                  </span>
+                </div>
               </div>
-              <span className="text-sm font-medium text-blue-600">
-                {new Date(e.deadline).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                })}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Engagement, type Client } from "@/lib/supabase";
 import { useState } from "react";
-import { Plus, X, Archive } from "lucide-react";
+import { Plus, X, Archive, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/engagements")({
@@ -32,7 +32,7 @@ const statusColors: Record<string, string> = {
 
 function EngagementsPage() {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [modalState, setModalState] = useState<{ mode: "create" | "edit"; engagement?: Engagement | null } | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
 
   const { data: engagements, isLoading } = useQuery({
@@ -40,7 +40,9 @@ function EngagementsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("engagements")
-        .select("*, clients(name, firm_name)")
+        .select("*, clients!inner(name, firm_name, status)")
+        .neq("clients.status", "deleted")
+        .neq("clients.status", "archived")
         .order("deadline", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Engagement[];
@@ -84,7 +86,19 @@ function EngagementsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["engagements"] });
       qc.invalidateQueries({ queryKey: ["engagements-all"] });
-      setOpen(false);
+      setModalState(null);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Partial<Engagement> }) => {
+      const { error } = await supabase.from("engagements").update(payload).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["engagements"] });
+      qc.invalidateQueries({ queryKey: ["engagements-all"] });
+      setModalState(null);
     },
   });
 
@@ -107,7 +121,7 @@ function EngagementsPage() {
             {hideCompleted ? "Hide Completed" : "Hide Completed"}
           </button>
           <button
-            onClick={() => setOpen(true)}
+            onClick={() => setModalState({ mode: "create" })}
             className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
           >
             <Plus size={16} /> Add Engagement
@@ -160,16 +174,25 @@ function EngagementsPage() {
                 </td>
                 <td className="px-5 py-3 text-slate-700">{e.assigned_to ?? "—"}</td>
                 <td className="px-5 py-3">
-                  {e.status !== "completed" && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => archiveMutation.mutate({ id: e.id })}
-                      disabled={archiveMutation.isPending}
-                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
-                      title="Archive"
+                      type="button"
+                      onClick={() => setModalState({ mode: "edit", engagement: e })}
+                      className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 font-medium"
                     >
-                      <Archive size={14} /> Archive
+                      <Pencil size={14} /> Edit
                     </button>
-                  )}
+                    {e.status !== "completed" && (
+                      <button
+                        onClick={() => archiveMutation.mutate({ id: e.id })}
+                        disabled={archiveMutation.isPending}
+                        className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                        title="Archive"
+                      >
+                        <Archive size={14} /> Archive
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -177,12 +200,20 @@ function EngagementsPage() {
         </table>
       </div>
 
-      {open && (
+      {modalState && (
         <EngagementModal
+          mode={modalState.mode}
+          initialEngagement={modalState.engagement ?? undefined}
           clients={clients ?? []}
-          onClose={() => setOpen(false)}
-          onSubmit={addMutation.mutate}
-          pending={addMutation.isPending}
+          onClose={() => setModalState(null)}
+          onSubmit={(payload) => {
+            if (modalState.mode === "edit" && modalState.engagement?.id) {
+              updateMutation.mutate({ id: modalState.engagement.id, payload });
+              return;
+            }
+            addMutation.mutate(payload);
+          }}
+          pending={addMutation.isPending || updateMutation.isPending}
         />
       )}
     </div>
@@ -190,30 +221,34 @@ function EngagementsPage() {
 }
 
 function EngagementModal({
+  mode,
+  initialEngagement,
   clients,
   onClose,
   onSubmit,
   pending,
 }: {
+  mode: "create" | "edit";
+  initialEngagement?: Engagement | null;
   clients: Pick<Client, "id" | "name">[];
   onClose: () => void;
   onSubmit: (data: any) => void;
   pending: boolean;
 }) {
   const [form, setForm] = useState({
-    client_id: "",
-    title: "",
-    type: "GST Return",
-    deadline: "",
-    assigned_to: "",
-    status: "pending",
+    client_id: initialEngagement?.client_id ?? "",
+    title: initialEngagement?.title ?? "",
+    type: initialEngagement?.type ?? "GST Return",
+    deadline: initialEngagement?.deadline ?? "",
+    assigned_to: initialEngagement?.assigned_to ?? "",
+    status: initialEngagement?.status ?? "pending",
   });
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">Add Engagement</h2>
+          <h2 className="font-semibold text-slate-900">{mode === "edit" ? "Edit Engagement" : "Add Engagement"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
@@ -294,7 +329,7 @@ function EngagementModal({
               disabled={pending}
               className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
             >
-              {pending ? "Saving..." : "Save Engagement"}
+              {pending ? "Saving..." : mode === "edit" ? "Update Engagement" : "Save Engagement"}
             </button>
           </div>
         </form>

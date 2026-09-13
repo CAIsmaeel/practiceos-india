@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://xjcknltsldywczvqmzwp.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_TJWY8tPSJP60FBZCq2oYpA_9NNNb7VX";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2tubHRzbGR5d2N6dnFtendwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTM3ODksImV4cCI6MjA5ODAyOTc4OX0.qAijhwhTg1-OD0avyMgh59r_ai3OC5T47R6C7HQi8mY";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -18,18 +18,17 @@ export type Client = {
   whatsapp_number: string | null;
   client_type: string | null;
   notes: string | null;
+  gst_registered?: boolean | null;
+  gst_turnover_above_2cr?: boolean | null;
+  tds_applicable?: boolean | null;
+  pf_applicable?: boolean | null;
+  ptec_applicable?: boolean | null;
+  advance_tax_applicable?: boolean | null;
 };
 
-export type EngagementType =
-  | "GST Return"
-  | "ITR Filing"
-  | "Statutory Audit"
-  | "Tax Audit"
-  | "ROC Filing"
-  | "MCA Compliance"
-  | "Other";
+export type EngagementType = string;
 
-export type EngagementStatus = "pending" | "in_progress" | "completed" | "billed";
+export type EngagementStatus = string;
 
 export type Engagement = {
   id: string;
@@ -54,7 +53,21 @@ export type Task = {
   engagements?: { title: string } | null;
 };
 
-export type InvoiceStatus = "Pending" | "Overdue" | "Paid";
+export type ComplianceItem = {
+  id: string;
+  client_id: string;
+  compliance_type: string | null;
+  compliance_name: string | null;
+  due_date: string | null;
+  status: string | null;
+  filed_date: string | null;
+  financial_year: string | null;
+  notes: string | null;
+  created_at: string;
+  clients?: { name: string } | null;
+};
+
+export type InvoiceStatus = "Pending" | "Overdue" | "Unpaid" | "Paid";
 
 export type Invoice = {
   id: string;
@@ -72,20 +85,48 @@ export type Invoice = {
   gst_amount: number | null;
   total_amount: number | null;
   notes: string | null;
-  clients?: { name: string; firm_name: string | null } | null;
+  clients?: {
+    name: string;
+    firm_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
 };
 
 export type Settings = {
   id: string;
   firm_name: string | null;
-  logo_url?: string | null;
   ca_reg_number: string | null;
-  ca_registration_number?: string | null;
   gst_number: string | null;
   address: string | null;
   phone: string | null;
   email: string | null;
-  updated_at: string;
+  state?: string | null;
+  bank_name?: string | null;
+  bank_account_no?: string | null;
+  bank_ifsc?: string | null;
+  invoice_prefix?: string | null;
+  logo_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type FirmSettings = {
+  id: string;
+  firm_name: string | null;
+  ca_reg_number: string | null;
+  gst_number: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  state?: string | null;
+  bank_name?: string | null;
+  bank_account_no?: string | null;
+  bank_ifsc?: string | null;
+  invoice_prefix?: string | null;
+  logo_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type QueryLog = {

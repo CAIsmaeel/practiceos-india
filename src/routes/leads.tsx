@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
-import { Plus, X, UserPlus } from "lucide-react";
+import { Plus, X, UserPlus, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/leads")({
   head: () => ({ meta: [{ title: "Leads — PracticeOS" }] }),
@@ -44,7 +44,7 @@ const statusColors: Record<string, string> = {
 
 function LeadsPage() {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [modalState, setModalState] = useState<{ mode: "create" | "edit"; lead?: Lead | null } | null>(null);
   const [convertLead, setConvertLead] = useState<Lead | null>(null);
   const [statusFilter, setStatusFilter] = useState("active");
 
@@ -76,7 +76,18 @@ function LeadsPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["leads"] });
-      setOpen(false);
+      setModalState(null);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Partial<Lead> }) => {
+      const { error } = await supabase.from("leads").update(payload).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      setModalState(null);
     },
   });
 
@@ -113,7 +124,7 @@ function LeadsPage() {
           <p className="text-slate-500 text-sm">Track and convert your sales leads</p>
         </div>
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => setModalState({ mode: "create" })}
           className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
         >
           <Plus size={16} /> Add Lead
@@ -178,14 +189,23 @@ function LeadsPage() {
                   </span>
                 </td>
                 <td className="px-5 py-3">
-                  {l.status !== "Converted" && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setConvertLead(l)}
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      type="button"
+                      onClick={() => setModalState({ mode: "edit", lead: l })}
+                      className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 font-medium"
                     >
-                      <UserPlus size={14} /> Convert to Client
+                      <Pencil size={14} /> Edit
                     </button>
-                  )}
+                    {l.status !== "Converted" && (
+                      <button
+                        onClick={() => setConvertLead(l)}
+                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        <UserPlus size={14} /> Convert to Client
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -193,11 +213,19 @@ function LeadsPage() {
         </table>
       </div>
 
-      {open && (
+      {modalState && (
         <LeadModal
-          onClose={() => setOpen(false)}
-          onSubmit={addMutation.mutate}
-          pending={addMutation.isPending}
+          mode={modalState.mode}
+          initialLead={modalState.lead ?? undefined}
+          onClose={() => setModalState(null)}
+          onSubmit={(payload) => {
+            if (modalState.mode === "edit" && modalState.lead?.id) {
+              updateMutation.mutate({ id: modalState.lead.id, payload });
+              return;
+            }
+            addMutation.mutate(payload);
+          }}
+          pending={addMutation.isPending || updateMutation.isPending}
         />
       )}
       {convertLead && (
@@ -213,36 +241,41 @@ function LeadsPage() {
 }
 
 function LeadModal({
+  mode,
+  initialLead,
   onClose,
   onSubmit,
   pending,
 }: {
+  mode: "create" | "edit";
+  initialLead?: Lead | null;
   onClose: () => void;
   onSubmit: (data: any) => void;
   pending: boolean;
 }) {
   const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    source: "WhatsApp",
-    requirement: "",
-    business_type: "",
-    urgency: "Medium",
-    notes: "",
+    name: initialLead?.name ?? "",
+    phone: initialLead?.phone ?? "",
+    email: initialLead?.email ?? "",
+    source: initialLead?.source ?? "WhatsApp",
+    requirement: initialLead?.requirement ?? "",
+    business_type: initialLead?.business_type ?? "",
+    urgency: initialLead?.urgency ?? "Medium",
+    qualification_score: initialLead?.qualification_score ?? "Warm",
+    notes: initialLead?.notes ?? "",
   });
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">Add Lead</h2>
+          <h2 className="font-semibold text-slate-900">{mode === "edit" ? "Edit Lead" : "Add Lead"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            onSubmit({ ...form, status: "New" });
+            onSubmit({ ...form, status: mode === "edit" ? initialLead?.status ?? "New" : "New" });
           }}
           className="p-5 space-y-4"
         >
@@ -297,6 +330,18 @@ function LeadModal({
             </div>
           </div>
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Qualification Score</label>
+            <select
+              value={form.qualification_score}
+              onChange={(e) => setForm({ ...form, qualification_score: e.target.value })}
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Hot">Hot</option>
+              <option value="Warm">Warm</option>
+              <option value="Cold">Cold</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Requirement</label>
             <input
               value={form.requirement}
@@ -330,7 +375,7 @@ function LeadModal({
               disabled={pending}
               className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
             >
-              {pending ? "Saving..." : "Save Lead"}
+              {pending ? "Saving..." : mode === "edit" ? "Update Lead" : "Save Lead"}
             </button>
           </div>
         </form>

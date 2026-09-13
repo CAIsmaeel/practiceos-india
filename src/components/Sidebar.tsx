@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, Activity } from "lucide-react";
+// @ts-ignore - lucide-react does not currently ship TypeScript declarations in this setup
+import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, Activity, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -9,6 +10,7 @@ const navItems = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/leads", label: "Leads", icon: UserPlus },
   { to: "/engagements", label: "Engagements", icon: Briefcase },
+  { to: "/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/invoices", label: "Invoices", icon: Receipt },
   { to: "/tasks", label: "Tasks", icon: ListChecks },
@@ -23,16 +25,27 @@ export function Sidebar({ firmName = "CA Practice Manager" }: { firmName?: strin
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const { data: settings } = useQuery({
-    queryKey: ["settings"],
+  const { data: firmSettings } = useQuery({
+    queryKey: ["firm-settings"],
     queryFn: async () => {
-      const { data } = await supabase.from("settings").select("firm_name").limit(1);
+      const { data, error } = await supabase.from("firm_settings").select("firm_name").limit(1);
+      if (error) throw error;
       return data?.[0] ?? null;
     },
     staleTime: 0,
   });
 
-  const displayFirmName = settings?.firm_name ?? firmName ?? "CA Practice Manager";
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("settings").select("firm_name").limit(1);
+      if (error) throw error;
+      return data?.[0] ?? null;
+    },
+    staleTime: 0,
+  });
+
+  const displayFirmName = firmSettings?.firm_name ?? settings?.firm_name ?? firmName ?? "CA Practice Manager";
 
   return (
     <>
