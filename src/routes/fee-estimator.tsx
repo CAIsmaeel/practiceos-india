@@ -452,7 +452,7 @@ async function getGroqReasoning(form: FeeForm, range: PriceRange, recommendedFee
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer GROQ_API_KEY_PLACEHOLDER`,
+        "Authorization": `Bearer import.meta.env.VITE_GROQ_API_KEY`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
