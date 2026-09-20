@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CA Ismaeel & Co. — Chartered Accountants</title>
+  <meta name="description" content="CA Ismaeel & Co. — Expert Chartered Accountants for GST, ITR, Audit, Company Registration and more. Based in Navi Mumbai."/>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --blue-light: #eff6ff;
+      --slate: #1e293b;
+      --slate-mid: #475569;
+      --slate-light: #f8fafc;
+      --white: #ffffff;
+      --border: #e2e8f0;
+      --green: #16a34a;
+      --wa-green: #25D366;
+
+      /* === CUSTOMIZE HERE === */
+      --firm-name: "CA Ismaeel & Co.";
+      --whatsapp-number: "919920728172"; /* 91 + number, no + */
+      --email: "ismaeel@practiceos.in";
+      --phone: "+91 99207 28172";
+      --city: "Navi Mumbai, Maharashtra";
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--slate);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .nav-name {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--slate);
+    }
+
+    .nav-sub {
+      font-size: 11px;
+      color: var(--slate-mid);
+    }
+
+    .nav-cta {
+      background: var(--blue);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .nav-cta:hover { background: var(--blue-dark); }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #3b82f6 100%);
+      color: white;
+      padding: 80px 24px 100px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -40px;
+      width: 250px; height: 250px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 16px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero h1 span { color: #93c5fd; }
+
+    .hero p {
+      font-size: clamp(15px, 2.5vw, 18px);
+      opacity: 0.88;
+      max-width: 560px;
+      margin: 0 auto 36px;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: white;
+      color: var(--blue);
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+
+    .btn-wa {
+      background: var(--wa-green);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.15s;
+    }
+
+    .btn-wa:hover { transform: translateY(-2px); }
+
+    /* STATS */
+    .stats {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 32px 24px;
+    }
+
+    .stats-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 24px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--slate-mid);
+      margin-top: 4px;
+    }
+
+    /* SERVICES */
+    .section {
+      padding: 72px 24px;
+    }
+
+    .section-alt { background: var(--slate-light); }
+
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: clamp(22px, 3.5vw, 34px);
+      font-weight: 800;
+      color: var(--slate);
+      margin-bottom: 12px;
+    }
+
+    .section-sub {
+      font-size: 16px;
+      color: var(--slate-mid);
+      max-width: 560px;
+      margin-bottom: 48px;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .service-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: default;
+    }
+
+    .service-card:hover {
+      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+      transform: translateY(-3px);
+      border-color: #bfdbfe;
+    }
+
+    .service-icon {
+      font-size: 32px;
+      margin-bottom: 14px;
+    }
+
+    .service-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--slate);
+      margin-bottom: 8px;
+    }
+
+    .service-desc {
+      font-size: 14px;
+      color: var(--slate-mid);
+      line-height: 1.6;
+    }
+
+    /* WHY US */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .why-card {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .why-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--blue-light);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .why-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate);
+      margin-bottom: 4px;
+    }
+
+    .why-desc {
+      font-size: 13px;
+      color: var(--slate-mid);
+    }
+
+    /* FAQ */
+    .faq-list {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: white;
+    }
+
+    .faq-q {
+      width: 100%;
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--slate);
+      text-align: left;
+      gap: 12px;
+    }
+
+    .faq-q:hover { background: var(--slate-light); }
+
+    .faq-arrow {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: transform 0.2s;
+    }
+
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+    .faq-a {
+      display: none;
+      padding: 0 20px 18px;
+      font-size: 14px;
+      color: var(--slate-mid);
+      line-height: 1.7;
+    }
+
+    .faq-item.open .faq-a { display: block; }
+
+    /* CONTACT FORM */
+    .contact-section {
+      background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%);
+      padding: 72px 24px;
+      color: white;
+    }
+
+    .contact-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) {
+      .contact-inner { grid-template-columns: 1fr; gap: 40px; }
+    }
+
+    .contact-left h2 {
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .contact-left p {
+      opacity: 0.85;
+      font-size: 15px;
+      margin-bottom: 28px;
+    }
+
+    .contact-info-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .contact-info-item span:first-child {
+      font-size: 18px;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+
+    .form-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--slate);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate-mid);
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--slate);
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .form-submit {
+      width: 100%;
+      background: var(--blue);
+      color: white;
+      border: none;
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+
+    .form-submit:hover { background: var(--blue-dark); }
+    .form-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .form-success-icon { font-size: 48px; margin-bottom: 12px; }
+    .form-success h3 { color: var(--green); font-size: 18px; margin-bottom: 8px; }
+    .form-success p { font-size: 14px; color: var(--slate-mid); }
+
+    /* FOOTER */
+    footer {
+      background: var(--slate);
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 13px;
+    }
+
+    footer strong { color: white; }
+
+    /* WHATSAPP FLOAT */
+    .wa-float {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--wa-green);
+      color: white;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+      text-decoration: none;
+      z-index: 999;
+      transition: transform 0.2s;
+    }
+
+    .wa-float:hover { transform: scale(1.1); }
+
+    @media (max-width: 640px) {
+      .hero { padding: 60px 20px 80px; }
+      .section { padding: 52px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">₹</div>
+    <div>
+      <div class="nav-name">CA Ismaeel & Co.</div>
+      <div class="nav-sub">Chartered Accountants</div>
+    </div>
+  </div>
+  <a href="#contact" class="nav-cta">Get Free Consultation</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">✦ Trusted CA Firm — Navi Mumbai</div>
+  <h1>Expert CA Services for <span>GST, ITR,</span> Audit & Business Compliance</h1>
+  <p>Helping businesses and individuals stay compliant, save taxes, and grow — with personalised CA support you can actually reach.</p>
+  <div class="hero-btns">
+    <a href="#contact" class="btn-primary">📋 Get Free Consultation</a>
+    <a href="https://wa.me/919920728172?text=Hi%2C%20I%20want%20to%20know%20more%20about%20your%20CA%20services." target="_blank" class="btn-wa">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
+      WhatsApp Us
+    </a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div>
+      <div class="stat-num">200+</div>
+      <div class="stat-label">Clients Served</div>
+    </div>
+    <div>
+      <div class="stat-num">5+</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div>
+      <div class="stat-num">₹2Cr+</div>
+      <div class="stat-label">Tax Savings Delivered</div>
+    </div>
+    <div>
+      <div class="stat-num">100%</div>
+      <div class="stat-label">On-Time Filing Rate</div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-label">What We Do</div>
+    <h2 class="section-title">Services We Offer</h2>
+    <p class="section-sub">From GST filings to company registration — we handle your compliance so you can focus on growing your business.</p>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">🧾</div>
+        <div class="service-title">GST Registration & Filing</div>
+        <div class="service-desc">GSTR-1, GSTR-3B, GSTR-9 filings. New registration and amendments. Monthly, quarterly, or annual — we handle it all.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📄</div>
+        <div class="service-title">Income Tax Return (ITR)</div>
+        <div class="service-desc">ITR filing for individuals, firms, companies. Tax planning, notices, refunds and 26AS reconciliation.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🔍</div>
+        <div class="service-title">Statutory & Tax Audit</div>
+        <div class="service-desc">Statutory audits under Companies Act, tax audits under Section 44AB. Proper documentation and report filing.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🏢</div>
+        <div class="service-title">Company & LLP Registration</div>
+        <div class="service-desc">Private Limited, LLP, OPC, Partnership registration. ROC filings, MCA compliance and annual returns.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">💰</div>
+        <div class="service-title">TDS Compliance</div>
+        <div class="service-desc">TDS deduction, challan payment, quarterly returns (26Q, 24Q). Form 16 / 16A generation for your employees and vendors.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📊</div>
+        <div class="service-title">Bookkeeping & Accounting</div>
+        <div class="service-desc">Monthly bookkeeping, P&L, Balance Sheet. Tally, Zoho Books or any software. MIS reports for business decisions.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section class="section section-alt">
+  <div class="section-inner">
+    <div class="section-label">Why Choose Us</div>
+    <h2 class="section-title">CA Services That Actually Work</h2>
+    <p class="section-sub">We combine professional expertise with technology to deliver fast, accurate, and stress-free compliance.</p>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon">⚡</div>
+        <div>
+          <div class="why-title">Quick Turnaround</div>
+          <div class="why-desc">Most filings done within 24-48 hours of receiving documents. No delays, no excuses.</div>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">📱</div>
+        <div>
+          <div class="why-title">WhatsApp First</div>
+          <div class="why-desc">Reach us on WhatsApp anytime. No formal appointments needed for routine queries.</div>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🔔</div>
+        <div>
+          <div class="why-title">Deadline Reminders</div>
+          <div class="why-desc">We remind you before every due date so you never miss a filing or pay a late fee.</div>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🔒</div>
+        <div>
+          <div class="why-title">100% Confidential</div>
+          <div class="why-desc">Your financial data is handled with complete privacy and professional responsibility.</div>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">💸</div>
+        <div>
+          <div class="why-title">Transparent Pricing</div>
+          <div class="why-desc">Fixed, upfront pricing. No hidden charges. Know exactly what you're paying before we start.</div>
+        </div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🤝</div>
+        <div>
+          <div class="why-title">Long-Term Partner</div>
+          <div class="why-desc">We grow with your business — from startup to scale. Not just a CA, but a financial advisor.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title" style="text-align:center">Frequently Asked Questions</h2>
+    <p class="section-sub" style="text-align:center; margin:0 auto 40px">Quick answers to things clients ask us most.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Do I need a CA if I'm a freelancer or small business?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Yes — even freelancers need to file ITR and handle TDS. If your turnover crosses ₹20L, GST registration is also mandatory. A CA ensures you're compliant and helps you save taxes legally.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How much does GST return filing cost?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Pricing depends on your turnover and number of transactions. We offer affordable packages starting from ₹500/month. Contact us for a free quote based on your specific situation.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Can you help with a GST notice or income tax notice?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Absolutely. We handle GST notices, scrutiny cases, demand orders, and income tax notices. We prepare the response and represent you before the department if needed.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How do I share my documents with you?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">WhatsApp is our primary channel — just send photos or PDFs directly. We also accept email and Google Drive links. No need to physically visit our office for routine work.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How long does ITR filing take?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">For salaried individuals with Form 16, usually 1-2 working days after receiving all documents. For businesses, it depends on the complexity — we'll give you a clear timeline upfront.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Do you work with clients outside Navi Mumbai?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Yes! Most of our work is done digitally. We serve clients across Maharashtra and pan-India. You don't need to visit us — everything can be done remotely via WhatsApp and email.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-inner">
+    <div class="contact-left">
+      <div class="section-label" style="color:#93c5fd">Get In Touch</div>
+      <h2>Let's Talk About Your Business</h2>
+      <p>Fill the form or reach out directly — we'll get back to you within a few hours.</p>
+      <div class="contact-info-item">
+        <span>📱</span><span>+91 99207 28172</span>
+      </div>
+      <div class="contact-info-item">
+        <span>📧</span><span>ismaeel@practiceos.in</span>
+      </div>
+      <div class="contact-info-item">
+        <span>📍</span><span>Kharghar, Navi Mumbai, Maharashtra</span>
+      </div>
+      <div class="contact-info-item">
+        <span>🕐</span><span>Mon–Sat, 10 AM – 7 PM</span>
+      </div>
+      <br/>
+      <a href="https://wa.me/919920728172?text=Hi%20CA%20Ismaeel%2C%20I'd%20like%20a%20free%20consultation." target="_blank" class="btn-wa" style="display:inline-flex; margin-top:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
+        Chat on WhatsApp
+      </a>
+    </div>
+
+    <div class="form-card">
+      <div id="formView">
+        <div class="form-title">📋 Request Free Consultation</div>
+        <div class="form-group">
+          <label>Your Name *</label>
+          <input type="text" id="fname" placeholder="Ramesh Sharma" required/>
+        </div>
+        <div class="form-group">
+          <label>Phone / WhatsApp *</label>
+          <input type="tel" id="fphone" placeholder="+91 98765 43210" required/>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="femail" placeholder="ramesh@business.com"/>
+        </div>
+        <div class="form-group">
+          <label>Service Required *</label>
+          <select id="fservice">
+            <option value="">Select a service...</option>
+            <option>GST Registration</option>
+            <option>GST Return Filing</option>
+            <option>ITR Filing</option>
+            <option>Tax Audit</option>
+            <option>Statutory Audit</option>
+            <option>Company / LLP Registration</option>
+            <option>TDS Compliance</option>
+            <option>Bookkeeping & Accounting</option>
+            <option>GST / IT Notice Handling</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Message (optional)</label>
+          <textarea id="fmessage" placeholder="Brief about your business or query..."></textarea>
+        </div>
+        <div id="formError" style="color:#dc2626; font-size:13px; margin-bottom:10px; display:none;"></div>
+        <button class="form-submit" id="submitBtn" onclick="submitForm()">
+          Send Enquiry →
+        </button>
+        <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:10px;">We respond within 2-4 hours on business days.</p>
+      </div>
+      <div class="form-success" id="formSuccess">
+        <div class="form-success-icon">🎉</div>
+        <h3>Enquiry Received!</h3>
+        <p>Thank you! We'll reach out to you on WhatsApp or call within a few hours.</p>
+        <br/>
+        <a href="https://wa.me/919920728172" target="_blank" class="btn-wa" style="justify-content:center; margin-top:8px;">
+          💬 Also chat on WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong>CA Ismaeel & Co.</strong> — Chartered Accountants, Kharghar, Navi Mumbai<br/>
+  <span style="font-size:12px; opacity:0.6;">© 2025 CA Ismaeel & Co. All rights reserved.</span>
+</footer>
+
+<!-- WHATSAPP FLOAT -->
+<a class="wa-float" href="https://wa.me/919920728172?text=Hi%20CA%20Ismaeel%2C%20I'd%20like%20to%20know%20more%20about%20your%20services." target="_blank" title="Chat on WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
+</a>
+
+<script>
+  // === CONFIG — Change these ===
+  const N8N_WEBHOOK_URL = "YOUR_N8N_WEBHOOK_URL_HERE";
+  // e.g. "https://your-n8n.app.n8n.cloud/webhook/website-lead"
+
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  async function submitForm() {
+    const name = document.getElementById('fname').value.trim();
+    const phone = document.getElementById('fphone').value.trim();
+    const email = document.getElementById('femail').value.trim();
+    const service = document.getElementById('fservice').value;
+    const message = document.getElementById('fmessage').value.trim();
+    const errEl = document.getElementById('formError');
+    const btn = document.getElementById('submitBtn');
+
+    errEl.style.display = 'none';
+
+    if (!name || !phone || !service) {
+      errEl.textContent = 'Please fill in your name, phone and service required.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    try {
+      if (N8N_WEBHOOK_URL && N8N_WEBHOOK_URL !== 'YOUR_N8N_WEBHOOK_URL_HERE') {
+        await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name, phone, email,
+            message: service + (message ? ' — ' + message : ''),
+            source: 'Website',
+            requirement: service
+          })
+        });
+      }
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    } catch (err) {
+      // Even if webhook fails, show success to user
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Send Enquiry →';
+  }
+</script>
+</body>
+</html>
