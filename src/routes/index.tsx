@@ -296,17 +296,49 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Clients" value={clients ?? 0} icon={Users} color="bg-blue-500" />
+        <StatCard
+          label="Total Clients"
+          value={clients ?? 0}
+          icon={Users}
+          color="bg-blue-500"
+          href="/clients"
+        />
         <StatCard
           label="Total Outstanding"
           value={new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(totalOutstanding)}
           icon={Briefcase}
           color="bg-indigo-500"
+          href="/invoices"
         />
-        <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" />
-        <StatCard label="Tasks Due This Week" value={tasksDueCount ?? 0} icon={Calendar} color="bg-amber-500" />
-        <StatCard label="Overdue Items" value={overdueCount} icon={AlertTriangle} color="bg-red-500" />
-        <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" />
+        <StatCard
+          label="Active Engagements"
+          value={activeCount}
+          icon={Briefcase}
+          color="bg-indigo-500"
+          href="/engagements"
+        />
+        <StatCard
+          label="Tasks Due This Week"
+          value={tasksDueCount ?? 0}
+          icon={Calendar}
+          color="bg-amber-500"
+          href="/tasks"
+        />
+        <StatCard
+          label="Overdue Items"
+          value={overdueCount}
+          sub={`${overdueComplianceCount} compliance · ${overdueEngagements} engagements`}
+          icon={AlertTriangle}
+          color="bg-red-500"
+          href="/compliance"
+        />
+        <StatCard
+          label="Open Leads"
+          value={openLeadsCount ?? 0}
+          icon={Users}
+          color="bg-purple-500"
+          href="/leads"
+        />
         <StatCard
           label="Clients Waiting for Docs"
           value={clientsWaiting}
@@ -315,7 +347,13 @@ function Dashboard() {
           color="bg-orange-500"
           href="/documents"
         />
-        <StatCard label="Overdue Invoices" value={overdueInvoicesCount ?? 0} icon={AlertTriangle} color="bg-red-500" />
+        <StatCard
+          label="Overdue Invoices"
+          value={overdueInvoicesCount ?? 0}
+          icon={AlertTriangle}
+          color="bg-red-500"
+          href="/invoices"
+        />
       </div>
 
       {/* Compliance — Overdue + Upcoming + View All button */}
