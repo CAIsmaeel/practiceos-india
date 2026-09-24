@@ -485,11 +485,16 @@ function ClientsPage() {
           initialClient={modalState.client ?? undefined}
           onClose={() => setModalState(null)}
           onSubmit={(payload) => {
+            const cleaned = {
+            ...payload,
+            dsc_expiry_date: payload.dsc_expiry_date || null,
+            dsc_location: payload.dsc_location || null,
+            pan_number: payload.pan_number ? payload.pan_number.toUpperCase() : null,};
             if (modalState.mode === "edit" && modalState.client?.id) {
-              updateMutation.mutate({ id: modalState.client.id, payload });
-              return;
+            updateMutation.mutate({ id: modalState.client.id, payload: cleaned });
+            return;
             }
-            addMutation.mutate(payload);
+            addMutation.mutate(cleaned);
           }}
           pending={addMutation.isPending || updateMutation.isPending}
         />
