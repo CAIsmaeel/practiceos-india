@@ -17,33 +17,32 @@ function StatCard({ label, value, icon: Icon, color, sub, href }: {
   sub?: string;
   href?: string;
 }) {
-  const inner = (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-slate-500 font-medium">{label}</p>
-        <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
-        {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
-      </div>
-      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-        <Icon size={22} className="text-white" />
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return (
-      
-        href={href}
-        className="block bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
-      >
-        {inner}
-      </a>
-    );
-  }
+  const goTo = () => {
+    if (href) window.location.href = href;
+  };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-      {inner}
+    <div
+      role={href ? "link" : undefined}
+      tabIndex={href ? 0 : undefined}
+      onClick={href ? goTo : undefined}
+      onKeyDown={(e) => {
+        if (href && e.key === "Enter") goTo();
+      }}
+      className={`bg-white border border-slate-200 rounded-lg p-5 shadow-sm ${
+        href ? "cursor-pointer hover:shadow-md hover:border-slate-300 transition-all" : ""
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-slate-500 font-medium">{label}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
+          {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
+        </div>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
+          <Icon size={22} className="text-white" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -124,7 +123,7 @@ function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  // ✅ NEW: Pending docs from engagement checklists (same source as Documents page)
+  // Pending docs from engagement checklists (same source as Documents page)
   const { data: pendingChecklistDocs } = useQuery({
     queryKey: ["dashboard-pending-docs"],
     queryFn: async () => {
@@ -275,7 +274,7 @@ function Dashboard() {
     return sum + Number(inv.total_amount ?? inv.amount ?? 0);
   }, 0);
 
-  // ✅ NEW: Clients waiting for docs (only active engagements, same as Documents page)
+  // Clients waiting for docs (only active engagements, same as Documents page)
   const activeEngClient: Record<string, string> = {};
   (engagements ?? []).forEach((e: any) => {
     if (isActiveEng(e)) activeEngClient[e.id] = e.client_id;
