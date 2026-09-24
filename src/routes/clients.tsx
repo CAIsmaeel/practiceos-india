@@ -5,7 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, X, MoreVertical } from "lucide-react";
 import { startOfDay } from "date-fns";
 
-
 export const Route = createFileRoute("/clients")({
   head: () => ({ meta: [{ title: "Clients — PracticeOS" }] }),
   component: ClientsPage,
@@ -412,43 +411,63 @@ function ClientsPage() {
               <th className="px-5 py-3 font-medium">Firm Name</th>
               <th className="px-5 py-3 font-medium">Type</th>
               <th className="px-5 py-3 font-medium">PAN</th>
+              <th className="px-5 py-3 font-medium">DSC Expiry</th>
               <th className="px-5 py-3 font-medium">Phone</th>
               <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
             )}
             {!isLoading && clients?.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No clients found.</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No clients found.</td></tr>
             )}
-            {clients?.map((c: any) => (
-              <tr key={c.id} className="hover:bg-slate-50">
-                <td className="px-5 py-3 font-medium text-slate-900">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[c.status as FilterType] ?? "bg-gray-400"}`} />
-                    {c.name}
-                  </div>
-                </td>
-                <td className="px-5 py-3 text-slate-700">{c.firm_name ?? "—"}</td>
-                <td className="px-5 py-3">
-                  {c.client_type ? (
-                    <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{c.client_type}</span>
-                  ) : "—"}
-                </td>
-                <td className="px-5 py-3 text-slate-700 font-mono text-xs">{c.pan_number ?? "—"}</td>
-                <td className="px-5 py-3 text-slate-700">{c.phone ?? "—"}</td>
-                <td className="px-5 py-3">
-                  <RowMenu
-                    status={c.status}
-                    client={c}
-                    onAction={(action) => updateStatusMutation.mutate({ id: c.id, status: action })}
-                    onEdit={() => setModalState({ mode: "edit", client: c })}
-                  />
-                </td>
-              </tr>
-            ))}
+            {clients?.map((c: any) => {
+              const dscExpiry = c.dsc_expiry_date ? new Date(c.dsc_expiry_date) : null;
+              const today = new Date();
+              const daysLeft = dscExpiry ? Math.ceil((dscExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+              const dscColor = daysLeft === null ? "" : daysLeft <= 0 ? "text-red-600 font-semibold" : daysLeft <= 30 ? "text-amber-600 font-semibold" : "text-green-600";
+
+              return (
+                <tr key={c.id} className="hover:bg-slate-50">
+                  <td className="px-5 py-3 font-medium text-slate-900">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[c.status as FilterType] ?? "bg-gray-400"}`} />
+                      {c.name}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-slate-700">{c.firm_name ?? "—"}</td>
+                  <td className="px-5 py-3">
+                    {c.client_type ? (
+                      <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{c.client_type}</span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-slate-700 font-mono text-xs">{c.pan_number ?? "—"}</td>
+                  <td className={`px-5 py-3 text-xs ${dscColor}`}>
+                    {dscExpiry ? (
+                      <span title={c.dsc_location ?? ""}>
+                        {dscExpiry.toLocaleDateString("en-IN")}
+                        {daysLeft !== null && daysLeft <= 30 && (
+                          <span className="ml-1">
+                            {daysLeft <= 0 ? "⚠️ Expired" : `⚠️ ${daysLeft}d left`}
+                          </span>
+                        )}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-slate-700">{c.phone ?? "—"}</td>
+                  <td className="px-5 py-3">
+                    <RowMenu
+                      status={c.status}
+                      client={c}
+                      onAction={(action) => updateStatusMutation.mutate({ id: c.id, status: action })}
+                      onEdit={() => setModalState({ mode: "edit", client: c })}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -478,7 +497,6 @@ function ClientsPage() {
                 <X size={18} />
               </button>
             </div>
-
             <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 text-sm">
               {[1, 2, 3].map(s => (
                 <div key={s} className="flex items-center gap-2">
@@ -492,44 +510,24 @@ function ClientsPage() {
                 </div>
               ))}
             </div>
-
             <div className="p-5">
               {importStep === 1 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-600">
-                    Upload your Excel or CSV file. Columns will be auto-detected.
-                    Supported: .xlsx, .xls, .csv
-                  </p>
+                  <p className="text-sm text-slate-600">Upload your Excel or CSV file. Columns will be auto-detected.</p>
                   <div className="border-2 border-dashed border-emerald-300 bg-emerald-50 rounded-lg p-8 text-center">
                     <div className="text-4xl mb-3">📊</div>
                     <p className="text-slate-700 font-medium mb-1">Drop your Excel or CSV file here</p>
                     <p className="text-slate-400 text-xs mb-4">Supported: .xlsx, .xls, .csv</p>
                     <label className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-md text-sm font-medium cursor-pointer transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                      </svg>
                       Choose File
-                      <input
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
+                      <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
                     </label>
                   </div>
-                  <p className="text-xs text-slate-400 text-center">
-                    Columns supported: Name, Firm Name, Email, Phone, WhatsApp, PAN, GSTIN, Client Type, Notes
-                  </p>
                 </div>
               )}
-
               {importStep === 2 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-600">
-                    Found <strong>{importRows.length} rows</strong>. Preview below — first 5 rows shown.
-                  </p>
+                  <p className="text-sm text-slate-600">Found <strong>{importRows.length} rows</strong>. Preview below.</p>
                   <div className="bg-slate-50 rounded-lg p-3 text-xs space-y-1">
                     <p className="font-semibold text-slate-700 mb-2">Auto-detected columns:</p>
                     {Object.entries(importMapping).map(([field, col]) => (
@@ -538,55 +536,20 @@ function ClientsPage() {
                         <span className="text-slate-500">← "{col}"</span>
                       </div>
                     ))}
-                    {!importMapping.name && (
-                      <p className="text-red-500 font-medium mt-2">⚠️ Name column not detected.</p>
-                    )}
+                    {!importMapping.name && <p className="text-red-500 font-medium mt-2">⚠️ Name column not detected.</p>}
                   </div>
-                  <div className="overflow-x-auto border border-slate-200 rounded-lg">
-                    <table className="text-xs w-full">
-                      <thead className="bg-slate-50">
-                        <tr>
-                          {['name','firm_name','email','phone','pan_number','gst_number','client_type'].map(f => (
-                            <th key={f} className="px-3 py-2 text-left font-medium text-slate-600">
-                              {f.replace(/_/g, ' ')}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {importRows.slice(0, 5).map((row: any, i: number) => (
-                          <tr key={i} className="border-t border-slate-100">
-                            {['name','firm_name','email','phone','pan_number','gst_number','client_type'].map(f => (
-                              <td key={f} className="px-3 py-2 text-slate-700">
-                                {importMapping[f] ? String(row[importMapping[f]] ?? '') || '—' : '—'}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {importRows.length > 5 && (
-                    <p className="text-xs text-slate-400 text-center">+{importRows.length - 5} more rows not shown</p>
-                  )}
                   <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => setImportStep(1)}
-                      className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50"
-                    >
-                      ← Back
-                    </button>
+                    <button onClick={() => setImportStep(1)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">← Back</button>
                     <button
                       onClick={handleImport}
                       disabled={!importMapping.name}
-                      className="flex-1 px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium disabled:opacity-50"
                     >
                       Import {importRows.length} Clients →
                     </button>
                   </div>
                 </div>
               )}
-
               {importStep === 3 && (
                 <div className="py-8 text-center space-y-4">
                   {importProgress && (
@@ -599,10 +562,7 @@ function ClientsPage() {
                     <div>
                       <p className="text-3xl mb-3">🎉</p>
                       <p className="text-slate-800 font-medium">{importDone}</p>
-                      <button
-                        onClick={() => { setImportOpen(false); setImportStep(1); }}
-                        className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
-                      >
+                      <button onClick={() => { setImportOpen(false); setImportStep(1); }} className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600">
                         Close & View Clients
                       </button>
                     </div>
@@ -617,12 +577,7 @@ function ClientsPage() {
   );
 }
 
-function RowMenu({
-  status,
-  client,
-  onAction,
-  onEdit,
-}: {
+function RowMenu({ status, client, onAction, onEdit }: {
   status: string;
   client: Client;
   onAction: (s: string) => void;
@@ -641,40 +596,23 @@ function RowMenu({
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="p-1 rounded hover:bg-slate-100 text-slate-500"
-      >
+      <button onClick={() => setOpen((p) => !p)} className="p-1 rounded hover:bg-slate-100 text-slate-500">
         <MoreVertical size={16} />
       </button>
       {open && (
         <div className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-10 py-1">
           <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit</button>
-          {status !== "inactive" && (
-            <button onClick={() => { onAction("inactive"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Set Inactive</button>
-          )}
-          {status !== "archived" && (
-            <button onClick={() => { onAction("archived"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Archive</button>
-          )}
-          {status !== "active" && (
-            <button onClick={() => { onAction("active"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50">Restore</button>
-          )}
-          {status !== "deleted" && (
-            <button onClick={() => { onAction("deleted"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Delete</button>
-          )}
+          {status !== "inactive" && <button onClick={() => { onAction("inactive"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Set Inactive</button>}
+          {status !== "archived" && <button onClick={() => { onAction("archived"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Archive</button>}
+          {status !== "active" && <button onClick={() => { onAction("active"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50">Restore</button>}
+          {status !== "deleted" && <button onClick={() => { onAction("deleted"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Delete</button>}
         </div>
       )}
     </div>
   );
 }
 
-function ClientModal({
-  mode,
-  initialClient,
-  onClose,
-  onSubmit,
-  pending,
-}: {
+function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
   mode: "create" | "edit";
   initialClient?: Client | null;
   onClose: () => void;
@@ -697,6 +635,8 @@ function ClientModal({
     pf_applicable: Boolean(initialClient?.pf_applicable),
     ptec_applicable: Boolean(initialClient?.ptec_applicable),
     advance_tax_applicable: Boolean(initialClient?.advance_tax_applicable),
+    dsc_expiry_date: (initialClient as any)?.dsc_expiry_date ?? "",
+    dsc_location: (initialClient as any)?.dsc_location ?? "",
   });
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }));
@@ -713,6 +653,7 @@ function ClientModal({
           onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, status: initialClient?.status ?? "active" }); }}
           className="p-5 space-y-5"
         >
+          {/* Basic Info */}
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Basic Info</p>
             <div className="space-y-3">
@@ -735,6 +676,7 @@ function ClientModal({
             </div>
           </div>
 
+          {/* Tax Details */}
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Tax Details</p>
             <div className="space-y-3">
@@ -756,6 +698,7 @@ function ClientModal({
             </div>
           </div>
 
+          {/* Services */}
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Services Applicable</p>
             <div className="space-y-3">
@@ -790,6 +733,7 @@ function ClientModal({
             </div>
           </div>
 
+          {/* Contact Details */}
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Contact Details</p>
             <div className="space-y-3">
@@ -800,6 +744,32 @@ function ClientModal({
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Notes</label>
                 <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} className={`${inputClass} resize-none`} />
+              </div>
+            </div>
+          </div>
+
+          {/* DSC Details */}
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🔐 DSC Details</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">DSC Expiry Date</label>
+                <input
+                  type="date"
+                  value={form.dsc_expiry_date}
+                  onChange={(e) => set("dsc_expiry_date", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">DSC Physical Location</label>
+                <input
+                  type="text"
+                  value={form.dsc_location}
+                  onChange={(e) => set("dsc_location", e.target.value)}
+                  placeholder="e.g. Drawer 2, USB Box, Tray A Slot 3"
+                  className={inputClass}
+                />
               </div>
             </div>
           </div>
