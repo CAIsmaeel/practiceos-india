@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Engagement, type Client, getCurrentUserId } from "@/lib/supabase";
 import { ENGAGEMENT_TYPES, getTemplate } from "@/lib/checklistTemplates";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus, X, Archive, Pencil, CheckCircle2, Clock,
-  ClipboardList, MessageCircle, AlertCircle,
+  ClipboardList, MessageCircle, AlertCircle, MoreHorizontal, Play,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -96,9 +96,18 @@ async function generateChecklist(engagementId: string, clientId: string | null, 
   if (error) throw error;
 }
 
+const isActive = (e: any) => e.status !== "completed" && e.status !== "billed";
+
+// Is the main button for this row "Chase"?
+const primaryIsChase = (e: any, s: ReturnType<typeof summarize>) =>
+  isActive(e) && e.status !== "ready_for_review" && e.status !== "on_hold" && s.state === "pending_docs";
+
+const btn = "inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap";
+
 // ---------- Page ----------
 
 type Tab = "all" | "review" | "docs" | "ready";
+type MenuState = { id: string; right: number; top?: number; bottom?: number } | null;
 
 function EngagementsPage() {
   const qc = useQueryClient();
@@ -106,6 +115,19 @@ function EngagementsPage() {
   const [hideCompleted, setHideCompleted] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [checklistFor, setChecklistFor] = useState<string | null>(null);
+  const [menu, setMenu] = useState<MenuState>(null);
+
+  // Close the ⋯ menu on scroll / resize
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [menu]);
 
   const { data: engagements, isLoading } = useQuery({
     queryKey: ["engagements"],
@@ -172,8 +194,6 @@ function EngagementsPage() {
   const clientMap: Record<string, any> = {};
   (clients ?? []).forEach((c) => { clientMap[c.id] = c; });
 
-  const isActive = (e: any) => e.status !== "completed" && e.status !== "billed";
-
   const inTab = (e: any, tab: Tab) => {
     const s = summarize(docsByEng[e.id]);
     if (tab === "review") return e.status === "ready_for_review";
@@ -198,7 +218,10 @@ function EngagementsPage() {
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("engagements").update({ status }).eq("id", id);
-    if (error) throw error;
+    if (error) {
+      alert("Could not update status: " + error.message);
+      return;
+    }
     invalidateEngagements();
   };
 
@@ -223,7 +246,7 @@ function EngagementsPage() {
         await generateChecklist(data.id, data.client_id, data.type);
       } catch (err: any) {
         console.error(err);
-        alert("Engagement saved, but checklist could not be created. Use the Generate button. " + (err?.message ?? ""));
+        alert("Engagement saved, but checklist could not be created. Use Generate Checklist from the ⋯ menu. " + (err?.message ?? ""));
       }
     },
     onSuccess: () => {
@@ -288,6 +311,87 @@ function EngagementsPage() {
     invalidateEngagements();
   };
 
+  // ----- Main (primary) action for each row -----
+  const renderPrimary = (e: any, s: ReturnType<typeof summarize>) => {
+    if (e.status === "ready_for_review") {
+      return (
+        <>
+          <button
+            onClick={() => void updateStatus(e.id, "completed")}
+            className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}
+          >
+            <CheckCircle2 size={13} /> Approve
+          </button>
+          <button
+            onClick={() => void updateStatus(e.id, "in_progress")}
+            className={`${btn} bg-white text-red-600 border-red-200 hover:bg-red-50`}
+          >
+            <X size={13} /> Reject
+          </button>
+        </>
+      );
+    }
+    if (!isActive(e)) return <span className="text-xs text-slate-400">—</span>;
+    if (e.status === "on_hold") {
+      return (
+        <button
+          onClick={() => void updateStatus(e.id, "in_progress")}
+          className={`${btn} bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100`}
+        >
+          <Play size={13} /> Resume
+        </button>
+      );
+    }
+    if (primaryIsChase(e, s)) {
+      return (
+        <button
+          onClick={() => void chase(e)}
+          className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}
+          title="Send WhatsApp reminder for pending documents"
+        >
+          <MessageCircle size={13} /> Chase
+        </button>
+      );
+    }
+    if (e.status === "pending") {
+      return (
+        <button
+          onClick={() => void updateStatus(e.id, "in_progress")}
+          className={`${btn} bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100`}
+        >
+          <Play size={13} /> Start
+        </button>
+      );
+    }
+    if (e.status === "in_progress") {
+      return (
+        <button
+          onClick={() => void updateStatus(e.id, "ready_for_review")}
+          className={`${btn} bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100`}
+        >
+          <Clock size={13} /> Send for Review
+        </button>
+      );
+    }
+    return null;
+  };
+
+  const openMenu = (ev: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    if (menu?.id === id) {
+      setMenu(null);
+      return;
+    }
+    const r = ev.currentTarget.getBoundingClientRect();
+    const right = window.innerWidth - r.right;
+    const openUp = r.bottom + 190 > window.innerHeight;
+    setMenu(
+      openUp
+        ? { id, right, bottom: window.innerHeight - r.top + 4 }
+        : { id, right, top: r.bottom + 4 }
+    );
+  };
+
+  const menuEngagement = menu ? engagements?.find((e) => e.id === menu.id) : null;
   const checklistEngagement = checklistFor ? engagements?.find((e) => e.id === checklistFor) : null;
 
   return (
@@ -347,7 +451,7 @@ function EngagementsPage() {
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 font-medium">Maker</th>
               <th className="px-5 py-3 font-medium">Checker</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-medium">Next Step</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -372,7 +476,7 @@ function EngagementsPage() {
                   <td className="px-5 py-3 font-medium text-slate-900">{e.clients?.name ?? "—"}</td>
                   <td className="px-5 py-3 text-slate-700">{e.title}</td>
                   <td className="px-5 py-3 text-slate-700">{e.type}</td>
-                  <td className="px-5 py-3 text-slate-700">
+                  <td className="px-5 py-3 text-slate-700 whitespace-nowrap">
                     {e.deadline ? format(new Date(e.deadline), "dd MMM yyyy") : "—"}
                   </td>
                   <td className="px-5 py-3">
@@ -417,65 +521,18 @@ function EngagementsPage() {
                   <td className="px-5 py-3 text-slate-700 text-xs">{e.assigned_to || "—"}</td>
                   <td className="px-5 py-3 text-slate-700 text-xs">{e.reviewed_by || "—"}</td>
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">{renderPrimary(e, s)}</div>
                       <button
                         type="button"
-                        onClick={() => setModalState({ mode: "edit", engagement: e })}
-                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 font-medium"
+                        aria-label="More actions"
+                        onClick={(ev) => openMenu(ev, e.id)}
+                        className={`p-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 ${
+                          menu?.id === e.id ? "bg-slate-100 text-slate-800" : ""
+                        }`}
                       >
-                        <Pencil size={14} /> Edit
+                        <MoreHorizontal size={16} />
                       </button>
-
-                      {/* Document Chase */}
-                      {s.pendingCount > 0 && isActive(e) && (
-                        <button
-                          onClick={() => void chase(e)}
-                          className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"
-                          title="Send WhatsApp reminder for pending documents"
-                        >
-                          <MessageCircle size={14} /> Chase
-                        </button>
-                      )}
-
-                      {/* Maker → Send for Review */}
-                      {e.status === "in_progress" && (
-                        <button
-                          onClick={() => void updateStatus(e.id, "ready_for_review")}
-                          className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"
-                        >
-                          <Clock size={14} /> Send for Review
-                        </button>
-                      )}
-
-                      {/* Checker → Approve */}
-                      {e.status === "ready_for_review" && (
-                        <button
-                          onClick={() => void updateStatus(e.id, "completed")}
-                          className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"
-                        >
-                          <CheckCircle2 size={14} /> Approve
-                        </button>
-                      )}
-
-                      {/* Checker → Reject */}
-                      {e.status === "ready_for_review" && (
-                        <button
-                          onClick={() => void updateStatus(e.id, "in_progress")}
-                          className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium"
-                        >
-                          <X size={14} /> Reject
-                        </button>
-                      )}
-
-                      {e.status !== "completed" && e.status !== "ready_for_review" && (
-                        <button
-                          onClick={() => archiveMutation.mutate({ id: e.id })}
-                          disabled={archiveMutation.isPending}
-                          className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
-                        >
-                          <Archive size={14} /> Archive
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -484,6 +541,56 @@ function EngagementsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* ⋯ menu (rendered outside the table so it never gets cut off) */}
+      {menu && menuEngagement && (() => {
+        const e = menuEngagement;
+        const s = summarize(docsByEng[e.id]);
+        const hasTemplate = getTemplate(e.type).length > 0;
+        const item = "w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2";
+        const run = (fn: () => void) => () => { setMenu(null); fn(); };
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
+            <div
+              className="fixed z-50 w-48 bg-white border border-slate-200 rounded-md shadow-lg py-1"
+              style={{ right: menu.right, top: menu.top, bottom: menu.bottom }}
+            >
+              <button className={item} onClick={run(() => setModalState({ mode: "edit", engagement: e }))}>
+                <Pencil size={14} /> Edit
+              </button>
+
+              {s.total > 0 ? (
+                <button className={item} onClick={run(() => setChecklistFor(e.id))}>
+                  <ClipboardList size={14} /> Open Checklist
+                </button>
+              ) : hasTemplate ? (
+                <button className={item} onClick={run(() => generateMutation.mutate(e))}>
+                  <ClipboardList size={14} /> Generate Checklist
+                </button>
+              ) : null}
+
+              {s.pendingCount > 0 && isActive(e) && !primaryIsChase(e, s) && (
+                <button className={item} onClick={run(() => void chase(e))}>
+                  <MessageCircle size={14} /> Send Reminder
+                </button>
+              )}
+
+              {e.status !== "completed" && e.status !== "ready_for_review" && (
+                <>
+                  <div className="my-1 border-t border-slate-100" />
+                  <button
+                    className={`${item} text-slate-500`}
+                    onClick={run(() => archiveMutation.mutate({ id: e.id }))}
+                  >
+                    <Archive size={14} /> Archive
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        );
+      })()}
 
       {modalState && (
         <EngagementModal
