@@ -361,6 +361,13 @@ function ClientsPage() {
           <p className="text-slate-500 text-sm">Manage your client list</p>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href="/client-template.xlsx"
+            download
+            className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md text-sm font-medium border border-slate-300"
+          >
+            📥 Download Template
+          </a>
           <button
             onClick={() => {
               setImportOpen(true);
