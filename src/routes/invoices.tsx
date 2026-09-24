@@ -2,21 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Invoice, type Client, type FirmSettings, getCurrentUserId } from "@/lib/supabase";
 import { useState, useMemo } from "react";
-import { Plus, X, CheckCircle2, Download, Pencil } from "lucide-react";
-import { format, isBefore, startOfDay } from "date-fns";
+import { Plus, X, CheckCircle2, Download, Pencil, MessageCircle } from "lucide-react";
+import { format, isBefore, startOfDay, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/invoices")({
   head: () => ({ meta: [{ title: "Invoices — PracticeOS" }] }),
   component: InvoicesPage,
 });
 
-const statusColors: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-800",
-  Overdue: "bg-red-100 text-red-800",
-  Paid: "bg-green-100 text-green-800",
-};
-
 const GST_RATES = [0, 5, 9, 12, 18];
+
+// Aging thresholds — customizable
+const AGING_THRESHOLDS = [30, 60, 90];
 
 function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -40,10 +37,40 @@ function isInvoiceOverdue(invoice: Pick<Invoice, "due_date" | "status">): boolea
   return isBefore(new Date(invoice.due_date), startOfDay(new Date()));
 }
 
+function getOverdueDays(invoice: Invoice): number | null {
+  if (isInvoicePaid(invoice) || !invoice.due_date) return null;
+  const days = differenceInDays(new Date(), new Date(invoice.due_date));
+  return days > 0 ? days : null;
+}
+
+function getAgingTag(days: number | null): { label: string; color: string } | null {
+  if (days === null) return null;
+  if (days >= 90) return { label: `90+ days`, color: "bg-red-200 text-red-900" };
+  if (days >= 60) return { label: `60-89 days`, color: "bg-red-100 text-red-800" };
+  if (days >= 30) return { label: `30-59 days`, color: "bg-orange-100 text-orange-800" };
+  return { label: `${days}d overdue`, color: "bg-yellow-100 text-yellow-800" };
+}
 function getDisplayStatus(invoice: Invoice): string {
   if (isInvoicePaid(invoice)) return "Paid";
   if (isInvoiceOverdue(invoice)) return "Overdue";
   return "Pending";
+}
+
+function getWhatsAppMessage(inv: Invoice, overdueDays: number | null, firmName: string): string {
+  const clientName = inv.clients?.name ?? "Sir/Ma'am";
+  const amount = formatINR(Number(inv.total_amount ?? inv.amount ?? 0));
+  const invoiceNo = inv.invoice_number ?? "";
+  const dueDate = inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "";
+
+  if (overdueDays === null) {
+    return `Dear ${clientName},\n\nThis is a gentle reminder that Invoice ${invoiceNo} of ${amount} is due on ${dueDate}.\n\nKindly arrange payment at your earliest convenience.\n\nThank you,\n${firmName}`;
+  }
+
+  if (overdueDays > 60) {
+    return `Dear ${clientName},\n\nInvoice ${invoiceNo} of ${amount} is now ${overdueDays} days overdue (due: ${dueDate}).\n\nWe request you to please clear this immediately to avoid any disruption in services.\n\nThank you,\n${firmName}`;
+  }
+
+  return `Dear ${clientName},\n\nThis is a reminder that Invoice ${invoiceNo} of ${amount} was due on ${dueDate} and is now ${overdueDays} days overdue.\n\nKindly process the payment at your earliest.\n\nThank you,\n${firmName}`;
 }
 
 function InvoicesPage() {
@@ -51,12 +78,13 @@ function InvoicesPage() {
   const [showPaid, setShowPaid] = useState(false);
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; invoice?: Invoice | null } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [agingFilter, setAgingFilter] = useState<"all" | "30" | "60" | "90">("all");
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["invoices"],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      
       const { data, error } = await supabase
         .from("invoices")
         .select("*, clients(name, firm_name, email, phone)")
@@ -89,6 +117,8 @@ function InvoicesPage() {
     },
   });
 
+  const firmName = firmSettings?.firm_name ?? "CA Practice";
+
   const sorted = useMemo(() => {
     if (!invoices) return [];
     return [...invoices].sort((a, b) => {
@@ -106,25 +136,55 @@ function InvoicesPage() {
 
   const visibleInvoices = useMemo(() => {
     if (!sorted) return [];
-    return sorted.filter((invoice) => showPaid || !isInvoicePaid(invoice));
-  }, [sorted, showPaid]);
+    return sorted.filter((invoice) => {
+      if (!showPaid && isInvoicePaid(invoice)) return false;
+      if (agingFilter === "all") return true;
+      const days = getOverdueDays(invoice);
+      if (days === null) return false;
+      if (agingFilter === "30") return days >= 30 && days < 60;
+      if (agingFilter === "60") return days >= 60 && days < 90;
+      if (agingFilter === "90") return days >= 90;
+      return true;
+    });
+  }, [sorted, showPaid, agingFilter]);
 
   const summary = useMemo(() => {
-    if (!invoices) return { outstanding: 0, overdueCount: 0, overdueAmount: 0 };
-    let outstanding = 0;
-    let overdueCount = 0;
-    let overdueAmount = 0;
+    if (!invoices) return { outstanding: 0, overdueCount: 0, overdueAmount: 0, aging30: 0, aging60: 0, aging90: 0 };
+    let outstanding = 0, overdueCount = 0, overdueAmount = 0;
+    let aging30 = 0, aging60 = 0, aging90 = 0;
     for (const inv of invoices) {
       if (isInvoicePaid(inv)) continue;
       const total = Number(inv.total_amount ?? inv.amount ?? 0);
       outstanding += total;
-      if (isInvoiceOverdue(inv)) {
+      const days = getOverdueDays(inv);
+      if (days !== null) {
         overdueCount += 1;
         overdueAmount += total;
+        if (days >= 90) aging90 += total;
+        else if (days >= 60) aging60 += total;
+        else if (days >= 30) aging30 += total;
       }
     }
-    return { outstanding, overdueCount, overdueAmount };
+    return { outstanding, overdueCount, overdueAmount, aging30, aging60, aging90 };
   }, [invoices]);
+
+  const handleCopyReminder = (inv: Invoice) => {
+    const days = getOverdueDays(inv);
+    const msg = getWhatsAppMessage(inv, days, firmName);
+    navigator.clipboard.writeText(msg);
+    setCopiedId(inv.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleWhatsApp = (inv: Invoice) => {
+    const days = getOverdueDays(inv);
+    const msg = getWhatsAppMessage(inv, days, firmName);
+    const phone = inv.clients?.phone?.replace(/\D/g, "") ?? "";
+    const url = phone
+      ? `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
 
   const addMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
@@ -134,10 +194,8 @@ function InvoicesPage() {
         .from("invoices")
         .select("id", { count: "exact", head: true });
       if (countError) throw countError;
-
       const sequence = (count ?? 0) + 1;
       const invoiceNumber = `${prefix}-${new Date().getFullYear()}-${String(sequence).padStart(3, "0")}`;
-
       const { error } = await supabase.from("invoices").insert({
         ...payload,
         invoice_number: invoiceNumber,
@@ -163,49 +221,21 @@ function InvoicesPage() {
     },
   });
 
-  const loadImageAsBase64 = async (url: string): Promise<string | null> => {
-    try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      return await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-    } catch {
-      return null;
-    }
-  };
-
   const handleDownload = async (invoice: Invoice) => {
     try {
       setDownloadingId(invoice.id);
-
       const printWindow = window.open("", "_blank");
-      if (!printWindow) {
-        alert("Please allow popups for this site");
-        return;
-      }
+      if (!printWindow) { alert("Please allow popups for this site"); return; }
 
-      printWindow.document.write(`
-        <html>
-          <body style="font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; font-size:18px; color:#666;">
-            Loading invoice...
-          </body>
-        </html>
-      `);
+      printWindow.document.write(`<html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;font-size:18px;color:#666;">Loading invoice...</body></html>`);
       printWindow.document.close();
       printWindow.focus();
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const { data: settingsData } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("user_id", currentUser?.id ?? "")
-        .limit(1);
+      const { data: settingsData } = await supabase.from("settings").select("*").eq("user_id", currentUser?.id ?? "").limit(1);
       const firm = settingsData?.[0];
 
-      const firmName = firm?.firm_name ?? "Your Firm Name";
+      const firmNamePdf = firm?.firm_name ?? "Your Firm Name";
       const gstin = firm?.gst_number ?? "—";
       const pan = firm?.ca_reg_number ?? "—";
       const address = firm?.address ?? "";
@@ -218,153 +248,18 @@ function InvoicesPage() {
       const total = Number(invoice.total_amount ?? invoice.amount ?? 0);
       const description = invoice.description ?? "Professional services";
 
-      const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Invoice ${invoice.invoice_number ?? ""}</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      max-width: 800px;
-      margin: 0 auto;
-      color: #111;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      border-bottom: 2px solid #111;
-      padding-bottom: 16px;
-    }
-    .firm-name {
-      font-size: 22px;
-      font-weight: bold;
-    }
-    .firm-details {
-      font-size: 12px;
-      color: #444;
-      margin-top: 4px;
-      line-height: 1.6;
-    }
-    .invoice-label {
-      font-size: 20px;
-      font-weight: bold;
-      letter-spacing: 3px;
-      text-align: center;
-      border-top: 2px solid #111;
-      border-bottom: 2px solid #111;
-      padding: 8px 0;
-      margin: 16px 0;
-    }
-    .meta-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
-    .bill-to {
-      background: #f8f8f8;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      font-size: 13px;
-    }
-    .bill-to-title {
-      font-weight: bold;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      font-size: 13px;
-    }
-    thead tr {
-      background: #f3f4f6;
-      border-bottom: 2px solid #111;
-    }
-    th { padding: 10px 8px; }
-    td { padding: 10px 8px; border-bottom: 1px solid #eee; }
-    .text-left { text-align: left; }
-    .text-right { text-align: right; }
-    .text-center { text-align: center; }
-    .grand-total {
-      font-weight: bold;
-      border-top: 2px solid #111;
-      font-size: 14px;
-    }
-    @media print {
-      body { padding: 20px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <div class="firm-name">${firmName}</div>
-      <div class="firm-details">
-        ${address ? `${address.replace(/\n/g, "<br />")}` : ""}
-        ${phone ? `<br />Phone: ${phone}` : ""}
-        ${email ? `<br />Email: ${email}` : ""}
-      </div>
-    </div>
-    <div style="text-align:right; font-size:13px;">
-      <div>GSTIN: ${gstin}</div>
-      <div>PAN/CA Reg: ${pan}</div>
-    </div>
-  </div>
-
-  <div class="invoice-label">TAX INVOICE</div>
-
-  <div class="meta-row">
-    <div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "—"}</div>
-    <div><strong>Date:</strong> ${invoiceDate}</div>
-  </div>
-
-  <div class="bill-to">
-    <div class="bill-to-title">Bill To</div>
-    <div>${invoice.clients?.name ?? "—"}</div>
-    <div>${invoice.clients?.email ?? ""}</div>
-    <div>${invoice.clients?.phone ?? ""}</div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th class="text-left" style="width:40%">Description</th>
-        <th class="text-right" style="width:15%">Amount</th>
-        <th class="text-center" style="width:10%">GST%</th>
-        <th class="text-right" style="width:15%">GST Amt</th>
-        <th class="text-right" style="width:20%">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="text-left">${description}</td>
-        <td class="text-right">₹${base.toLocaleString("en-IN")}</td>
-        <td class="text-center">${gstRate}%</td>
-        <td class="text-right">₹${gstAmount.toLocaleString("en-IN")}</td>
-        <td class="text-right">₹${total.toLocaleString("en-IN")}</td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr class="grand-total">
-        <td colspan="4" class="text-right">Grand Total</td>
-        <td class="text-right">₹${total.toLocaleString("en-IN")}</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <script>
-    window.onload = function() {
-      setTimeout(function() { window.print(); }, 800);
-    };
-  </script>
-</body>
-</html>`;
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title>
+      <style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}.header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}.firm-name{font-size:22px;font-weight:bold}.firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}.invoice-label{font-size:20px;font-weight:bold;letter-spacing:3px;text-align:center;border-top:2px solid #111;border-bottom:2px solid #111;padding:8px 0;margin:16px 0}.meta-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px}.bill-to{background:#f8f8f8;padding:12px;border-radius:4px;margin-bottom:20px;font-size:13px}.bill-to-title{font-weight:bold;margin-bottom:6px;font-size:14px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}thead tr{background:#f3f4f6;border-bottom:2px solid #111}th{padding:10px 8px}td{padding:10px 8px;border-bottom:1px solid #eee}.text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}.grand-total{font-weight:bold;border-top:2px solid #111;font-size:14px}</style>
+      </head><body>
+      <div class="header"><div><div class="firm-name">${firmNamePdf}</div><div class="firm-details">${address ? address.replace(/\n/g,"<br/>") : ""}${phone ? `<br/>Phone: ${phone}` : ""}${email ? `<br/>Email: ${email}` : ""}</div></div>
+      <div style="text-align:right;font-size:13px"><div>GSTIN: ${gstin}</div><div>PAN/CA Reg: ${pan}</div></div></div>
+      <div class="invoice-label">TAX INVOICE</div>
+      <div class="meta-row"><div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "—"}</div><div><strong>Date:</strong> ${invoiceDate}</div></div>
+      <div class="bill-to"><div class="bill-to-title">Bill To</div><div>${invoice.clients?.name ?? "—"}</div><div>${invoice.clients?.email ?? ""}</div><div>${invoice.clients?.phone ?? ""}</div></div>
+      <table><thead><tr><th class="text-left" style="width:40%">Description</th><th class="text-right" style="width:15%">Amount</th><th class="text-center" style="width:10%">GST%</th><th class="text-right" style="width:15%">GST Amt</th><th class="text-right" style="width:20%">Total</th></tr></thead>
+      <tbody><tr><td class="text-left">${description}</td><td class="text-right">₹${base.toLocaleString("en-IN")}</td><td class="text-center">${gstRate}%</td><td class="text-right">₹${gstAmount.toLocaleString("en-IN")}</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tbody>
+      <tfoot><tr class="grand-total"><td colspan="4" class="text-right">Grand Total</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tfoot></table>
+      <script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
 
       printWindow.document.open();
       printWindow.document.write(html);
@@ -380,10 +275,7 @@ function InvoicesPage() {
 
   const payMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      const { error } = await supabase
-        .from("invoices")
-        .update({ status: "Paid", payment_date: new Date().toISOString() })
-        .eq("id", id);
+      const { error } = await supabase.from("invoices").update({ status: "Paid", payment_date: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),
@@ -413,20 +305,50 @@ function InvoicesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-          <p className="text-sm text-slate-500 font-medium">Total Outstanding</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{formatINR(summary.outstanding)}</p>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm col-span-2 sm:col-span-1">
+          <p className="text-xs text-slate-500 font-medium">Total Outstanding</p>
+          <p className="text-xl font-bold text-slate-900 mt-1">{formatINR(summary.outstanding)}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-          <p className="text-sm text-slate-500 font-medium">Overdue Count</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">{summary.overdueCount}</p>
+        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-slate-500 font-medium">Overdue Count</p>
+          <p className="text-xl font-bold text-red-600 mt-1">{summary.overdueCount}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-          <p className="text-sm text-slate-500 font-medium">Overdue Amount</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">{formatINR(summary.overdueAmount)}</p>
+        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-slate-500 font-medium">Overdue Amount</p>
+          <p className="text-xl font-bold text-red-600 mt-1">{formatINR(summary.overdueAmount)}</p>
+        </div>
+        <div
+          className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-sm cursor-pointer hover:bg-yellow-100"
+          onClick={() => setAgingFilter(agingFilter === "30" ? "all" : "30")}
+        >
+          <p className="text-xs text-yellow-700 font-medium">30+ Days</p>
+          <p className="text-xl font-bold text-yellow-800 mt-1">{formatINR(summary.aging30)}</p>
+        </div>
+        <div
+          className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm cursor-pointer hover:bg-orange-100"
+          onClick={() => setAgingFilter(agingFilter === "60" ? "all" : "60")}
+        >
+          <p className="text-xs text-orange-700 font-medium">60+ Days</p>
+          <p className="text-xl font-bold text-orange-800 mt-1">{formatINR(summary.aging60)}</p>
+        </div>
+        <div
+          className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm cursor-pointer hover:bg-red-100"
+          onClick={() => setAgingFilter(agingFilter === "90" ? "all" : "90")}
+        >
+          <p className="text-xs text-red-700 font-medium">90+ Days</p>
+          <p className="text-xl font-bold text-red-800 mt-1">{formatINR(summary.aging90)}</p>
         </div>
       </div>
+
+      {/* Aging filter indicator */}
+      {agingFilter !== "all" && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-600">Filtering: <strong>{agingFilter}+ days overdue</strong></span>
+          <button onClick={() => setAgingFilter("all")} className="text-xs text-blue-500 hover:underline">Clear filter</button>
+        </div>
+      )}
 
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
@@ -434,49 +356,51 @@ function InvoicesPage() {
             <tr>
               <th className="px-5 py-3 font-medium">Invoice No</th>
               <th className="px-5 py-3 font-medium">Client</th>
-              <th className="px-5 py-3 font-medium">Base Amount</th>
-              <th className="px-5 py-3 font-medium">GST</th>
               <th className="px-5 py-3 font-medium">Total (₹)</th>
               <th className="px-5 py-3 font-medium">Due Date</th>
-              <th className="px-5 py-3 font-medium">Status</th>
+              <th className="px-5 py-3 font-medium">Status / Aging</th>
               <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading && (
-              <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-slate-500">Loading...</td>
-              </tr>
+              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
             )}
             {!isLoading && visibleInvoices.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-slate-500">No invoices yet.</td>
-              </tr>
+              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No invoices found.</td></tr>
             )}
             {visibleInvoices.map((inv) => {
               const displayStatus = getDisplayStatus(inv);
-              const base = Number(inv.base_amount ?? inv.amount ?? 0);
-              const gst = Number(inv.gst_amount ?? 0);
               const total = Number(inv.total_amount ?? inv.amount ?? 0);
+              const overdueDays = getOverdueDays(inv);
+              const agingTag = getAgingTag(overdueDays);
+
               return (
                 <tr key={inv.id} className="hover:bg-slate-50">
-                  <td className="px-5 py-3 font-medium text-slate-900">
-                    {inv.invoice_number ?? "—"}
-                  </td>
+                  <td className="px-5 py-3 font-medium text-slate-900">{inv.invoice_number ?? "—"}</td>
                   <td className="px-5 py-3 text-slate-700">{inv.clients?.name ?? "—"}</td>
-                  <td className="px-5 py-3 text-slate-700">{formatINR(base)}</td>
-                  <td className="px-5 py-3 text-slate-700">{formatINR(gst)}</td>
                   <td className="px-5 py-3 font-medium text-slate-900">{formatINR(total)}</td>
                   <td className="px-5 py-3 text-slate-700">
                     {inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "—"}
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${statusColors[displayStatus] ?? "bg-gray-100 text-gray-700"}`}>
-                      {displayStatus}
-                    </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                        displayStatus === "Paid" ? "bg-green-100 text-green-800" :
+                        displayStatus === "Overdue" ? "bg-red-100 text-red-800" :
+                        "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {displayStatus}
+                      </span>
+                      {agingTag && (
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${agingTag.color}`}>
+                          {agingTag.label}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         type="button"
                         onClick={() => setModalState({ mode: "edit", invoice: inv })}
@@ -489,16 +413,26 @@ function InvoicesPage() {
                         disabled={downloadingId === inv.id}
                         className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 font-medium disabled:opacity-50"
                       >
-                        <Download size={14} /> {downloadingId === inv.id ? "Generating..." : "Download PDF"}
+                        <Download size={14} /> {downloadingId === inv.id ? "..." : "PDF"}
                       </button>
-                      {inv.status !== "Paid" && (
-                        <button
-                          onClick={() => payMutation.mutate({ id: inv.id })}
-                          disabled={payMutation.isPending}
-                          className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
-                        >
-                          <CheckCircle2 size={14} /> Mark Paid
-                        </button>
+                      {!isInvoicePaid(inv) && (
+                        <>
+                          <button
+                            onClick={() => payMutation.mutate({ id: inv.id })}
+                            disabled={payMutation.isPending}
+                            className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+                          >
+                            <CheckCircle2 size={14} /> Paid
+                          </button>
+                          <button
+                            onClick={() => handleWhatsApp(inv)}
+                            className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+                            title="Send WhatsApp reminder"
+                          >
+                            <MessageCircle size={14} />
+                            {copiedId === inv.id ? "Copied!" : "Remind"}
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -529,14 +463,7 @@ function InvoicesPage() {
   );
 }
 
-function InvoiceModal({
-  clients,
-  mode,
-  initialInvoice,
-  onClose,
-  onSubmit,
-  pending,
-}: {
+function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pending }: {
   clients: Pick<Client, "id" | "name">[];
   mode: "create" | "edit";
   initialInvoice?: Invoice | null;
@@ -559,6 +486,8 @@ function InvoiceModal({
   const totalAmount = base + gstAmount;
   const cgst = rate > 0 ? gstAmount / 2 : 0;
   const sgst = rate > 0 ? gstAmount / 2 : 0;
+
+  const inputClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -587,95 +516,57 @@ function InvoiceModal({
         >
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Client <span className="text-red-500">*</span></label>
-            <select
-              required
-              value={form.client_id}
-              onChange={(e) => setForm({ ...form, client_id: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+            <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className={inputClass}>
               <option value="">Select a client</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Service Description</label>
-            <input
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="e.g. GST Return Filing — Q2"
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="e.g. GST Return Filing — Q2" className={inputClass} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Base Amount (₹) <span className="text-red-500">*</span></label>
-            <input
-              required
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.base_amount}
-              onChange={(e) => setForm({ ...form, base_amount: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <input required type="number" min="0" step="0.01" value={form.base_amount} onChange={(e) => setForm({ ...form, base_amount: e.target.value })} className={inputClass} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">GST Rate</label>
-            <select
-              value={form.gst_rate}
-              onChange={(e) => setForm({ ...form, gst_rate: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {GST_RATES.map((r) => (
-                <option key={r} value={r}>{r}%</option>
-              ))}
+            <select value={form.gst_rate} onChange={(e) => setForm({ ...form, gst_rate: e.target.value })} className={inputClass}>
+              {GST_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
             </select>
           </div>
           <div className="bg-slate-50 rounded-md p-3 space-y-1.5 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-500">GST Amount</span>
-              <span className="font-medium text-slate-700">{formatINR(gstAmount)}</span>
+              <span className="font-medium">{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(gstAmount)}</span>
             </div>
             {rate > 0 && (
               <>
                 <div className="flex justify-between text-xs text-slate-500 pl-3">
-                  <span>CGST ({rate / 2}%)</span>
-                  <span>{formatINR(cgst)}</span>
+                  <span>CGST ({rate/2}%)</span>
+                  <span>{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(cgst)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500 pl-3">
-                  <span>SGST ({rate / 2}%)</span>
-                  <span>{formatINR(sgst)}</span>
+                  <span>SGST ({rate/2}%)</span>
+                  <span>{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(sgst)}</span>
                 </div>
               </>
             )}
             <div className="flex justify-between border-t border-slate-200 pt-1.5">
               <span className="font-medium text-slate-700">Total Amount</span>
-              <span className="font-bold text-slate-900">{formatINR(totalAmount)}</span>
+              <span className="font-bold text-slate-900">{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(totalAmount)}</span>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
-            <input
-              type="date"
-              value={form.due_date}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className={inputClass} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={2}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className={inputClass} />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">
-              Cancel
-            </button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</button>
             <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60">
               {pending ? "Saving..." : mode === "edit" ? "Update Invoice" : "Create Invoice"}
             </button>
