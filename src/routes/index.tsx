@@ -9,23 +9,41 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-function StatCard({ label, value, icon: Icon, color }: {
+function StatCard({ label, value, icon: Icon, color, sub, href }: {
   label: string;
   value: number | string;
   icon: any;
   color: string;
+  sub?: string;
+  href?: string;
 }) {
+  const inner = (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-slate-500 font-medium">{label}</p>
+        <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
+        {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
+      </div>
+      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
+        <Icon size={22} className="text-white" />
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      
+        href={href}
+        className="block bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
+      >
+        {inner}
+      </a>
+    );
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500 font-medium">{label}</p>
-          <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
-        </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-          <Icon size={22} className="text-white" />
-        </div>
-      </div>
+      {inner}
     </div>
   );
 }
@@ -106,18 +124,19 @@ function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: pendingDocsCount } = useQuery({
-    queryKey: ["pending-docs-count"],
+  // ✅ NEW: Pending docs from engagement checklists (same source as Documents page)
+  const { data: pendingChecklistDocs } = useQuery({
+    queryKey: ["dashboard-pending-docs"],
     queryFn: async () => {
       try {
         const userId = await getCurrentUserId();
-        const { count } = await supabase
-          .from("documents")
-          .select("*", { count: "exact", head: true })
+        const { data } = await supabase
+          .from("engagement_documents")
+          .select("engagement_id, requirement")
           .eq("user_id", userId ?? "")
           .eq("status", "pending");
-        return count ?? 0;
-      } catch { return 0; }
+        return (data ?? []) as { engagement_id: string; requirement: string }[];
+      } catch { return []; }
     },
     refetchInterval: 30000,
     staleTime: 0,
@@ -188,7 +207,7 @@ function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  // ✅ FIXED: Overdue + Upcoming compliance combined
+  // Overdue + Upcoming compliance combined
   const { data: complianceItems } = useQuery({
     queryKey: ["dashboard-compliance"],
     queryFn: async () => {
@@ -240,13 +259,12 @@ function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const activeCount = engagements?.filter(
-    (e: any) => e.status !== "completed" && e.status !== "billed"
-  ).length ?? 0;
+  const isActiveEng = (e: any) => e.status !== "completed" && e.status !== "billed";
+
+  const activeCount = engagements?.filter(isActiveEng).length ?? 0;
 
   const overdueEngagements = engagements?.filter(
-    (e: any) => e.deadline && isBefore(new Date(e.deadline), now) &&
-      e.status !== "completed" && e.status !== "billed"
+    (e: any) => e.deadline && isBefore(new Date(e.deadline), now) && isActiveEng(e)
   ).length ?? 0;
 
   const overdueComplianceCount = complianceItems?.filter((i: any) => i.isOverdue).length ?? 0;
@@ -256,6 +274,18 @@ function Dashboard() {
     if (inv.status === "Paid") return sum;
     return sum + Number(inv.total_amount ?? inv.amount ?? 0);
   }, 0);
+
+  // ✅ NEW: Clients waiting for docs (only active engagements, same as Documents page)
+  const activeEngClient: Record<string, string> = {};
+  (engagements ?? []).forEach((e: any) => {
+    if (isActiveEng(e)) activeEngClient[e.id] = e.client_id;
+  });
+  const activePendingDocs = (pendingChecklistDocs ?? []).filter(
+    (d) => activeEngClient[d.engagement_id]
+  );
+  const clientsWaiting = new Set(activePendingDocs.map((d) => activeEngClient[d.engagement_id])).size;
+  const pendingDocsTotal = activePendingDocs.length;
+  const mandatoryDocsPending = activePendingDocs.filter((d) => d.requirement === "mandatory").length;
 
   return (
     <div className="space-y-6">
@@ -278,11 +308,18 @@ function Dashboard() {
         <StatCard label="Tasks Due This Week" value={tasksDueCount ?? 0} icon={Calendar} color="bg-amber-500" />
         <StatCard label="Overdue Items" value={overdueCount} icon={AlertTriangle} color="bg-red-500" />
         <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" />
-        <StatCard label="Pending Docs" value={pendingDocsCount ?? 0} icon={FileText} color="bg-orange-500" />
+        <StatCard
+          label="Clients Waiting for Docs"
+          value={clientsWaiting}
+          sub={`${pendingDocsTotal} docs · ${mandatoryDocsPending} mandatory`}
+          icon={FileText}
+          color="bg-orange-500"
+          href="/documents"
+        />
         <StatCard label="Overdue Invoices" value={overdueInvoicesCount ?? 0} icon={AlertTriangle} color="bg-red-500" />
       </div>
 
-      {/* ✅ FIXED: Compliance — Overdue + Upcoming + View All button */}
+      {/* Compliance — Overdue + Upcoming + View All button */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
           <div>
