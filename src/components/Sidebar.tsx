@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 // @ts-ignore - lucide-react does not currently ship TypeScript declarations in this setup
-import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, Activity, ShieldCheck, Calculator, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, Activity, ShieldCheck, Calculator, LogOut, Bot } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/fee-estimator", label: "Fee Estimator", icon: Calculator },
   { to: "/invoices", label: "Invoices", icon: Receipt },
   { to: "/tasks", label: "Tasks", icon: ListChecks },
+  { to: "/support-agent", label: "AI Support Agent", icon: Bot },
 ];
 
 const systemItems = [

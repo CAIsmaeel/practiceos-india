@@ -20,6 +20,7 @@ import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SupportAgentRouteImport } from './routes/support-agent'
 import { Route as TasksRouteImport } from './routes/tasks'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupportAgentRoute = SupportAgentRouteImport.update({
+  id: '/support-agent',
+  path: '/support-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/login'
     | '/settings'
+    | '/support-agent'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/login'
     | '/settings'
+    | '/support-agent'
     | '/tasks'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/login'
     | '/settings'
+    | '/support-agent'
     | '/tasks'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
+  SupportAgentRoute: typeof SupportAgentRoute
   TasksRoute: typeof TasksRoute
 }
 
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/support-agent': {
+      id: '/support-agent'
+      path: '/support-agent'
+      fullPath: '/support-agent'
+      preLoaderRoute: typeof SupportAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks': {
       id: '/tasks'
       path: '/tasks'
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
+  SupportAgentRoute: SupportAgentRoute,
   TasksRoute: TasksRoute,
 }
 export const routeTree = rootRouteImport
