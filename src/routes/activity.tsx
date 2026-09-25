@@ -12,20 +12,20 @@ export const Route = createFileRoute("/activity")({
 
 const channelColors: Record<string, string> = {
   whatsapp: "bg-green-100 text-green-800",
-  email: "bg-blue-100 text-blue-800",
+  email: "bg-primary/10 text-primary",
 };
 
 const TRUNCATE_LEN = 80;
 
 function TruncatedText({ text }: { text: string | null }) {
   const [expanded, setExpanded] = useState(false);
-  if (!text) return <span className="text-slate-400">—</span>;
+  if (!text) return <span className="text-muted-foreground">—</span>;
   if (text.length <= TRUNCATE_LEN || expanded) {
     return (
       <span>
         {text}
         {text.length > TRUNCATE_LEN && expanded && (
-          <button onClick={() => setExpanded(false)} className="ml-1 text-blue-600 hover:underline text-xs">
+          <button onClick={() => setExpanded(false)} className="ml-1 text-primary hover:underline text-xs">
             show less
           </button>
         )}
@@ -35,7 +35,7 @@ function TruncatedText({ text }: { text: string | null }) {
   return (
     <span>
       {text.slice(0, TRUNCATE_LEN)}...
-      <button onClick={() => setExpanded(true)} className="ml-1 text-blue-600 hover:underline text-xs">
+      <button onClick={() => setExpanded(true)} className="ml-1 text-primary hover:underline text-xs">
         show more
       </button>
     </span>
@@ -79,17 +79,17 @@ function ActivityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Activity Log</h1>
-        <p className="text-slate-500 text-sm">System monitoring — AI conversations and errors</p>
+        <h1 className="text-2xl font-bold text-foreground">Activity Log</h1>
+        <p className="text-muted-foreground text-sm">System monitoring — AI conversations and errors</p>
       </div>
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setTab("conversations")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             tab === "conversations"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           AI Conversations
@@ -98,8 +98,8 @@ function ActivityPage() {
           onClick={() => setTab("errors")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             tab === "errors"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           System Errors
@@ -109,17 +109,17 @@ function ActivityPage() {
       {tab === "conversations" && (
         <div className="space-y-4">
           <div className="relative max-w-sm">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by contact..."
-              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+          <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-left">
+              <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
                 <tr>
                   <th className="px-5 py-3 font-medium">Channel</th>
                   <th className="px-5 py-3 font-medium">Contact</th>
@@ -128,24 +128,24 @@ function ActivityPage() {
                   <th className="px-5 py-3 font-medium">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {logsLoading && (
-                  <tr><td colSpan={5} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
                 )}
                 {!logsLoading && filteredLogs?.length === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-8 text-center text-slate-500">No conversations logged.</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-8 text-center text-muted-foreground">No conversations logged.</td></tr>
                 )}
                 {filteredLogs?.map((l) => (
-                  <tr key={l.id} className="hover:bg-slate-50">
+                  <tr key={l.id} className="hover:bg-muted">
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${channelColors[l.channel ?? ""] ?? "bg-gray-100 text-gray-700"}`}>
+                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${channelColors[l.channel ?? ""] ?? "bg-muted text-foreground"}`}>
                         {l.channel ?? "—"}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-slate-700">{l.contact ?? "—"}</td>
-                    <td className="px-5 py-3 text-slate-700 max-w-xs"><TruncatedText text={l.query_text} /></td>
-                    <td className="px-5 py-3 text-slate-700 max-w-xs"><TruncatedText text={l.ai_response} /></td>
-                    <td className="px-5 py-3 text-slate-500 whitespace-nowrap">
+                    <td className="px-5 py-3 text-foreground">{l.contact ?? "—"}</td>
+                    <td className="px-5 py-3 text-foreground max-w-xs"><TruncatedText text={l.query_text} /></td>
+                    <td className="px-5 py-3 text-foreground max-w-xs"><TruncatedText text={l.ai_response} /></td>
+                    <td className="px-5 py-3 text-muted-foreground whitespace-nowrap">
                       {l.created_at ? formatDistanceToNow(new Date(l.created_at), { addSuffix: true }) : "—"}
                     </td>
                   </tr>
@@ -157,9 +157,9 @@ function ActivityPage() {
       )}
 
       {tab === "errors" && (
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+        <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600 text-left">
+            <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
               <tr>
                 <th className="px-5 py-3 font-medium">Workflow</th>
                 <th className="px-5 py-3 font-medium">Node</th>
@@ -167,21 +167,21 @@ function ActivityPage() {
                 <th className="px-5 py-3 font-medium">Time</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {errorsLoading && (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
               )}
               {!errorsLoading && errors?.length === 0 && (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-slate-500">No errors logged.</td></tr>
+                <tr><td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">No errors logged.</td></tr>
               )}
               {errors?.map((e) => {
                 const isRecent = e.created_at && new Date(e.created_at) > twentyFourHoursAgo;
                 return (
-                  <tr key={e.id} className={`hover:bg-slate-50 ${isRecent ? "bg-red-50" : ""}`}>
-                    <td className="px-5 py-3 text-slate-700">{e.workflow_name ?? "—"}</td>
-                    <td className="px-5 py-3 text-slate-700">{e.node_name ?? "—"}</td>
-                    <td className="px-5 py-3 text-slate-700 max-w-md">{e.error_message ?? "—"}</td>
-                    <td className="px-5 py-3 text-slate-500 whitespace-nowrap">
+                  <tr key={e.id} className={`hover:bg-muted ${isRecent ? "bg-red-50" : ""}`}>
+                    <td className="px-5 py-3 text-foreground">{e.workflow_name ?? "—"}</td>
+                    <td className="px-5 py-3 text-foreground">{e.node_name ?? "—"}</td>
+                    <td className="px-5 py-3 text-foreground max-w-md">{e.error_message ?? "—"}</td>
+                    <td className="px-5 py-3 text-muted-foreground whitespace-nowrap">
                       {e.created_at ? formatDistanceToNow(new Date(e.created_at), { addSuffix: true }) : "—"}
                     </td>
                   </tr>

@@ -597,18 +597,18 @@ function FeeEstimatorPage() {
     }
   };
 
-  const selectClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-  const naClass = "w-full border border-dashed border-slate-200 rounded-md px-3 py-2 text-sm text-slate-400 bg-slate-50";
+  const selectClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+  const naClass = "w-full border border-dashed border-border rounded-md px-3 py-2 text-sm text-muted-foreground bg-muted";
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/5 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
           <Calculator size={14} />
           Pricing engine
         </div>
-        <h1 className="mt-3 text-2xl font-bold text-slate-900">Fee Estimator</h1>
-        <p className="text-sm text-slate-500 mt-1">Market-rate pricing for Indian CA services — with eligibility checks.</p>
+        <h1 className="mt-3 text-2xl font-bold text-foreground">Fee Estimator</h1>
+        <p className="text-sm text-muted-foreground mt-1">Market-rate pricing for Indian CA services — with eligibility checks.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -621,23 +621,23 @@ function FeeEstimatorPage() {
                 <div key={i} className={`rounded-xl border p-4 flex gap-3 ${
                   alert.type === "warning" ? "bg-amber-50 border-amber-200"
                   : alert.type === "success" ? "bg-green-50 border-green-200"
-                  : "bg-blue-50 border-blue-200"
+                  : "bg-primary/5 border-primary/20"
                 }`}>
                   <div className="flex-shrink-0 mt-0.5">
                     {alert.type === "warning" ? <AlertTriangle size={18} className="text-amber-500" />
                     : alert.type === "success" ? <CheckCircle size={18} className="text-green-500" />
-                    : <Info size={18} className="text-blue-500" />}
+                    : <Info size={18} className="text-primary" />}
                   </div>
                   <div>
                     <p className={`text-sm font-semibold ${
                       alert.type === "warning" ? "text-amber-800"
                       : alert.type === "success" ? "text-green-800"
-                      : "text-blue-800"
+                      : "text-primary"
                     }`}>{alert.title}</p>
                     <p className={`text-sm mt-0.5 ${
                       alert.type === "warning" ? "text-amber-700"
                       : alert.type === "success" ? "text-green-700"
-                      : "text-blue-700"
+                      : "text-primary"
                     }`}>{alert.message}</p>
                   </div>
                 </div>
@@ -646,31 +646,31 @@ function FeeEstimatorPage() {
           )}
 
           {/* Form */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-6">
             <div className="grid md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Service Group</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Service Group</label>
                 <select value={form.serviceGroup} onChange={(e) => handleServiceGroupChange(e.target.value as ServiceGroup)} className={selectClass}>
                   {Object.keys(SERVICE_GROUPS).map((g) => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Service Type</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Service Type</label>
                 <select value={form.serviceType} onChange={(e) => updateFormValue("serviceType", e.target.value)} className={selectClass}>
                   {availableServices.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Entity Type</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Entity Type</label>
                 <select value={form.entityType} onChange={(e) => updateFormValue("entityType", e.target.value as EntityType)} className={selectClass}>
                   {ENTITY_TYPES.map((e) => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${showTurnover ? "text-slate-700" : "text-slate-400"}`}>Annual Turnover</label>
+                <label className={`block text-sm font-medium mb-1 ${showTurnover ? "text-foreground" : "text-muted-foreground"}`}>Annual Turnover</label>
                 {showTurnover ? (
                   <select value={form.turnoverBand} onChange={(e) => updateFormValue("turnoverBand", e.target.value as TurnoverBand)} className={selectClass}>
                     {TURNOVER_OPTIONS.map((b) => <option key={b} value={b}>{b}</option>)}
@@ -679,7 +679,7 @@ function FeeEstimatorPage() {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${showVolume ? "text-slate-700" : "text-slate-400"}`}>Monthly Transaction Volume</label>
+                <label className={`block text-sm font-medium mb-1 ${showVolume ? "text-foreground" : "text-muted-foreground"}`}>Monthly Transaction Volume</label>
                 {showVolume ? (
                   <select value={form.transactionVolume} onChange={(e) => updateFormValue("transactionVolume", e.target.value as TransactionVolume)} className={selectClass}>
                     {TRANSACTION_VOLUME_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
@@ -688,7 +688,7 @@ function FeeEstimatorPage() {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${showComplexity ? "text-slate-700" : "text-slate-400"}`}>Complexity</label>
+                <label className={`block text-sm font-medium mb-1 ${showComplexity ? "text-foreground" : "text-muted-foreground"}`}>Complexity</label>
                 {showComplexity ? (
                   <select value={form.complexity} onChange={(e) => updateFormValue("complexity", e.target.value as ComplexityLevel)} className={selectClass}>
                     {COMPLEXITY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -697,14 +697,14 @@ function FeeEstimatorPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">CA City</label>
+                <label className="block text-sm font-medium text-foreground mb-1">CA City</label>
                 <select value={form.cityTier} onChange={(e) => updateFormValue("cityTier", e.target.value as CityTier)} className={selectClass}>
                   {CITY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">CA Experience</label>
+                <label className="block text-sm font-medium text-foreground mb-1">CA Experience</label>
                 <select value={form.experience} onChange={(e) => updateFormValue("experience", e.target.value as ExperienceBand)} className={selectClass}>
                   {EXPERIENCE_OPTIONS.map((e) => <option key={e} value={e}>{e}</option>)}
                 </select>
@@ -713,16 +713,16 @@ function FeeEstimatorPage() {
           </div>
 
           {/* Complexity Factors */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-            <h3 className="text-base font-semibold text-slate-900 mb-4">Additional complexity factors</h3>
+          <div className="bg-card border border-border rounded-xl shadow-sm p-6">
+            <h3 className="text-base font-semibold text-foreground mb-4">Additional complexity factors</h3>
             <div className="grid md:grid-cols-2 gap-3">
               {FACTOR_OPTIONS.map((option) => (
-                <label key={option.key} className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50">
+                <label key={option.key} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm text-foreground cursor-pointer hover:bg-muted">
                   <input
                     type="checkbox"
                     checked={Boolean(form[option.key as keyof FeeForm])}
                     onChange={(e) => updateFormValue(option.key as keyof FeeForm, e.target.checked as never)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                   />
                   {option.label}
                 </label>
@@ -732,14 +732,14 @@ function FeeEstimatorPage() {
               <button
                 type="button"
                 onClick={() => setShowResult(true)}
-                className="flex-1 rounded-md bg-blue-600 hover:bg-blue-500 px-4 py-2.5 text-sm font-medium text-white transition-colors"
+                className="flex-1 rounded-md bg-primary hover:bg-primary/90 px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors"
               >
                 Calculate Fee
               </button>
               <button
                 type="button"
                 onClick={() => { setShowResult(false); setReasoning(""); }}
-                className="rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                className="rounded-md border border-input px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
                 Reset
               </button>
@@ -751,13 +751,13 @@ function FeeEstimatorPage() {
         {showResult && (
           <aside className="space-y-5">
             {/* Fee Card */}
-            <div className="bg-slate-900 text-white rounded-xl shadow-sm p-6">
+            <div className="bg-sidebar text-sidebar-foreground rounded-xl shadow-sm p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="bg-green-500 rounded-lg p-2">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground rounded-lg p-2">
                   <TrendingUp size={18} />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Fee range</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-sidebar-foreground/60">Fee range</p>
                   <h2 className="text-3xl font-bold mt-1">
                     {formatCurrency(computedFee.min)} – {formatCurrency(computedFee.max)}
                   </h2>
@@ -774,7 +774,7 @@ function FeeEstimatorPage() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="w-full flex items-center justify-center gap-2 rounded-md border border-slate-600 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
                 >
                   <Copy size={16} />
                   {copyState}
@@ -783,35 +783,35 @@ function FeeEstimatorPage() {
             </div>
 
             {/* AI Analysis */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
               <div className="flex items-center justify-between gap-3 mb-4">
-                <h3 className="text-base font-semibold text-slate-900">AI Market Analysis</h3>
+                <h3 className="text-base font-semibold text-foreground">AI Market Analysis</h3>
                 <button
                   type="button"
                   onClick={handleGenerateAnalysis}
                   disabled={isLoadingReasoning}
-                  className="rounded-md bg-blue-600 hover:bg-blue-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-70 transition-colors"
+                  className="rounded-md bg-primary hover:bg-primary/90 px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-70 transition-colors"
                 >
                   {isLoadingReasoning ? "Generating..." : "Generate Analysis"}
                 </button>
               </div>
               {reasoning ? (
-                <p className="text-sm leading-7 text-slate-700 whitespace-pre-line">{reasoning}</p>
+                <p className="text-sm leading-7 text-foreground whitespace-pre-line">{reasoning}</p>
               ) : (
-                <p className="text-sm leading-6 text-slate-400 italic">
+                <p className="text-sm leading-6 text-muted-foreground italic">
                   Click &apos;Generate Analysis&apos; to get AI market context for this fee estimate.
                 </p>
               )}
             </div>
 
             {/* Pricing Factors */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
-              <h3 className="text-base font-semibold text-slate-900 mb-4">Pricing factors</h3>
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+              <h3 className="text-base font-semibold text-foreground mb-4">Pricing factors</h3>
               <div className="space-y-2">
                 {pricingFactors.map((factor, index) => (
-                  <div key={`${factor.label}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                    <span className="text-slate-600">{factor.label}</span>
-                    <span className="inline-flex items-center gap-1 font-medium text-slate-800">
+                  <div key={`${factor.label}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">{factor.label}</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
                       {factor.direction === "up"
                         ? <ArrowUpRight size={16} className="text-amber-500" />
                         : <ArrowDownRight size={16} className="text-emerald-500" />}

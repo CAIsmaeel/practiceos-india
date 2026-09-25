@@ -329,12 +329,12 @@ function DocumentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
-          <p className="text-slate-500 text-sm">Pending client documents across all engagements</p>
+          <h1 className="text-2xl font-bold text-foreground">Documents</h1>
+          <p className="text-muted-foreground text-sm">Pending client documents across all engagements</p>
         </div>
         <button
           onClick={() => setRequestOpen(true)}
-          className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
         >
           <Plus size={16} /> Request Documents
         </button>
@@ -343,7 +343,7 @@ function DocumentsPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SummaryCard icon={<Users size={18} />} label="Clients waiting" value={totals.clients}
-          className="text-blue-600 bg-blue-50" />
+          className="text-primary bg-primary/5" />
         <SummaryCard icon={<FileText size={18} />} label="Pending documents"
           value={totals.pending} sub={`${totals.mandatory} mandatory`}
           className="text-amber-600 bg-amber-50" />
@@ -354,24 +354,24 @@ function DocumentsPage() {
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search client..."
-          className="w-full border border-slate-300 rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-input rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       {/* Client cards */}
       <div className="space-y-3">
         {loading && (
-          <div className="bg-white border border-slate-200 rounded-lg px-5 py-8 text-center text-slate-500 text-sm">
+          <div className="bg-card border border-border rounded-lg px-5 py-8 text-center text-muted-foreground text-sm">
             Loading...
           </div>
         )}
         {!loading && groups.length === 0 && (
-          <div className="bg-white border border-slate-200 rounded-lg px-5 py-8 text-center text-slate-500 text-sm">
+          <div className="bg-card border border-border rounded-lg px-5 py-8 text-center text-muted-foreground text-sm">
             {search ? "No client matches your search." : "🎉 No pending client documents!"}
           </div>
         )}
@@ -379,15 +379,15 @@ function DocumentsPage() {
         {groups.map((g) => {
           const isOpen = expanded.has(g.clientId);
           return (
-            <div key={g.clientId} className="bg-white border border-slate-200 rounded-lg shadow-sm">
+            <div key={g.clientId} className="bg-card border border-border rounded-lg shadow-sm">
               <div className="flex items-center justify-between gap-3 px-5 py-4 flex-wrap">
                 <button onClick={() => toggle(g.clientId)} className="flex items-center gap-3 text-left min-w-0 flex-1">
                   {isOpen
-                    ? <ChevronDown size={18} className="text-slate-400 shrink-0" />
-                    : <ChevronRight size={18} className="text-slate-400 shrink-0" />}
+                    ? <ChevronDown size={18} className="text-muted-foreground shrink-0" />
+                    : <ChevronRight size={18} className="text-muted-foreground shrink-0" />}
                   <div className="min-w-0">
-                    <p className="font-semibold text-slate-900">{g.name}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="font-semibold text-foreground">{g.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       <span className="text-amber-700 font-medium">{g.pendingCount} pending</span>
                       {" · "}
                       <span className="text-red-600 font-medium">{g.mandatoryPending} mandatory</span>
@@ -405,12 +405,12 @@ function DocumentsPage() {
                   </div>
                 </button>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-muted-foreground">
                     {g.lastReminder ? `Last reminder ${fmt(g.lastReminder)}` : "No reminder yet"}
                   </span>
                   <button
                     onClick={() => void chaseClient(g)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-green-600 text-white hover:bg-green-700"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-green-600 text-primary-foreground hover:bg-green-700"
                   >
                     <MessageCircle size={14} /> Chase All
                   </button>
@@ -418,26 +418,26 @@ function DocumentsPage() {
               </div>
 
               {isOpen && (
-                <div className="border-t border-slate-100 divide-y divide-slate-100">
+                <div className="border-t border-border divide-y divide-border">
                   {g.engs.map(({ eng, docs }) => (
                     <div key={eng.id} className="px-5 py-3">
-                      <p className="text-sm font-medium text-slate-800">
+                      <p className="text-sm font-medium text-foreground">
                         {eng.title}
-                        <span className="text-slate-400 font-normal"> · {eng.type}</span>
+                        <span className="text-muted-foreground font-normal"> · {eng.type}</span>
                         {eng.deadline && (
-                          <span className={`font-normal ${isOverdue(eng.deadline) ? "text-red-600" : "text-slate-400"}`}>
+                          <span className={`font-normal ${isOverdue(eng.deadline) ? "text-red-600" : "text-muted-foreground"}`}>
                             {" · "}due {fmt(eng.deadline)}
                           </span>
                         )}
                       </p>
                       <div className="mt-2 space-y-1.5">
                         {docs.map((d) => (
-                          <div key={d.id} className="flex items-center justify-between gap-3 pl-3 border-l-2 border-slate-100">
+                          <div key={d.id} className="flex items-center justify-between gap-3 pl-3 border-l-2 border-border">
                             <div className="min-w-0">
-                              <p className="text-sm text-slate-700">{d.doc_name}</p>
+                              <p className="text-sm text-foreground">{d.doc_name}</p>
                               <span
                                 className={`text-[10px] font-semibold uppercase tracking-wide ${
-                                  d.requirement === "mandatory" ? "text-red-500" : "text-slate-400"
+                                  d.requirement === "mandatory" ? "text-red-500" : "text-muted-foreground"
                                 }`}
                               >
                                 {d.requirement}
@@ -447,14 +447,14 @@ function DocumentsPage() {
                               <button
                                 disabled={updateDocMutation.isPending}
                                 onClick={() => updateDocMutation.mutate({ id: d.id, status: "received" })}
-                                className="px-2 py-1 rounded-md text-xs font-medium border bg-white text-green-700 border-green-200 hover:bg-green-50 disabled:opacity-60"
+                                className="px-2 py-1 rounded-md text-xs font-medium border bg-card text-green-700 border-green-200 hover:bg-green-50 disabled:opacity-60"
                               >
                                 Received
                               </button>
                               <button
                                 disabled={updateDocMutation.isPending}
                                 onClick={() => updateDocMutation.mutate({ id: d.id, status: "not_applicable" })}
-                                className="px-2 py-1 rounded-md text-xs font-medium border bg-white text-slate-500 border-slate-200 hover:bg-slate-50 disabled:opacity-60"
+                                className="px-2 py-1 rounded-md text-xs font-medium border bg-card text-muted-foreground border-border hover:bg-muted disabled:opacity-60"
                               >
                                 N/A
                               </button>
@@ -476,21 +476,21 @@ function DocumentsPage() {
         <div className="space-y-3 pt-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <h2 className="text-sm font-semibold text-slate-700">Older requests</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-sm font-semibold text-foreground">Older requests</h2>
+              <p className="text-xs text-muted-foreground">
                 Created before checklists. New requests now go into the engagement checklist.
               </p>
             </div>
             <button
               onClick={() => setShowOldReceived((v) => !v)}
-              className="text-xs text-slate-600 hover:text-slate-800 font-medium"
+              className="text-xs text-muted-foreground hover:text-foreground font-medium"
             >
               {showOldReceived ? "Hide received" : "Show received"}
             </button>
           </div>
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+          <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-left">
+              <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
                 <tr>
                   <th className="px-5 py-2.5 font-medium">Client</th>
                   <th className="px-5 py-2.5 font-medium">Document</th>
@@ -499,16 +499,16 @@ function DocumentsPage() {
                   <th className="px-5 py-2.5 font-medium">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {oldVisible.length === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-6 text-center text-slate-500">No older requests.</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-6 text-center text-muted-foreground">No older requests.</td></tr>
                 )}
                 {oldVisible.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="px-5 py-2.5 font-medium text-slate-900">{r.clients?.name ?? "—"}</td>
-                    <td className="px-5 py-2.5 text-slate-700">{r.document_name}</td>
-                    <td className="px-5 py-2.5 text-slate-700">{r.engagements?.title ?? "—"}</td>
-                    <td className="px-5 py-2.5 text-slate-700 whitespace-nowrap">
+                  <tr key={r.id} className="hover:bg-muted">
+                    <td className="px-5 py-2.5 font-medium text-foreground">{r.clients?.name ?? "—"}</td>
+                    <td className="px-5 py-2.5 text-foreground">{r.document_name}</td>
+                    <td className="px-5 py-2.5 text-foreground">{r.engagements?.title ?? "—"}</td>
+                    <td className="px-5 py-2.5 text-foreground whitespace-nowrap">
                       {r.requested_date ? fmt(r.requested_date) : "—"}
                     </td>
                     <td className="px-5 py-2.5">
@@ -557,12 +557,12 @@ function SummaryCard({
   className: string;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 flex items-center gap-3">
+    <div className="bg-card border border-border rounded-lg shadow-sm p-4 flex items-center gap-3">
       <div className={`p-2 rounded-md ${className}`}>{icon}</div>
       <div>
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-xl font-bold text-slate-900">{value}</p>
-        {sub && <p className="text-[11px] text-slate-400">{sub}</p>}
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-xl font-bold text-foreground">{value}</p>
+        {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
       </div>
     </div>
   );
@@ -601,13 +601,13 @@ function RequestModal({
   };
   const removeDocName = (i: number) => setDocNames(docNames.filter((_, idx) => idx !== i));
 
-  const inputClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">Request Documents</h2>
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">Request Documents</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
@@ -620,7 +620,7 @@ function RequestModal({
           className="p-5 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Client <span className="text-red-500">*</span>
             </label>
             <select
@@ -633,12 +633,12 @@ function RequestModal({
               {selectableClients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             {selectableClients.length === 0 && (
-              <p className="text-xs text-slate-500 mt-1">No clients with active engagements. Add an engagement first.</p>
+              <p className="text-xs text-muted-foreground mt-1">No clients with active engagements. Add an engagement first.</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Engagement <span className="text-red-500">*</span>
             </label>
             <select
@@ -646,7 +646,7 @@ function RequestModal({
               value={engagementId}
               onChange={(e) => setEngagementId(e.target.value)}
               disabled={!clientId}
-              className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-400`}
+              className={`${inputClass} disabled:bg-muted disabled:text-muted-foreground`}
             >
               <option value="">{clientId ? "Select an engagement" : "Select a client first"}</option>
               {clientEngagements.map((e) => (
@@ -656,7 +656,7 @@ function RequestModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Requirement</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Requirement</label>
             <div className="flex gap-2">
               {(["mandatory", "optional"] as const).map((r) => (
                 <button
@@ -667,21 +667,21 @@ function RequestModal({
                     requirement === r
                       ? r === "mandatory"
                         ? "bg-red-50 text-red-700 border-red-200"
-                        : "bg-slate-100 text-slate-700 border-slate-300"
-                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                        : "bg-muted text-foreground border-input"
+                      : "bg-card text-muted-foreground border-border hover:bg-muted"
                   }`}
                 >
                   {r}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Mandatory documents block the engagement until received.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Document Names <span className="text-red-500">*</span>
             </label>
             <div className="space-y-2">
@@ -692,10 +692,10 @@ function RequestModal({
                     value={name}
                     onChange={(e) => setDocName(i, e.target.value)}
                     placeholder={`Document ${i + 1}`}
-                    className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   {docNames.length > 1 && (
-                    <button type="button" onClick={() => removeDocName(i)} className="text-slate-400 hover:text-red-500">
+                    <button type="button" onClick={() => removeDocName(i)} className="text-muted-foreground hover:text-red-500">
                       <Trash2 size={16} />
                     </button>
                   )}
@@ -705,17 +705,17 @@ function RequestModal({
             <button
               type="button"
               onClick={() => setDocNames([...docNames, ""])}
-              className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:text-primary font-medium"
             >
               <Plus size={14} /> Add another document
             </button>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">
               Cancel
             </button>
-            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
               {pending ? "Saving..." : "Add to Checklist"}
             </button>
           </div>

@@ -116,21 +116,21 @@ function SettingsPage() {
     }
   };
 
-  const inputClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Firm Settings</h1>
-        <p className="text-slate-500 text-sm">Configure billing and invoice metadata for your practice</p>
+        <h1 className="text-2xl font-bold text-foreground">Firm Settings</h1>
+        <p className="text-muted-foreground text-sm">Configure billing and invoice metadata for your practice</p>
       </div>
 
       <form
         onSubmit={handleSave}
-        className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-5"
+        className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-5"
       >
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Firm Name</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Firm Name</label>
           <input
             value={form.firm_name}
             onChange={(e) => setForm({ ...form, firm_name: e.target.value })}
@@ -141,7 +141,7 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">GSTIN</label>
+            <label className="block text-sm font-medium text-foreground mb-1">GSTIN</label>
             <input
               value={form.gst_number}
               onChange={(e) => setForm({ ...form, gst_number: e.target.value.toUpperCase() })}
@@ -149,7 +149,7 @@ function SettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">PAN</label>
+            <label className="block text-sm font-medium text-foreground mb-1">PAN</label>
             <input
               value={form.ca_reg_number}
               onChange={(e) => setForm({ ...form, ca_reg_number: e.target.value.toUpperCase() })}
@@ -159,7 +159,7 @@ function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Address</label>
           <textarea
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
@@ -170,7 +170,7 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">State</label>
+            <label className="block text-sm font-medium text-foreground mb-1">State</label>
             <input
               value={form.state}
               onChange={(e) => setForm({ ...form, state: e.target.value })}
@@ -178,7 +178,7 @@ function SettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Invoice Prefix</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Invoice Prefix</label>
             <input
               value={form.invoice_prefix}
               onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value.toUpperCase() })}
@@ -190,7 +190,7 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Bank Name</label>
             <input
               value={form.bank_name}
               onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
@@ -198,7 +198,7 @@ function SettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Bank Account No</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Bank Account No</label>
             <input
               value={form.bank_account_no}
               onChange={(e) => setForm({ ...form, bank_account_no: e.target.value })}
@@ -209,7 +209,7 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Bank IFSC</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Bank IFSC</label>
             <input
               value={form.bank_ifsc}
               onChange={(e) => setForm({ ...form, bank_ifsc: e.target.value.toUpperCase() })}
@@ -217,7 +217,7 @@ function SettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
             <input
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -227,7 +227,7 @@ function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Email</label>
           <input
             type="email"
             value={form.email}
@@ -240,7 +240,7 @@ function SettingsPage() {
           <button
             type="submit"
             disabled={isSaving}
-            className="px-5 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
+            className="px-5 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
             {isSaving ? "Saving..." : "Save Firm Settings"}
           </button>

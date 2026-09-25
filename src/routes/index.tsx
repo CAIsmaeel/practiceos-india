@@ -29,18 +29,18 @@ function StatCard({ label, value, icon: Icon, color, sub, href }: {
       onKeyDown={(e) => {
         if (href && e.key === "Enter") goTo();
       }}
-      className={`bg-white border border-slate-200 rounded-lg p-5 shadow-sm ${
-        href ? "cursor-pointer hover:shadow-md hover:border-slate-300 transition-all" : ""
+      className={`bg-card border border-border rounded-lg p-5 shadow-sm ${
+        href ? "cursor-pointer hover:shadow-md hover:border-input transition-all" : ""
       }`}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-500 font-medium">{label}</p>
-          <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
-          {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
+          <p className="text-sm text-muted-foreground font-medium">{label}</p>
+          <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
+          {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
         </div>
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-          <Icon size={22} className="text-white" />
+          <Icon size={22} className="text-primary-foreground" />
         </div>
       </div>
     </div>
@@ -289,8 +289,8 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 text-sm">
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground text-sm">
           Overview of your practice — {format(now, "EEEE, dd MMM yyyy")}
         </p>
       </div>
@@ -300,7 +300,7 @@ function Dashboard() {
           label="Total Clients"
           value={clients ?? 0}
           icon={Users}
-          color="bg-blue-500"
+          color="bg-primary"
           href="/clients"
         />
         <StatCard
@@ -357,23 +357,23 @@ function Dashboard() {
       </div>
 
       {/* Compliance — Overdue + Upcoming + View All button */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+      <div className="bg-card border border-border rounded-lg shadow-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
-            <h2 className="font-semibold text-slate-900">Compliance — Overdue & Next 7 Days</h2>
+            <h2 className="font-semibold text-foreground">Compliance — Overdue & Next 7 Days</h2>
             {overdueComplianceCount > 0 && (
               <p className="text-xs text-red-600 font-medium mt-0.5">
                 ⚠️ {overdueComplianceCount} overdue item{overdueComplianceCount > 1 ? "s" : ""}
               </p>
             )}
           </div>
-          <a href="/compliance" className="text-blue-500 text-sm hover:underline font-medium">
+          <a href="/compliance" className="text-primary text-sm hover:underline font-medium">
             View All →
           </a>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {(complianceItems ?? []).length === 0 && (
-            <p className="px-5 py-8 text-center text-sm text-slate-500">
+            <p className="px-5 py-8 text-center text-sm text-muted-foreground">
               No upcoming or overdue compliance items.
             </p>
           )}
@@ -401,14 +401,14 @@ function Dashboard() {
             return (
               <div key={item.id} className={`flex items-center justify-between py-3 px-4 ${rowClass}`}>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-900 text-sm truncate">{item.clientName}</p>
-                  <p className="text-xs text-slate-500">{item.complianceType}</p>
+                  <p className="font-medium text-foreground text-sm truncate">{item.clientName}</p>
+                  <p className="text-xs text-muted-foreground">{item.complianceType}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${labelClass}`}>
                     {dueLabel}
                   </span>
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm font-medium text-foreground">
                     {dueDate ? format(dueDate, "dd MMM yyyy") : "—"}
                   </span>
                 </div>
@@ -419,27 +419,27 @@ function Dashboard() {
       </div>
 
       {/* Recent Leads */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">Recent Leads</h2>
-          <a href="/leads" className="text-blue-500 text-sm hover:underline font-medium">
+      <div className="bg-card border border-border rounded-lg shadow-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">Recent Leads</h2>
+          <a href="/leads" className="text-primary text-sm hover:underline font-medium">
             View All →
           </a>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {(recentLeads ?? []).length === 0 && (
-            <p className="px-5 py-6 text-slate-500 text-sm text-center">No leads yet.</p>
+            <p className="px-5 py-6 text-muted-foreground text-sm text-center">No leads yet.</p>
           )}
           {(recentLeads ?? []).map((lead: any) => (
             <div key={lead.id} className="px-5 py-3 flex items-center justify-between">
               <div>
-                <p className="font-medium text-slate-900 text-sm">{lead.name}</p>
-                <p className="text-xs text-slate-500">{lead.requirement ?? "—"}</p>
+                <p className="font-medium text-foreground text-sm">{lead.name}</p>
+                <p className="text-xs text-muted-foreground">{lead.requirement ?? "—"}</p>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 lead.qualification_score === "Hot" ? "bg-red-100 text-red-700" :
                 lead.qualification_score === "Warm" ? "bg-orange-100 text-orange-700" :
-                "bg-gray-100 text-gray-600"
+                "bg-muted text-muted-foreground"
               }`}>
                 {lead.qualification_score ?? "—"}
               </span>

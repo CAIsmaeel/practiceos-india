@@ -161,8 +161,8 @@ function AppLayout() {
   // Loading spinner
   if (checking) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-sidebar flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-sidebar-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -172,7 +172,7 @@ function AppLayout() {
 
   // Logged in — render full app
   return (
-    <div className="min-h-screen bg-white md:pl-64">
+    <div className="min-h-screen bg-background md:pl-64">
       <Sidebar
         firmName={firmName}
         onLogout={async () => {

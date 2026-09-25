@@ -270,7 +270,7 @@ function ClientsPage() {
 
   const statusDot: Record<FilterType, string> = {
     active: "bg-green-500",
-    inactive: "bg-gray-400",
+    inactive: "bg-muted-foreground",
     archived: "bg-yellow-500",
     deleted: "bg-red-500",
   };
@@ -357,14 +357,14 @@ function ClientsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Clients</h1>
-          <p className="text-slate-500 text-sm">Manage your client list</p>
+          <h1 className="text-2xl font-bold text-foreground">Clients</h1>
+          <p className="text-muted-foreground text-sm">Manage your client list</p>
         </div>
         <div className="flex items-center gap-2">
           <a
             href="/client-template.xlsx"
             download
-            className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md text-sm font-medium border border-slate-300"
+            className="inline-flex items-center gap-2 bg-muted hover:bg-muted text-foreground px-4 py-2 rounded-md text-sm font-medium border border-input"
           >
             📥 Download Template
           </a>
@@ -376,7 +376,7 @@ function ClientsPage() {
               setImportDone('');
               setImportProgress('');
             }}
-            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors"
+            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -387,7 +387,7 @@ function ClientsPage() {
           </button>
           <button
             onClick={() => setModalState({ mode: "create" })}
-            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
           >
             <Plus size={16} /> Add Client
           </button>
@@ -401,8 +401,8 @@ function ClientsPage() {
             onClick={() => setFilter(btn.value)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
               filter === btn.value
-                ? "bg-blue-500 text-white border-blue-500"
-                : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-muted-foreground border-input hover:bg-muted"
             }`}
           >
             {btn.label}
@@ -410,9 +410,9 @@ function ClientsPage() {
         ))}
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600 text-left">
+          <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
             <tr>
               <th className="px-5 py-3 font-medium">Name</th>
               <th className="px-5 py-3 font-medium">Firm Name</th>
@@ -423,12 +423,12 @@ function ClientsPage() {
               <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading && (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
             )}
             {!isLoading && clients?.length === 0 && (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No clients found.</td></tr>
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No clients found.</td></tr>
             )}
             {clients?.map((c: any) => {
               const dscExpiry = c.dsc_expiry_date ? new Date(c.dsc_expiry_date) : null;
@@ -437,20 +437,20 @@ function ClientsPage() {
               const dscColor = daysLeft === null ? "" : daysLeft <= 0 ? "text-red-600 font-semibold" : daysLeft <= 30 ? "text-amber-600 font-semibold" : "text-green-600";
 
               return (
-                <tr key={c.id} className="hover:bg-slate-50">
-                  <td className="px-5 py-3 font-medium text-slate-900">
+                <tr key={c.id} className="hover:bg-muted">
+                  <td className="px-5 py-3 font-medium text-foreground">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[c.status as FilterType] ?? "bg-gray-400"}`} />
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[c.status as FilterType] ?? "bg-muted-foreground"}`} />
                       {c.name}
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-slate-700">{c.firm_name ?? "—"}</td>
+                  <td className="px-5 py-3 text-foreground">{c.firm_name ?? "—"}</td>
                   <td className="px-5 py-3">
                     {c.client_type ? (
-                      <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{c.client_type}</span>
+                      <span className="bg-primary/5 text-primary text-xs px-2 py-0.5 rounded-full">{c.client_type}</span>
                     ) : "—"}
                   </td>
-                  <td className="px-5 py-3 text-slate-700 font-mono text-xs">{c.pan_number ?? "—"}</td>
+                  <td className="px-5 py-3 text-foreground font-mono text-xs">{c.pan_number ?? "—"}</td>
                   <td className={`px-5 py-3 text-xs ${dscColor}`}>
                     {dscExpiry ? (
                       <span title={c.dsc_location ?? ""}>
@@ -463,7 +463,7 @@ function ClientsPage() {
                       </span>
                     ) : "—"}
                   </td>
-                  <td className="px-5 py-3 text-slate-700">{c.phone ?? "—"}</td>
+                  <td className="px-5 py-3 text-foreground">{c.phone ?? "—"}</td>
                   <td className="px-5 py-3">
                     <RowMenu
                       status={c.status}
@@ -502,35 +502,35 @@ function ClientsPage() {
 
       {importOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 sticky top-0 bg-white">
-              <h2 className="font-semibold text-slate-900">Import Clients from Excel</h2>
-              <button onClick={() => setImportOpen(false)} className="text-slate-400 hover:text-slate-600">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-card">
+              <h2 className="font-semibold text-foreground">Import Clients from Excel</h2>
+              <button onClick={() => setImportOpen(false)} className="text-muted-foreground hover:text-muted-foreground">
                 <X size={18} />
               </button>
             </div>
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 text-sm">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-border text-sm">
               {[1, 2, 3].map(s => (
                 <div key={s} className="flex items-center gap-2">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    importStep >= s ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-500'
+                    importStep >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   }`}>{s}</span>
-                  <span className={importStep >= s ? 'text-slate-900' : 'text-slate-400'}>
+                  <span className={importStep >= s ? 'text-foreground' : 'text-muted-foreground'}>
                     {s === 1 ? 'Upload' : s === 2 ? 'Preview' : 'Import'}
                   </span>
-                  {s < 3 && <span className="text-slate-300 mx-2">→</span>}
+                  {s < 3 && <span className="text-muted-foreground mx-2">→</span>}
                 </div>
               ))}
             </div>
             <div className="p-5">
               {importStep === 1 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-600">Upload your Excel or CSV file. Columns will be auto-detected.</p>
+                  <p className="text-sm text-muted-foreground">Upload your Excel or CSV file. Columns will be auto-detected.</p>
                   <div className="border-2 border-dashed border-emerald-300 bg-emerald-50 rounded-lg p-8 text-center">
                     <div className="text-4xl mb-3">📊</div>
-                    <p className="text-slate-700 font-medium mb-1">Drop your Excel or CSV file here</p>
-                    <p className="text-slate-400 text-xs mb-4">Supported: .xlsx, .xls, .csv</p>
-                    <label className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-md text-sm font-medium cursor-pointer transition-colors">
+                    <p className="text-foreground font-medium mb-1">Drop your Excel or CSV file here</p>
+                    <p className="text-muted-foreground text-xs mb-4">Supported: .xlsx, .xls, .csv</p>
+                    <label className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-primary-foreground px-5 py-2.5 rounded-md text-sm font-medium cursor-pointer transition-colors">
                       Choose File
                       <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
                     </label>
@@ -539,23 +539,23 @@ function ClientsPage() {
               )}
               {importStep === 2 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-slate-600">Found <strong>{importRows.length} rows</strong>. Preview below.</p>
-                  <div className="bg-slate-50 rounded-lg p-3 text-xs space-y-1">
-                    <p className="font-semibold text-slate-700 mb-2">Auto-detected columns:</p>
+                  <p className="text-sm text-muted-foreground">Found <strong>{importRows.length} rows</strong>. Preview below.</p>
+                  <div className="bg-muted rounded-lg p-3 text-xs space-y-1">
+                    <p className="font-semibold text-foreground mb-2">Auto-detected columns:</p>
                     {Object.entries(importMapping).map(([field, col]) => (
                       <div key={field} className="flex gap-2">
-                        <span className="text-blue-600 w-36">{field.replace(/_/g, ' ')}</span>
-                        <span className="text-slate-500">← "{col}"</span>
+                        <span className="text-primary w-36">{field.replace(/_/g, ' ')}</span>
+                        <span className="text-muted-foreground">← "{col}"</span>
                       </div>
                     ))}
                     {!importMapping.name && <p className="text-red-500 font-medium mt-2">⚠️ Name column not detected.</p>}
                   </div>
                   <div className="flex gap-3 pt-2">
-                    <button onClick={() => setImportStep(1)} className="px-4 py-2 text-sm border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50">← Back</button>
+                    <button onClick={() => setImportStep(1)} className="px-4 py-2 text-sm border border-input rounded-md text-foreground hover:bg-muted">← Back</button>
                     <button
                       onClick={handleImport}
                       disabled={!importMapping.name}
-                      className="flex-1 px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium disabled:opacity-50"
+                      className="flex-1 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium disabled:opacity-50"
                     >
                       Import {importRows.length} Clients →
                     </button>
@@ -566,15 +566,15 @@ function ClientsPage() {
                 <div className="py-8 text-center space-y-4">
                   {importProgress && (
                     <div>
-                      <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                      <p className="text-slate-600 text-sm">{importProgress}</p>
+                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                      <p className="text-muted-foreground text-sm">{importProgress}</p>
                     </div>
                   )}
                   {importDone && (
                     <div>
                       <p className="text-3xl mb-3">🎉</p>
-                      <p className="text-slate-800 font-medium">{importDone}</p>
-                      <button onClick={() => { setImportOpen(false); setImportStep(1); }} className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600">
+                      <p className="text-foreground font-medium">{importDone}</p>
+                      <button onClick={() => { setImportOpen(false); setImportStep(1); }} className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">
                         Close & View Clients
                       </button>
                     </div>
@@ -608,14 +608,14 @@ function RowMenu({ status, client, onAction, onEdit }: {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((p) => !p)} className="p-1 rounded hover:bg-slate-100 text-slate-500">
+      <button onClick={() => setOpen((p) => !p)} className="p-1 rounded hover:bg-muted text-muted-foreground">
         <MoreVertical size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-10 py-1">
-          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Edit</button>
-          {status !== "inactive" && <button onClick={() => { onAction("inactive"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Set Inactive</button>}
-          {status !== "archived" && <button onClick={() => { onAction("archived"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Archive</button>}
+        <div className="absolute right-0 mt-1 w-40 bg-card border border-border rounded-lg shadow-lg z-10 py-1">
+          <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted">Edit</button>
+          {status !== "inactive" && <button onClick={() => { onAction("inactive"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted">Set Inactive</button>}
+          {status !== "archived" && <button onClick={() => { onAction("archived"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted">Archive</button>}
           {status !== "active" && <button onClick={() => { onAction("active"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50">Restore</button>}
           {status !== "deleted" && <button onClick={() => { onAction("deleted"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Delete</button>}
         </div>
@@ -652,13 +652,13 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
   });
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }));
-  const inputClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
+  const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-card";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 sticky top-0 bg-white">
-          <h2 className="font-semibold text-slate-900">{mode === "edit" ? "Edit Client" : "Add Client"}</h2>
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-card">
+          <h2 className="font-semibold text-foreground">{mode === "edit" ? "Edit Client" : "Add Client"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
@@ -667,22 +667,22 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
         >
           {/* Basic Info */}
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Basic Info</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Basic Info</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Name *</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Name *</label>
                 <input type="text" required value={form.name} onChange={(e) => set("name", e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Firm Name</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Firm Name</label>
                 <input type="text" value={form.firm_name} onChange={(e) => set("firm_name", e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Email</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Email</label>
                 <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Phone</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Phone</label>
                 <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputClass} />
               </div>
             </div>
@@ -690,18 +690,18 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
 
           {/* Tax Details */}
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Tax Details</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Tax Details</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">PAN Number</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">PAN Number</label>
                 <input type="text" maxLength={10} value={form.pan_number} onChange={(e) => set("pan_number", e.target.value.toUpperCase())} placeholder="ABCDE1234F" className={`${inputClass} font-mono`} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">GST Number</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">GST Number</label>
                 <input type="text" maxLength={15} value={form.gst_number} onChange={(e) => set("gst_number", e.target.value.toUpperCase())} placeholder="22ABCDE1234F1Z5" className={`${inputClass} font-mono`} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Client Type</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Client Type</label>
                 <select value={form.client_type} onChange={(e) => set("client_type", e.target.value)} className={inputClass}>
                   <option value="">Select type...</option>
                   {CLIENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -712,34 +712,34 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
 
           {/* Services */}
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Services Applicable</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Services Applicable</p>
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={form.gst_registered} onChange={(e) => set("gst_registered", e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={form.gst_registered} onChange={(e) => set("gst_registered", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                 GST Registered
               </label>
               {form.gst_registered && (
                 <div className="ml-6 rounded-md border border-amber-200 bg-amber-50 p-3">
-                  <label className="flex items-center gap-2 text-sm text-slate-700">
-                    <input type="checkbox" checked={form.gst_turnover_above_2cr} onChange={(e) => set("gst_turnover_above_2cr", e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                  <label className="flex items-center gap-2 text-sm text-foreground">
+                    <input type="checkbox" checked={form.gst_turnover_above_2cr} onChange={(e) => set("gst_turnover_above_2cr", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                     Turnover above ₹2 Crore? (GSTR-9 applicable)
                   </label>
                 </div>
               )}
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={form.tds_applicable} onChange={(e) => set("tds_applicable", e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={form.tds_applicable} onChange={(e) => set("tds_applicable", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                 TDS Applicable
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={form.pf_applicable} onChange={(e) => set("pf_applicable", e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={form.pf_applicable} onChange={(e) => set("pf_applicable", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                 PF Applicable
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={form.ptec_applicable} onChange={(e) => set("ptec_applicable", e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={form.ptec_applicable} onChange={(e) => set("ptec_applicable", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                 PTEC Applicable
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={form.advance_tax_applicable} onChange={(e) => set("advance_tax_applicable", e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={form.advance_tax_applicable} onChange={(e) => set("advance_tax_applicable", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                 Advance Tax Applicable
               </label>
             </div>
@@ -747,14 +747,14 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
 
           {/* Contact Details */}
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Contact Details</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contact Details</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">WhatsApp Number</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">WhatsApp Number</label>
                 <input type="text" value={form.whatsapp_number} onChange={(e) => set("whatsapp_number", e.target.value)} placeholder="Same as phone if blank" className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">Notes</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Notes</label>
                 <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} className={`${inputClass} resize-none`} />
               </div>
             </div>
@@ -762,10 +762,10 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
 
           {/* DSC Details */}
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🔐 DSC Details</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">🔐 DSC Details</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">DSC Expiry Date</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Expiry Date</label>
                 <input
                   type="date"
                   value={form.dsc_expiry_date}
@@ -774,7 +774,7 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wide">DSC Physical Location</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Physical Location</label>
                 <input
                   type="text"
                   value={form.dsc_location}
@@ -787,8 +787,8 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
+            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
               {pending ? "Saving..." : mode === "edit" ? "Update Client" : "Save Client"}
             </button>
           </div>

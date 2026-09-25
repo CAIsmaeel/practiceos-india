@@ -18,11 +18,11 @@ const STATUSES = ["pending", "in_progress", "ready_for_review", "completed", "bi
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-blue-100 text-blue-800",
+  in_progress: "bg-primary/10 text-primary",
   ready_for_review: "bg-purple-100 text-purple-800",
   completed: "bg-green-100 text-green-800",
   billed: "bg-teal-100 text-teal-800",
-  on_hold: "bg-gray-200 text-gray-700",
+  on_hold: "bg-muted text-foreground",
 };
 
 // ---------- Document Chase helpers ----------
@@ -324,19 +324,19 @@ function EngagementsPage() {
           </button>
           <button
             onClick={() => void updateStatus(e.id, "in_progress")}
-            className={`${btn} bg-white text-red-600 border-red-200 hover:bg-red-50`}
+            className={`${btn} bg-card text-red-600 border-red-200 hover:bg-red-50`}
           >
             <X size={13} /> Reject
           </button>
         </>
       );
     }
-    if (!isActive(e)) return <span className="text-xs text-slate-400">—</span>;
+    if (!isActive(e)) return <span className="text-xs text-muted-foreground">—</span>;
     if (e.status === "on_hold") {
       return (
         <button
           onClick={() => void updateStatus(e.id, "in_progress")}
-          className={`${btn} bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100`}
+          className={`${btn} bg-muted text-foreground border-input hover:bg-muted`}
         >
           <Play size={13} /> Resume
         </button>
@@ -357,7 +357,7 @@ function EngagementsPage() {
       return (
         <button
           onClick={() => void updateStatus(e.id, "in_progress")}
-          className={`${btn} bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100`}
+          className={`${btn} bg-primary/5 text-primary border-primary/20 hover:bg-primary/90/10`}
         >
           <Play size={13} /> Start
         </button>
@@ -398,23 +398,23 @@ function EngagementsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Engagements</h1>
-          <p className="text-slate-500 text-sm">Track all client engagements</p>
+          <h1 className="text-2xl font-bold text-foreground">Engagements</h1>
+          <p className="text-muted-foreground text-sm">Track all client engagements</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setHideCompleted((v) => !v)}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border ${
               hideCompleted
-                ? "bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
-                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                : "bg-card text-foreground border-input hover:bg-muted"
             }`}
           >
             Hide Completed
           </button>
           <button
             onClick={() => setModalState({ mode: "create" })}
-            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
           >
             <Plus size={16} /> Add Engagement
           </button>
@@ -423,25 +423,25 @@ function EngagementsPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
-        <TabButton active={activeTab === "all"} activeClass="bg-blue-500 text-white border-blue-500"
+        <TabButton active={activeTab === "all"} activeClass="bg-primary text-primary-foreground border-primary"
           onClick={() => setActiveTab("all")} label="All Engagements" />
-        <TabButton active={activeTab === "docs"} activeClass="bg-amber-500 text-white border-amber-500"
-          badgeClass="bg-amber-500 text-white" activeBadgeClass="bg-white text-amber-600"
+        <TabButton active={activeTab === "docs"} activeClass="bg-amber-500 text-primary-foreground border-amber-500"
+          badgeClass="bg-amber-500 text-primary-foreground" activeBadgeClass="bg-card text-amber-600"
           onClick={() => setActiveTab("docs")} icon={<AlertCircle size={14} />}
           label="Pending Client Docs" count={counts.docs} />
-        <TabButton active={activeTab === "ready"} activeClass="bg-green-600 text-white border-green-600"
-          badgeClass="bg-green-600 text-white" activeBadgeClass="bg-white text-green-700"
+        <TabButton active={activeTab === "ready"} activeClass="bg-green-600 text-primary-foreground border-green-600"
+          badgeClass="bg-green-600 text-primary-foreground" activeBadgeClass="bg-card text-green-700"
           onClick={() => setActiveTab("ready")} icon={<CheckCircle2 size={14} />}
           label="Ready to Process" count={counts.ready} />
-        <TabButton active={activeTab === "review"} activeClass="bg-purple-500 text-white border-purple-500"
-          badgeClass="bg-purple-500 text-white" activeBadgeClass="bg-white text-purple-600"
+        <TabButton active={activeTab === "review"} activeClass="bg-purple-500 text-primary-foreground border-purple-500"
+          badgeClass="bg-purple-500 text-primary-foreground" activeBadgeClass="bg-card text-purple-600"
           onClick={() => setActiveTab("review")} icon={<Clock size={14} />}
           label="Pending Review" count={counts.review} />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600 text-left">
+          <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
             <tr>
               <th className="px-5 py-3 font-medium">Client</th>
               <th className="px-5 py-3 font-medium">Title</th>
@@ -454,13 +454,13 @@ function EngagementsPage() {
               <th className="px-5 py-3 font-medium">Next Step</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading && (
-              <tr><td colSpan={9} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={9} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
             )}
             {!isLoading && filtered?.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-8 text-center text-slate-500">
+                <td colSpan={9} className="px-5 py-8 text-center text-muted-foreground">
                   {activeTab === "review" && "🎉 No pending reviews!"}
                   {activeTab === "docs" && "🎉 No engagements waiting for client documents!"}
                   {activeTab === "ready" && "Nothing ready to process yet."}
@@ -472,11 +472,11 @@ function EngagementsPage() {
               const s = summarize(docsByEng[e.id]);
               const hasTemplate = getTemplate(e.type).length > 0;
               return (
-                <tr key={e.id} className={`hover:bg-slate-50 ${e.status === "ready_for_review" ? "bg-purple-50/30" : ""}`}>
-                  <td className="px-5 py-3 font-medium text-slate-900">{e.clients?.name ?? "—"}</td>
-                  <td className="px-5 py-3 text-slate-700">{e.title}</td>
-                  <td className="px-5 py-3 text-slate-700">{e.type}</td>
-                  <td className="px-5 py-3 text-slate-700 whitespace-nowrap">
+                <tr key={e.id} className={`hover:bg-muted ${e.status === "ready_for_review" ? "bg-purple-50/30" : ""}`}>
+                  <td className="px-5 py-3 font-medium text-foreground">{e.clients?.name ?? "—"}</td>
+                  <td className="px-5 py-3 text-foreground">{e.title}</td>
+                  <td className="px-5 py-3 text-foreground">{e.type}</td>
+                  <td className="px-5 py-3 text-foreground whitespace-nowrap">
                     {e.deadline ? format(new Date(e.deadline), "dd MMM yyyy") : "—"}
                   </td>
                   <td className="px-5 py-3">
@@ -497,19 +497,19 @@ function EngagementsPage() {
                       <button
                         onClick={() => generateMutation.mutate(e)}
                         disabled={generateMutation.isPending}
-                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary font-medium disabled:opacity-50"
                       >
                         <ClipboardList size={13} /> Generate
                       </button>
                     ) : (
-                      <span className="text-slate-400 text-xs">—</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3">
                     <select
                       value={e.status}
                       onChange={(event) => { void updateStatus(e.id, event.target.value); }}
-                      className={`rounded-md border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${statusColors[e.status] ?? "bg-gray-100 text-gray-700"}`}
+                      className={`rounded-md border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer ${statusColors[e.status] ?? "bg-muted text-foreground"}`}
                     >
                       {STATUSES.map((status) => (
                         <option key={status} value={status}>
@@ -518,8 +518,8 @@ function EngagementsPage() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-5 py-3 text-slate-700 text-xs">{e.assigned_to || "—"}</td>
-                  <td className="px-5 py-3 text-slate-700 text-xs">{e.reviewed_by || "—"}</td>
+                  <td className="px-5 py-3 text-foreground text-xs">{e.assigned_to || "—"}</td>
+                  <td className="px-5 py-3 text-foreground text-xs">{e.reviewed_by || "—"}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">{renderPrimary(e, s)}</div>
@@ -527,8 +527,8 @@ function EngagementsPage() {
                         type="button"
                         aria-label="More actions"
                         onClick={(ev) => openMenu(ev, e.id)}
-                        className={`p-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 ${
-                          menu?.id === e.id ? "bg-slate-100 text-slate-800" : ""
+                        className={`p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground ${
+                          menu?.id === e.id ? "bg-muted text-foreground" : ""
                         }`}
                       >
                         <MoreHorizontal size={16} />
@@ -547,13 +547,13 @@ function EngagementsPage() {
         const e = menuEngagement;
         const s = summarize(docsByEng[e.id]);
         const hasTemplate = getTemplate(e.type).length > 0;
-        const item = "w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2";
+        const item = "w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted flex items-center gap-2";
         const run = (fn: () => void) => () => { setMenu(null); fn(); };
         return (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
             <div
-              className="fixed z-50 w-48 bg-white border border-slate-200 rounded-md shadow-lg py-1"
+              className="fixed z-50 w-48 bg-card border border-border rounded-md shadow-lg py-1"
               style={{ right: menu.right, top: menu.top, bottom: menu.bottom }}
             >
               <button className={item} onClick={run(() => setModalState({ mode: "edit", engagement: e }))}>
@@ -578,9 +578,9 @@ function EngagementsPage() {
 
               {e.status !== "completed" && e.status !== "ready_for_review" && (
                 <>
-                  <div className="my-1 border-t border-slate-100" />
+                  <div className="my-1 border-t border-border" />
                   <button
-                    className={`${item} text-slate-500`}
+                    className={`${item} text-muted-foreground`}
                     onClick={run(() => archiveMutation.mutate({ id: e.id }))}
                   >
                     <Archive size={14} /> Archive
@@ -641,7 +641,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`px-4 py-2 rounded-md text-sm font-medium border transition-all flex items-center gap-2 ${
-        active ? activeClass : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+        active ? activeClass : "bg-card text-muted-foreground border-input hover:bg-muted"
       }`}
     >
       {icon}
@@ -660,7 +660,7 @@ function TabButton({
 const DOC_OPTIONS: { value: DocStatus; label: string; activeClass: string }[] = [
   { value: "pending", label: "Pending", activeClass: "bg-amber-100 text-amber-800 border-amber-300" },
   { value: "received", label: "Received", activeClass: "bg-green-100 text-green-800 border-green-300" },
-  { value: "not_applicable", label: "N/A", activeClass: "bg-slate-200 text-slate-700 border-slate-300" },
+  { value: "not_applicable", label: "N/A", activeClass: "bg-muted text-foreground border-input" },
 ];
 
 function ChecklistModal({
@@ -678,12 +678,12 @@ function ChecklistModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-border">
           <div>
-            <h2 className="font-semibold text-slate-900">Document Checklist</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="font-semibold text-foreground">Document Checklist</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {engagement.clients?.name ?? "—"} · {engagement.title} ({engagement.type})
             </p>
           </div>
@@ -691,7 +691,7 @@ function ChecklistModal({
         </div>
 
         {/* Progress */}
-        <div className="px-5 py-3 border-b border-slate-100 space-y-2">
+        <div className="px-5 py-3 border-b border-border space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span
               className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
@@ -702,9 +702,9 @@ function ChecklistModal({
                 ? "Ready to Process"
                 : `Pending Client Docs — ${s.mandatoryPending} mandatory pending`}
             </span>
-            <span className="text-slate-600 text-xs font-medium">{s.done} / {s.total} done</span>
+            <span className="text-muted-foreground text-xs font-medium">{s.done} / {s.total} done</span>
           </div>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full ${s.state === "ready" ? "bg-green-500" : "bg-amber-400"}`}
               style={{ width: `${pct}%` }}
@@ -713,20 +713,20 @@ function ChecklistModal({
         </div>
 
         {/* List */}
-        <div className="overflow-y-auto divide-y divide-slate-100">
+        <div className="overflow-y-auto divide-y divide-border">
           {docs.map((d) => (
             <div key={d.id} className="px-5 py-2.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p
                   className={`text-sm ${
-                    d.status === "not_applicable" ? "text-slate-400 line-through" : "text-slate-800"
+                    d.status === "not_applicable" ? "text-muted-foreground line-through" : "text-foreground"
                   }`}
                 >
                   {d.doc_name}
                 </p>
                 <span
                   className={`text-[10px] font-semibold uppercase tracking-wide ${
-                    d.requirement === "mandatory" ? "text-red-500" : "text-slate-400"
+                    d.requirement === "mandatory" ? "text-red-500" : "text-muted-foreground"
                   }`}
                 >
                   {d.requirement}
@@ -741,7 +741,7 @@ function ChecklistModal({
                     className={`px-2 py-1 rounded-md text-xs font-medium border disabled:opacity-60 ${
                       d.status === opt.value
                         ? opt.activeClass
-                        : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                        : "bg-card text-muted-foreground border-border hover:bg-muted"
                     }`}
                   >
                     {opt.label}
@@ -753,8 +753,8 @@ function ChecklistModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-xs text-slate-500">
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-xs text-muted-foreground">
             {engagement.last_reminder_date
               ? `Last reminder: ${format(new Date(engagement.last_reminder_date), "dd MMM yyyy")} · ${engagement.reminder_count ?? 0} sent`
               : "No reminder sent yet"}
@@ -763,13 +763,13 @@ function ChecklistModal({
             <button
               onClick={onChase}
               disabled={s.pendingCount === 0}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-green-600 text-primary-foreground hover:bg-green-700 disabled:opacity-50"
             >
               <MessageCircle size={14} /> Chase on WhatsApp
             </button>
             <button
               onClick={onClose}
-              className="px-3 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted"
             >
               Close
             </button>
@@ -802,14 +802,14 @@ function EngagementModal({
     status: initialEngagement?.status ?? "pending",
   });
 
-  const inputClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
   const templateCount = getTemplate(form.type).length;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">{mode === "edit" ? "Edit Engagement" : "Add Engagement"}</h2>
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">{mode === "edit" ? "Edit Engagement" : "Add Engagement"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
@@ -820,25 +820,25 @@ function EngagementModal({
           className="p-5 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Client *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Client *</label>
             <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className={inputClass}>
               <option value="">Select a client</option>
               {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Title *</label>
             <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Type</label>
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={inputClass}>
                 {ENGAGEMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Status</label>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={inputClass}>
                 {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
               </select>
@@ -846,7 +846,7 @@ function EngagementModal({
           </div>
 
           {mode === "create" && (
-            <p className="text-xs text-slate-500 -mt-2">
+            <p className="text-xs text-muted-foreground -mt-2">
               {templateCount > 0
                 ? `📋 A ${templateCount}-item document checklist will be created automatically.`
                 : "No document checklist for this type."}
@@ -854,7 +854,7 @@ function EngagementModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Deadline</label>
             <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className={inputClass} />
           </div>
 
@@ -862,7 +862,7 @@ function EngagementModal({
           <div className="bg-purple-50 border border-purple-100 rounded-lg p-3 space-y-3">
             <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Maker — Checker</p>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Assigned To (Maker)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Assigned To (Maker)</label>
               <input
                 value={form.assigned_to}
                 onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
@@ -871,7 +871,7 @@ function EngagementModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Reviewed By (Checker)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Reviewed By (Checker)</label>
               <input
                 value={form.reviewed_by}
                 onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })}
@@ -882,8 +882,8 @@ function EngagementModal({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
+            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
               {pending ? "Saving..." : mode === "edit" ? "Update Engagement" : "Save Engagement"}
             </button>
           </div>

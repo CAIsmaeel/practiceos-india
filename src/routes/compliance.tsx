@@ -54,7 +54,7 @@ function getStatusBadgeClass(item: Pick<ComplianceItem, "status" | "due_date">):
     case "filed":
       return "bg-green-100 text-green-800";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-muted text-foreground";
   }
 }
 
@@ -363,37 +363,37 @@ function CompliancePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Compliance</h1>
-          <p className="text-slate-500 text-sm">Track statutory filing deadlines</p>
+          <h1 className="text-2xl font-bold text-foreground">Compliance</h1>
+          <p className="text-muted-foreground text-sm">Track statutory filing deadlines</p>
         </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
         >
           <Plus size={16} /> Add Compliance Item
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4">
-          <p className="text-sm text-slate-500">Total Pending</p>
+        <div className="bg-card border border-border rounded-lg shadow-sm p-4">
+          <p className="text-sm text-muted-foreground">Total Pending</p>
           <div className="mt-2 flex items-baseline justify-between">
-            <p className="text-3xl font-bold text-slate-900">{summary.totalPending}</p>
-            <ShieldCheck className="text-slate-400" size={20} />
+            <p className="text-3xl font-bold text-foreground">{summary.totalPending}</p>
+            <ShieldCheck className="text-muted-foreground" size={20} />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4">
-          <p className="text-sm text-slate-500">Due This Week</p>
+        <div className="bg-card border border-border rounded-lg shadow-sm p-4">
+          <p className="text-sm text-muted-foreground">Due This Week</p>
           <div className="mt-2 flex items-baseline justify-between">
-            <p className="text-3xl font-bold text-slate-900">{summary.dueThisWeek}</p>
+            <p className="text-3xl font-bold text-foreground">{summary.dueThisWeek}</p>
             <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">Soon</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4">
-          <p className="text-sm text-slate-500">Overdue</p>
+        <div className="bg-card border border-border rounded-lg shadow-sm p-4">
+          <p className="text-sm text-muted-foreground">Overdue</p>
           <div className="mt-2 flex items-baseline justify-between">
             <p className="text-3xl font-bold text-red-600">{summary.overdue}</p>
             <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">Critical</span>
@@ -401,12 +401,12 @@ function CompliancePage() {
         </div>
       </div>
 
-      {isLoading && <p className="text-slate-500 text-sm">Loading compliance items...</p>}
+      {isLoading && <p className="text-muted-foreground text-sm">Loading compliance items...</p>}
 
       {!isLoading && sortedItems.length === 0 && (
-        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center">
+        <div className="bg-card border border-border rounded-lg p-12 text-center">
           <p className="text-3xl mb-3">✅</p>
-          <p className="font-medium text-slate-700">No compliance items yet.</p>
+          <p className="font-medium text-foreground">No compliance items yet.</p>
         </div>
       )}
 
@@ -431,64 +431,64 @@ function CompliancePage() {
             return (
               <div key={key}>
                 {index === 0 || month !== previousMonth ? (
-                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{month}</h2>
+                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{month}</h2>
                 ) : null}
-                <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-slate-900">{group.compliance_name}</h3>
-                      <p className="mt-0.5 text-sm text-slate-500">
+                      <h3 className="font-semibold text-foreground">{group.compliance_name}</h3>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
                         {group.clients.filter(
                           (client: any) => client.status !== "client_deleted" && client.status !== "filed",
                         ).length} clients pending
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {group.clients.slice(0, 2).map((client: any) => (
-                          <span key={client.id} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                          <span key={client.id} className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
                             {client.clients?.name ?? "—"}
                           </span>
                         ))}
                         {group.clients.length > 2 && (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                             +{group.clients.length - 2} more
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-sm font-semibold ${diff !== null && diff < 0 ? "text-red-600" : "text-blue-600"}`}>
+                      <p className={`text-sm font-semibold ${diff !== null && diff < 0 ? "text-red-600" : "text-primary"}`}>
                         {groupDate ? groupDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                       </p>
-                      <p className={`mt-0.5 text-xs ${diff !== null && diff < 0 ? "text-red-500" : "text-slate-500"}`}>
+                      <p className={`mt-0.5 text-xs ${diff !== null && diff < 0 ? "text-red-500" : "text-muted-foreground"}`}>
                         {diff === null ? "No due date" : diff < 0 ? `${Math.abs(diff)} days overdue` : diff === 0 ? "Due today!" : `Due in ${diff} days`}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+                  <div className="mt-3 flex gap-2 border-t border-border pt-3">
                     <button
                       type="button"
                       onClick={() => void markAllFiled(group)}
-                      className="rounded-md bg-green-500 px-3 py-1.5 text-xs text-white hover:bg-green-600"
+                      className="rounded-md bg-green-500 px-3 py-1.5 text-xs text-primary-foreground hover:bg-green-600"
                     >
                       ✓ Mark All Filed
                     </button>
                     <button
                       type="button"
                       onClick={() => toggleExpand(key)}
-                      className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                      className="rounded-md border border-input px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
                     >
                       {expanded === key ? "Hide Clients ▲" : "View Clients ▼"}
                     </button>
                   </div>
 
                   {expanded === key && (
-                    <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                    <div className="mt-3 space-y-2 border-t border-border pt-3">
                       {group.clients.map((item: any) => (
-                        <div key={item.id} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                        <div key={item.id} className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
                           <div>
-                            <p className="text-sm font-medium text-slate-900">{item.clients?.name ?? "—"}</p>
-                            <p className="text-xs text-slate-500">{item.clients?.client_type ?? ""}</p>
+                            <p className="text-sm font-medium text-foreground">{item.clients?.name ?? "—"}</p>
+                            <p className="text-xs text-muted-foreground">{item.clients?.client_type ?? ""}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`rounded-full px-2 py-0.5 text-xs ${item.status === "filed" ? "bg-green-100 text-green-700" : isPendingOverdue(item) ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
@@ -548,10 +548,10 @@ function ComplianceModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">Add Compliance Item</h2>
-          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-700">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">Add Compliance Item</h2>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={18} />
           </button>
         </div>
@@ -573,12 +573,12 @@ function ComplianceModal({
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Client *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Client *</label>
               <select
                 required
                 value={form.client_id}
                 onChange={(e) => setForm({ ...form, client_id: e.target.value })}
-                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Select a client</option>
                 {clients.map((client) => (
@@ -590,12 +590,12 @@ function ComplianceModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Compliance Type *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Compliance Type *</label>
               <select
                 required
                 value={form.compliance_type}
                 onChange={(e) => setForm({ ...form, compliance_type: e.target.value })}
-                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Select a compliance type</option>
                 {complianceTypes.map((type) => (
@@ -607,46 +607,46 @@ function ComplianceModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Due Date *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Due Date *</label>
               <input
                 required
                 type="date"
                 value={form.due_date}
                 onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Financial Year</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Financial Year</label>
               <input
                 type="text"
                 value={form.financial_year}
                 onChange={(e) => setForm({ ...form, financial_year: e.target.value })}
                 placeholder="2025-26"
-                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
             <textarea
               rows={4}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">
               Cancel
             </button>
             <button
               type="submit"
               disabled={pending}
-              className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
+              className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
               {pending ? "Saving..." : "Save Compliance Item"}
             </button>

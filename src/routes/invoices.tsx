@@ -285,20 +285,20 @@ function InvoicesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-          <p className="text-slate-500 text-sm">Track invoices and payments</p>
+          <h1 className="text-2xl font-bold text-foreground">Invoices</h1>
+          <p className="text-muted-foreground text-sm">Track invoices and payments</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setShowPaid((prev) => !prev)}
-            className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+            className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-sidebar text-primary-foreground border-sidebar" : "bg-card text-foreground border-input hover:bg-muted"}`}
           >
             Show Paid ({paidCount})
           </button>
           <button
             onClick={() => setModalState({ mode: "create" })}
-            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
           >
             <Plus size={16} /> Create Invoice
           </button>
@@ -307,16 +307,16 @@ function InvoicesPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm col-span-2 sm:col-span-1">
-          <p className="text-xs text-slate-500 font-medium">Total Outstanding</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{formatINR(summary.outstanding)}</p>
+        <div className="bg-card border border-border rounded-lg p-4 shadow-sm col-span-2 sm:col-span-1">
+          <p className="text-xs text-muted-foreground font-medium">Total Outstanding</p>
+          <p className="text-xl font-bold text-foreground mt-1">{formatINR(summary.outstanding)}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-          <p className="text-xs text-slate-500 font-medium">Overdue Count</p>
+        <div className="bg-card border border-border rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground font-medium">Overdue Count</p>
           <p className="text-xl font-bold text-red-600 mt-1">{summary.overdueCount}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-          <p className="text-xs text-slate-500 font-medium">Overdue Amount</p>
+        <div className="bg-card border border-border rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground font-medium">Overdue Amount</p>
           <p className="text-xl font-bold text-red-600 mt-1">{formatINR(summary.overdueAmount)}</p>
         </div>
         <div
@@ -345,14 +345,14 @@ function InvoicesPage() {
       {/* Aging filter indicator */}
       {agingFilter !== "all" && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600">Filtering: <strong>{agingFilter}+ days overdue</strong></span>
-          <button onClick={() => setAgingFilter("all")} className="text-xs text-blue-500 hover:underline">Clear filter</button>
+          <span className="text-sm text-muted-foreground">Filtering: <strong>{agingFilter}+ days overdue</strong></span>
+          <button onClick={() => setAgingFilter("all")} className="text-xs text-primary hover:underline">Clear filter</button>
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600 text-left">
+          <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
             <tr>
               <th className="px-5 py-3 font-medium">Invoice No</th>
               <th className="px-5 py-3 font-medium">Client</th>
@@ -362,12 +362,12 @@ function InvoicesPage() {
               <th className="px-5 py-3 font-medium">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
             )}
             {!isLoading && visibleInvoices.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No invoices found.</td></tr>
+              <tr><td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">No invoices found.</td></tr>
             )}
             {visibleInvoices.map((inv) => {
               const displayStatus = getDisplayStatus(inv);
@@ -376,11 +376,11 @@ function InvoicesPage() {
               const agingTag = getAgingTag(overdueDays);
 
               return (
-                <tr key={inv.id} className="hover:bg-slate-50">
-                  <td className="px-5 py-3 font-medium text-slate-900">{inv.invoice_number ?? "—"}</td>
-                  <td className="px-5 py-3 text-slate-700">{inv.clients?.name ?? "—"}</td>
-                  <td className="px-5 py-3 font-medium text-slate-900">{formatINR(total)}</td>
-                  <td className="px-5 py-3 text-slate-700">
+                <tr key={inv.id} className="hover:bg-muted">
+                  <td className="px-5 py-3 font-medium text-foreground">{inv.invoice_number ?? "—"}</td>
+                  <td className="px-5 py-3 text-foreground">{inv.clients?.name ?? "—"}</td>
+                  <td className="px-5 py-3 font-medium text-foreground">{formatINR(total)}</td>
+                  <td className="px-5 py-3 text-foreground">
                     {inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "—"}
                   </td>
                   <td className="px-5 py-3">
@@ -404,14 +404,14 @@ function InvoicesPage() {
                       <button
                         type="button"
                         onClick={() => setModalState({ mode: "edit", invoice: inv })}
-                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 font-medium"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium"
                       >
                         <Pencil size={14} /> Edit
                       </button>
                       <button
                         onClick={() => handleDownload(inv)}
                         disabled={downloadingId === inv.id}
-                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 font-medium disabled:opacity-50"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium disabled:opacity-50"
                       >
                         <Download size={14} /> {downloadingId === inv.id ? "..." : "PDF"}
                       </button>
@@ -487,13 +487,13 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
   const cgst = rate > 0 ? gstAmount / 2 : 0;
   const sgst = rate > 0 ? gstAmount / 2 : 0;
 
-  const inputClass = "w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
-          <h2 className="font-semibold text-slate-900">{mode === "edit" ? "Edit Invoice" : "Create Invoice"}</h2>
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-card z-10">
+          <h2 className="font-semibold text-foreground">{mode === "edit" ? "Edit Invoice" : "Create Invoice"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
         <form
@@ -515,59 +515,59 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
           className="p-5 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Client <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-foreground mb-1">Client <span className="text-red-500">*</span></label>
             <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className={inputClass}>
               <option value="">Select a client</option>
               {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Service Description</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Service Description</label>
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="e.g. GST Return Filing — Q2" className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Base Amount (₹) <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-foreground mb-1">Base Amount (₹) <span className="text-red-500">*</span></label>
             <input required type="number" min="0" step="0.01" value={form.base_amount} onChange={(e) => setForm({ ...form, base_amount: e.target.value })} className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">GST Rate</label>
+            <label className="block text-sm font-medium text-foreground mb-1">GST Rate</label>
             <select value={form.gst_rate} onChange={(e) => setForm({ ...form, gst_rate: e.target.value })} className={inputClass}>
               {GST_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
             </select>
           </div>
-          <div className="bg-slate-50 rounded-md p-3 space-y-1.5 text-sm">
+          <div className="bg-muted rounded-md p-3 space-y-1.5 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-500">GST Amount</span>
+              <span className="text-muted-foreground">GST Amount</span>
               <span className="font-medium">{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(gstAmount)}</span>
             </div>
             {rate > 0 && (
               <>
-                <div className="flex justify-between text-xs text-slate-500 pl-3">
+                <div className="flex justify-between text-xs text-muted-foreground pl-3">
                   <span>CGST ({rate/2}%)</span>
                   <span>{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(cgst)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-500 pl-3">
+                <div className="flex justify-between text-xs text-muted-foreground pl-3">
                   <span>SGST ({rate/2}%)</span>
                   <span>{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(sgst)}</span>
                 </div>
               </>
             )}
-            <div className="flex justify-between border-t border-slate-200 pt-1.5">
-              <span className="font-medium text-slate-700">Total Amount</span>
-              <span className="font-bold text-slate-900">{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(totalAmount)}</span>
+            <div className="flex justify-between border-t border-border pt-1.5">
+              <span className="font-medium text-foreground">Total Amount</span>
+              <span className="font-bold text-foreground">{new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(totalAmount)}</span>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Due Date</label>
             <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className={inputClass} />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
+            <button type="submit" disabled={pending} className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
               {pending ? "Saving..." : mode === "edit" ? "Update Invoice" : "Create Invoice"}
             </button>
           </div>
