@@ -6,7 +6,7 @@ import { Plus, X, MoreVertical } from "lucide-react";
 import { startOfDay } from "date-fns";
 
 export const Route = createFileRoute("/clients")({
-  head: () => ({ meta: [{ title: "Clients — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Clients — Firmora" }] }),
   component: ClientsPage,
 });
 

@@ -10,7 +10,7 @@ import {
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/engagements")({
-  head: () => ({ meta: [{ title: "Engagements — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Engagements — Firmora" }] }),
   component: EngagementsPage,
 });
 

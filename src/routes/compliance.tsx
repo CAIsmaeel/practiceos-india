@@ -6,7 +6,7 @@ import { Plus, X, ShieldCheck } from "lucide-react";
 import { differenceInCalendarDays, format, isBefore, parseISO, startOfDay } from "date-fns";
 
 export const Route = createFileRoute("/compliance")({
-  head: () => ({ meta: [{ title: "Compliance — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Compliance — Firmora" }] }),
   component: CompliancePage,
 });
 

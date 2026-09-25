@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Plus, X, UserPlus, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/leads")({
-  head: () => ({ meta: [{ title: "Leads — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Leads — Firmora" }] }),
   component: LeadsPage,
 });
 

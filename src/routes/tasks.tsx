@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { Plus, X } from "lucide-react";
 
 export const Route = createFileRoute("/tasks")({
-  head: () => ({ meta: [{ title: "Tasks — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Tasks — Firmora" }] }),
   component: TasksPage,
 });
 

@@ -9,7 +9,7 @@ import {
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/documents")({
-  head: () => ({ meta: [{ title: "Documents — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Documents — Firmora" }] }),
   component: DocumentsPage,
 });
 

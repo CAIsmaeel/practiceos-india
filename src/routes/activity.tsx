@@ -6,7 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/activity")({
-  head: () => ({ meta: [{ title: "Activity — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Activity — Firmora" }] }),
   component: ActivityPage,
 });
 

@@ -5,7 +5,7 @@ import { Users, Briefcase, Calendar, AlertTriangle, FileText } from "lucide-reac
 import { format, addDays, isBefore, differenceInCalendarDays, startOfDay } from "date-fns";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Dashboard — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Firmora" }] }),
   component: Dashboard,
 });
 

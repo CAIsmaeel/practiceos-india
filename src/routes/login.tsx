@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Login — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Login — Firmora" }] }),
   component: LoginPage,
 });
 
@@ -37,7 +37,7 @@ function LoginPage() {
           <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl mx-auto mb-4 shadow-lg">
             ₹
           </div>
-          <h1 className="text-2xl font-display font-bold text-sidebar-foreground">PracticeOS</h1>
+          <h1 className="text-2xl font-display font-bold text-sidebar-foreground">Firmora</h1>
           <p className="text-sidebar-foreground/60 text-sm mt-1">CA Practice Management</p>
         </div>
 
@@ -91,7 +91,7 @@ function LoginPage() {
         </div>
 
         <p className="text-center text-sidebar-foreground/40 text-xs mt-6">
-          PracticeOS — Built for Indian CA firms
+          Firmora — Built for Indian CA firms
         </p>
       </div>
     </div>

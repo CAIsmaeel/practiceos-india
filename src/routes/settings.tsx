@@ -4,7 +4,7 @@ import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Settings — Firmora" }] }),
   component: SettingsPage,
 });
 

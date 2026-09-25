@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PracticeOS — Practice Management for CA Firms" },
+      { title: "Firmora — Practice Management for CA Firms" },
       { name: "description", content: "Manage clients, engagements, deadlines and tasks — built for Indian CA and professional services firms." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],

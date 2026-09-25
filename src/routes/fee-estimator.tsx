@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/fee-estimator")({
-  head: () => ({ meta: [{ title: "Fee Estimator — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Fee Estimator — Firmora" }] }),
   component: FeeEstimatorPage,
 });
 

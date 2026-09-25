@@ -6,7 +6,7 @@ import { Plus, X, CheckCircle2, Download, Pencil, MessageCircle } from "lucide-r
 import { format, isBefore, startOfDay, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/invoices")({
-  head: () => ({ meta: [{ title: "Invoices — PracticeOS" }] }),
+  head: () => ({ meta: [{ title: "Invoices — Firmora" }] }),
   component: InvoicesPage,
 });
 
