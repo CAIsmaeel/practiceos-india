@@ -32,7 +32,7 @@ const TOP_FAQS = [
 ];
 
 async function getGroqReply(firmName: string, history: ChatMessage[]): Promise<string> {
-  const systemPrompt = `You are a CA firm assistant for ${firmName}. Answer client queries about GST, ITR, compliance deadlines. Be helpful and professional. Reply in the same language as the client.`;
+  const systemPrompt = `You are a CA firm assistant for ${firmName}. Answer client queries about GST, ITR, compliance deadlines. Be helpful and professional. Reply in plain simple text only - no asterisks, no bold, no markdown, no tables, no pipe characters. Keep answers short and clear. Reply in the same language as the client.`;
 
   const messages = [
     { role: "system" as const, content: systemPrompt },
