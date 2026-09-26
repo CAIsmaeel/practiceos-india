@@ -39,7 +39,7 @@ def fetch_rss(url: str) -> str:
             desc = item.findtext("description", "").strip()
             pub_date = item.findtext("pubDate", "").strip()
             combined = (title + " " + desc).lower()
-            if any(kw.lower() in combined for kw in DUE_DATE_KEYWORDS):
+            if True:  # show all items
                 items.append(f"TITLE: {title}\nDATE: {pub_date}\nDETAILS: {desc[:200]}")
         return "\n\n---\n\n".join(items[:6]) if items else "No relevant updates"
     except Exception as e:
@@ -121,8 +121,9 @@ def main():
                 print(f"  → {u.get('title','')[:70]}")
             save_to_supabase(updates, source["type"], source["name"])
             total += len(updates)
-        time.sleep(2)
+        time.sleep(8)
     print(f"\n✅ Done! Total: {total}")
 
 if __name__ == "__main__":
     main()
+# patch done
