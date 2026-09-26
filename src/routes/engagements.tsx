@@ -25,8 +25,6 @@ const statusColors: Record<string, string> = {
   on_hold: "bg-muted text-foreground",
 };
 
-// ---------- Document Chase helpers ----------
-
 type DocStatus = "pending" | "received" | "not_applicable";
 
 type DocRow = {
@@ -98,13 +96,10 @@ async function generateChecklist(engagementId: string, clientId: string | null, 
 
 const isActive = (e: any) => e.status !== "completed" && e.status !== "billed";
 
-// Is the main button for this row "Chase"?
 const primaryIsChase = (e: any, s: ReturnType<typeof summarize>) =>
   isActive(e) && e.status !== "ready_for_review" && e.status !== "on_hold" && s.state === "pending_docs";
 
 const btn = "inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap";
-
-// ---------- Page ----------
 
 type Tab = "all" | "review" | "docs" | "ready";
 type MenuState = { id: string; right: number; top?: number; bottom?: number } | null;
@@ -117,7 +112,6 @@ function EngagementsPage() {
   const [checklistFor, setChecklistFor] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuState>(null);
 
-  // Close the ⋯ menu on scroll / resize
   useEffect(() => {
     if (!menu) return;
     const close = () => setMenu(null);
@@ -158,6 +152,20 @@ function EngagementsPage() {
     },
   });
 
+  // ✅ Staff dropdown query
+  const { data: staffList } = useQuery({
+    queryKey: ["staff"],
+    queryFn: async () => {
+      const userId = await getCurrentUserId();
+      const { data } = await supabase
+        .from("staff")
+        .select("id, name, role")
+        .eq("user_id", userId ?? "")
+        .order("name");
+      return data ?? [];
+    },
+  });
+
   const { data: docs } = useQuery({
     queryKey: ["engagement-docs"],
     queryFn: async () => {
@@ -187,9 +195,7 @@ function EngagementsPage() {
   });
 
   const docsByEng: Record<string, DocRow[]> = {};
-  (docs ?? []).forEach((d) => {
-    (docsByEng[d.engagement_id] ??= []).push(d);
-  });
+  (docs ?? []).forEach((d) => { (docsByEng[d.engagement_id] ??= []).push(d); });
 
   const clientMap: Record<string, any> = {};
   (clients ?? []).forEach((c) => { clientMap[c.id] = c; });
@@ -198,8 +204,7 @@ function EngagementsPage() {
     const s = summarize(docsByEng[e.id]);
     if (tab === "review") return e.status === "ready_for_review";
     if (tab === "docs") return isActive(e) && s.state === "pending_docs";
-    if (tab === "ready")
-      return (e.status === "pending" || e.status === "in_progress") && s.state === "ready";
+    if (tab === "ready") return (e.status === "pending" || e.status === "in_progress") && s.state === "ready";
     return hideCompleted ? isActive(e) : true;
   };
 
@@ -218,10 +223,7 @@ function EngagementsPage() {
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("engagements").update({ status }).eq("id", id);
-    if (error) {
-      alert("Could not update status: " + error.message);
-      return;
-    }
+    if (error) { alert("Could not update status: " + error.message); return; }
     invalidateEngagements();
   };
 
@@ -246,12 +248,13 @@ function EngagementsPage() {
         await generateChecklist(data.id, data.client_id, data.type);
       } catch (err: any) {
         console.error(err);
-        alert("Engagement saved, but checklist could not be created. Use Generate Checklist from the ⋯ menu. " + (err?.message ?? ""));
+        alert("Engagement saved, but checklist could not be created. " + (err?.message ?? ""));
       }
     },
     onSuccess: () => {
       invalidateEngagements();
       qc.invalidateQueries({ queryKey: ["engagement-docs"] });
+      qc.invalidateQueries({ queryKey: ["staff"] });
       setModalState(null);
     },
     onError: (err: any) => alert("Could not save engagement: " + (err?.message ?? "")),
@@ -264,6 +267,7 @@ function EngagementsPage() {
     },
     onSuccess: () => {
       invalidateEngagements();
+      qc.invalidateQueries({ queryKey: ["staff"] });
       setModalState(null);
     },
     onError: (err: any) => alert("Could not update engagement: " + (err?.message ?? "")),
@@ -289,43 +293,29 @@ function EngagementsPage() {
 
   const chase = async (e: any) => {
     const s = summarize(docsByEng[e.id]);
-    if (s.pendingCount === 0) {
-      alert("All documents received — no reminder needed.");
-      return;
-    }
+    if (s.pendingCount === 0) { alert("All documents received — no reminder needed."); return; }
     const client = clientMap[e.client_id];
     const clientName = e.clients?.name ?? client?.name ?? "Sir/Madam";
     const phone = cleanPhone(client?.phone ?? client?.mobile ?? client?.whatsapp);
     const msg = encodeURIComponent(buildChaseMessage(e, s.pendingDocs, clientName, firmName ?? ""));
     const url = phone ? `https://wa.me/${phone}?text=${msg}` : `https://wa.me/?text=${msg}`;
     window.open(url, "_blank");
-
-    const { error } = await supabase
-      .from("engagements")
-      .update({
-        reminder_count: (e.reminder_count ?? 0) + 1,
-        last_reminder_date: new Date().toISOString(),
-      })
-      .eq("id", e.id);
+    const { error } = await supabase.from("engagements").update({
+      reminder_count: (e.reminder_count ?? 0) + 1,
+      last_reminder_date: new Date().toISOString(),
+    }).eq("id", e.id);
     if (error) console.error(error);
     invalidateEngagements();
   };
 
-  // ----- Main (primary) action for each row -----
   const renderPrimary = (e: any, s: ReturnType<typeof summarize>) => {
     if (e.status === "ready_for_review") {
       return (
         <>
-          <button
-            onClick={() => void updateStatus(e.id, "completed")}
-            className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}
-          >
+          <button onClick={() => void updateStatus(e.id, "completed")} className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
             <CheckCircle2 size={13} /> Approve
           </button>
-          <button
-            onClick={() => void updateStatus(e.id, "in_progress")}
-            className={`${btn} bg-card text-red-600 border-red-200 hover:bg-red-50`}
-          >
+          <button onClick={() => void updateStatus(e.id, "in_progress")} className={`${btn} bg-card text-red-600 border-red-200 hover:bg-red-50`}>
             <X size={13} /> Reject
           </button>
         </>
@@ -334,41 +324,28 @@ function EngagementsPage() {
     if (!isActive(e)) return <span className="text-xs text-muted-foreground">—</span>;
     if (e.status === "on_hold") {
       return (
-        <button
-          onClick={() => void updateStatus(e.id, "in_progress")}
-          className={`${btn} bg-muted text-foreground border-input hover:bg-muted`}
-        >
+        <button onClick={() => void updateStatus(e.id, "in_progress")} className={`${btn} bg-muted text-foreground border-input hover:bg-muted`}>
           <Play size={13} /> Resume
         </button>
       );
     }
     if (primaryIsChase(e, s)) {
       return (
-        <button
-          onClick={() => void chase(e)}
-          className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}
-          title="Send WhatsApp reminder for pending documents"
-        >
+        <button onClick={() => void chase(e)} className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
           <MessageCircle size={13} /> Chase
         </button>
       );
     }
     if (e.status === "pending") {
       return (
-        <button
-          onClick={() => void updateStatus(e.id, "in_progress")}
-          className={`${btn} bg-primary/5 text-primary border-primary/20 hover:bg-primary/90/10`}
-        >
+        <button onClick={() => void updateStatus(e.id, "in_progress")} className={`${btn} bg-primary/5 text-primary border-primary/20 hover:bg-primary/10`}>
           <Play size={13} /> Start
         </button>
       );
     }
     if (e.status === "in_progress") {
       return (
-        <button
-          onClick={() => void updateStatus(e.id, "ready_for_review")}
-          className={`${btn} bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100`}
-        >
+        <button onClick={() => void updateStatus(e.id, "ready_for_review")} className={`${btn} bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100`}>
           <Clock size={13} /> Send for Review
         </button>
       );
@@ -377,18 +354,11 @@ function EngagementsPage() {
   };
 
   const openMenu = (ev: React.MouseEvent<HTMLButtonElement>, id: string) => {
-    if (menu?.id === id) {
-      setMenu(null);
-      return;
-    }
+    if (menu?.id === id) { setMenu(null); return; }
     const r = ev.currentTarget.getBoundingClientRect();
     const right = window.innerWidth - r.right;
     const openUp = r.bottom + 190 > window.innerHeight;
-    setMenu(
-      openUp
-        ? { id, right, bottom: window.innerHeight - r.top + 4 }
-        : { id, right, top: r.bottom + 4 }
-    );
+    setMenu(openUp ? { id, right, bottom: window.innerHeight - r.top + 4 } : { id, right, top: r.bottom + 4 });
   };
 
   const menuEngagement = menu ? engagements?.find((e) => e.id === menu.id) : null;
@@ -404,11 +374,7 @@ function EngagementsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setHideCompleted((v) => !v)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border ${
-              hideCompleted
-                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                : "bg-card text-foreground border-input hover:bg-muted"
-            }`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border ${hideCompleted ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" : "bg-card text-foreground border-input hover:bg-muted"}`}
           >
             Hide Completed
           </button>
@@ -421,43 +387,30 @@ function EngagementsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
-        <TabButton active={activeTab === "all"} activeClass="bg-primary text-primary-foreground border-primary"
-          onClick={() => setActiveTab("all")} label="All Engagements" />
-        <TabButton active={activeTab === "docs"} activeClass="bg-amber-500 text-primary-foreground border-amber-500"
-          badgeClass="bg-amber-500 text-primary-foreground" activeBadgeClass="bg-card text-amber-600"
-          onClick={() => setActiveTab("docs")} icon={<AlertCircle size={14} />}
-          label="Pending Client Docs" count={counts.docs} />
-        <TabButton active={activeTab === "ready"} activeClass="bg-green-600 text-primary-foreground border-green-600"
-          badgeClass="bg-green-600 text-primary-foreground" activeBadgeClass="bg-card text-green-700"
-          onClick={() => setActiveTab("ready")} icon={<CheckCircle2 size={14} />}
-          label="Ready to Process" count={counts.ready} />
-        <TabButton active={activeTab === "review"} activeClass="bg-purple-500 text-primary-foreground border-purple-500"
-          badgeClass="bg-purple-500 text-primary-foreground" activeBadgeClass="bg-card text-purple-600"
-          onClick={() => setActiveTab("review")} icon={<Clock size={14} />}
-          label="Pending Review" count={counts.review} />
+        <TabButton active={activeTab === "all"} activeClass="bg-primary text-primary-foreground border-primary" onClick={() => setActiveTab("all")} label="All Engagements" />
+        <TabButton active={activeTab === "docs"} activeClass="bg-amber-500 text-primary-foreground border-amber-500" badgeClass="bg-amber-500 text-primary-foreground" activeBadgeClass="bg-card text-amber-600" onClick={() => setActiveTab("docs")} icon={<AlertCircle size={14} />} label="Pending Client Docs" count={counts.docs} />
+        <TabButton active={activeTab === "ready"} activeClass="bg-green-600 text-primary-foreground border-green-600" badgeClass="bg-green-600 text-primary-foreground" activeBadgeClass="bg-card text-green-700" onClick={() => setActiveTab("ready")} icon={<CheckCircle2 size={14} />} label="Ready to Process" count={counts.ready} />
+        <TabButton active={activeTab === "review"} activeClass="bg-purple-500 text-primary-foreground border-purple-500" badgeClass="bg-purple-500 text-primary-foreground" activeBadgeClass="bg-card text-purple-600" onClick={() => setActiveTab("review")} icon={<Clock size={14} />} label="Pending Review" count={counts.review} />
       </div>
 
       <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
             <tr>
-              <th className="px-5 py-3 font-medium">Client</th>
-              <th className="px-5 py-3 font-medium">Title</th>
-              <th className="px-5 py-3 font-medium">Type</th>
-              <th className="px-5 py-3 font-medium">Deadline</th>
-              <th className="px-5 py-3 font-medium">Docs</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Maker</th>
-              <th className="px-5 py-3 font-medium">Checker</th>
-              <th className="px-5 py-3 font-medium">Next Step</th>
+              <th className="px-5 py-3">Client</th>
+              <th className="px-5 py-3">Title</th>
+              <th className="px-5 py-3">Type</th>
+              <th className="px-5 py-3">Deadline</th>
+              <th className="px-5 py-3">Docs</th>
+              <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3">Maker</th>
+              <th className="px-5 py-3">Checker</th>
+              <th className="px-5 py-3">Next Step</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {isLoading && (
-              <tr><td colSpan={9} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
-            )}
+            {isLoading && <tr><td colSpan={9} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>}
             {!isLoading && filtered?.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-5 py-8 text-center text-muted-foreground">
@@ -476,46 +429,21 @@ function EngagementsPage() {
                   <td className="px-5 py-3 font-medium text-foreground">{e.clients?.name ?? "—"}</td>
                   <td className="px-5 py-3 text-foreground">{e.title}</td>
                   <td className="px-5 py-3 text-foreground">{e.type}</td>
-                  <td className="px-5 py-3 text-foreground whitespace-nowrap">
-                    {e.deadline ? format(new Date(e.deadline), "dd MMM yyyy") : "—"}
-                  </td>
+                  <td className="px-5 py-3 text-foreground whitespace-nowrap">{e.deadline ? format(new Date(e.deadline), "dd MMM yyyy") : "—"}</td>
                   <td className="px-5 py-3">
                     {s.total > 0 ? (
-                      <button
-                        onClick={() => setChecklistFor(e.id)}
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border ${
-                          s.state === "ready"
-                            ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                            : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-                        }`}
-                        title="Open checklist"
-                      >
-                        <ClipboardList size={13} />
-                        {s.state === "ready" ? "✓ " : ""}{s.done}/{s.total}
+                      <button onClick={() => setChecklistFor(e.id)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border ${s.state === "ready" ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"}`}>
+                        <ClipboardList size={13} />{s.state === "ready" ? "✓ " : ""}{s.done}/{s.total}
                       </button>
                     ) : hasTemplate ? (
-                      <button
-                        onClick={() => generateMutation.mutate(e)}
-                        disabled={generateMutation.isPending}
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary font-medium disabled:opacity-50"
-                      >
+                      <button onClick={() => generateMutation.mutate(e)} disabled={generateMutation.isPending} className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary font-medium disabled:opacity-50">
                         <ClipboardList size={13} /> Generate
                       </button>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
                   <td className="px-5 py-3">
-                    <select
-                      value={e.status}
-                      onChange={(event) => { void updateStatus(e.id, event.target.value); }}
-                      className={`rounded-md border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer ${statusColors[e.status] ?? "bg-muted text-foreground"}`}
-                    >
-                      {STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                          {status.replace(/_/g, " ")}
-                        </option>
-                      ))}
+                    <select value={e.status} onChange={(event) => { void updateStatus(e.id, event.target.value); }} className={`rounded-md border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer ${statusColors[e.status] ?? "bg-muted text-foreground"}`}>
+                      {STATUSES.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}
                     </select>
                   </td>
                   <td className="px-5 py-3 text-foreground text-xs">{e.assigned_to || "—"}</td>
@@ -523,14 +451,7 @@ function EngagementsPage() {
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">{renderPrimary(e, s)}</div>
-                      <button
-                        type="button"
-                        aria-label="More actions"
-                        onClick={(ev) => openMenu(ev, e.id)}
-                        className={`p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground ${
-                          menu?.id === e.id ? "bg-muted text-foreground" : ""
-                        }`}
-                      >
+                      <button type="button" aria-label="More actions" onClick={(ev) => openMenu(ev, e.id)} className={`p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground ${menu?.id === e.id ? "bg-muted text-foreground" : ""}`}>
                         <MoreHorizontal size={16} />
                       </button>
                     </div>
@@ -542,7 +463,6 @@ function EngagementsPage() {
         </table>
       </div>
 
-      {/* ⋯ menu (rendered outside the table so it never gets cut off) */}
       {menu && menuEngagement && (() => {
         const e = menuEngagement;
         const s = summarize(docsByEng[e.id]);
@@ -552,39 +472,20 @@ function EngagementsPage() {
         return (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
-            <div
-              className="fixed z-50 w-48 bg-card border border-border rounded-md shadow-lg py-1"
-              style={{ right: menu.right, top: menu.top, bottom: menu.bottom }}
-            >
-              <button className={item} onClick={run(() => setModalState({ mode: "edit", engagement: e }))}>
-                <Pencil size={14} /> Edit
-              </button>
-
+            <div className="fixed z-50 w-48 bg-card border border-border rounded-md shadow-lg py-1" style={{ right: menu.right, top: menu.top, bottom: menu.bottom }}>
+              <button className={item} onClick={run(() => setModalState({ mode: "edit", engagement: e }))}><Pencil size={14} /> Edit</button>
               {s.total > 0 ? (
-                <button className={item} onClick={run(() => setChecklistFor(e.id))}>
-                  <ClipboardList size={14} /> Open Checklist
-                </button>
+                <button className={item} onClick={run(() => setChecklistFor(e.id))}><ClipboardList size={14} /> Open Checklist</button>
               ) : hasTemplate ? (
-                <button className={item} onClick={run(() => generateMutation.mutate(e))}>
-                  <ClipboardList size={14} /> Generate Checklist
-                </button>
+                <button className={item} onClick={run(() => generateMutation.mutate(e))}><ClipboardList size={14} /> Generate Checklist</button>
               ) : null}
-
               {s.pendingCount > 0 && isActive(e) && !primaryIsChase(e, s) && (
-                <button className={item} onClick={run(() => void chase(e))}>
-                  <MessageCircle size={14} /> Send Reminder
-                </button>
+                <button className={item} onClick={run(() => void chase(e))}><MessageCircle size={14} /> Send Reminder</button>
               )}
-
               {e.status !== "completed" && e.status !== "ready_for_review" && (
                 <>
                   <div className="my-1 border-t border-border" />
-                  <button
-                    className={`${item} text-muted-foreground`}
-                    onClick={run(() => archiveMutation.mutate({ id: e.id }))}
-                  >
-                    <Archive size={14} /> Archive
-                  </button>
+                  <button className={`${item} text-muted-foreground`} onClick={run(() => archiveMutation.mutate({ id: e.id }))}><Archive size={14} /> Archive</button>
                 </>
               )}
             </div>
@@ -597,6 +498,7 @@ function EngagementsPage() {
           mode={modalState.mode}
           initialEngagement={modalState.engagement ?? undefined}
           clients={clients ?? []}
+          staffList={staffList ?? []}
           onClose={() => setModalState(null)}
           onSubmit={(payload) => {
             if (modalState.mode === "edit" && modalState.engagement?.id) {
@@ -623,39 +525,19 @@ function EngagementsPage() {
   );
 }
 
-// ---------- Tab button ----------
-
-function TabButton({
-  active, activeClass, badgeClass, activeBadgeClass, onClick, icon, label, count,
-}: {
-  active: boolean;
-  activeClass: string;
-  badgeClass?: string;
-  activeBadgeClass?: string;
-  onClick: () => void;
-  icon?: React.ReactNode;
-  label: string;
-  count?: number;
+function TabButton({ active, activeClass, badgeClass, activeBadgeClass, onClick, icon, label, count }: {
+  active: boolean; activeClass: string; badgeClass?: string; activeBadgeClass?: string;
+  onClick: () => void; icon?: React.ReactNode; label: string; count?: number;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-md text-sm font-medium border transition-all flex items-center gap-2 ${
-        active ? activeClass : "bg-card text-muted-foreground border-input hover:bg-muted"
-      }`}
-    >
-      {icon}
-      {label}
+    <button onClick={onClick} className={`px-4 py-2 rounded-md text-sm font-medium border transition-all flex items-center gap-2 ${active ? activeClass : "bg-card text-muted-foreground border-input hover:bg-muted"}`}>
+      {icon}{label}
       {count !== undefined && count > 0 && (
-        <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${active ? activeBadgeClass : badgeClass}`}>
-          {count}
-        </span>
+        <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${active ? activeBadgeClass : badgeClass}`}>{count}</span>
       )}
     </button>
   );
 }
-
-// ---------- Checklist modal ----------
 
 const DOC_OPTIONS: { value: DocStatus; label: string; activeClass: string }[] = [
   { value: "pending", label: "Pending", activeClass: "bg-amber-100 text-amber-800 border-amber-300" },
@@ -663,87 +545,44 @@ const DOC_OPTIONS: { value: DocStatus; label: string; activeClass: string }[] = 
   { value: "not_applicable", label: "N/A", activeClass: "bg-muted text-foreground border-input" },
 ];
 
-function ChecklistModal({
-  engagement, docs, onClose, onUpdate, updating, onChase,
-}: {
-  engagement: any;
-  docs: DocRow[];
-  onClose: () => void;
-  onUpdate: (id: string, status: DocStatus) => void;
-  updating: boolean;
-  onChase: () => void;
+function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase }: {
+  engagement: any; docs: DocRow[]; onClose: () => void;
+  onUpdate: (id: string, status: DocStatus) => void; updating: boolean; onChase: () => void;
 }) {
   const s = summarize(docs);
   const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-start justify-between px-5 py-4 border-b border-border">
           <div>
             <h2 className="font-semibold text-foreground">Document Checklist</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {engagement.clients?.name ?? "—"} · {engagement.title} ({engagement.type})
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">{engagement.clients?.name ?? "—"} · {engagement.title} ({engagement.type})</p>
           </div>
           <button onClick={onClose}><X size={18} /></button>
         </div>
-
-        {/* Progress */}
         <div className="px-5 py-3 border-b border-border space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span
-              className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
-                s.state === "ready" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
-              }`}
-            >
-              {s.state === "ready"
-                ? "Ready to Process"
-                : `Pending Client Docs — ${s.mandatoryPending} mandatory pending`}
+            <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${s.state === "ready" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>
+              {s.state === "ready" ? "Ready to Process" : `Pending Client Docs — ${s.mandatoryPending} mandatory pending`}
             </span>
             <span className="text-muted-foreground text-xs font-medium">{s.done} / {s.total} done</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className={`h-full ${s.state === "ready" ? "bg-green-500" : "bg-amber-400"}`}
-              style={{ width: `${pct}%` }}
-            />
+            <div className={`h-full ${s.state === "ready" ? "bg-green-500" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
           </div>
         </div>
-
-        {/* List */}
         <div className="overflow-y-auto divide-y divide-border">
           {docs.map((d) => (
             <div key={d.id} className="px-5 py-2.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p
-                  className={`text-sm ${
-                    d.status === "not_applicable" ? "text-muted-foreground line-through" : "text-foreground"
-                  }`}
-                >
-                  {d.doc_name}
-                </p>
-                <span
-                  className={`text-[10px] font-semibold uppercase tracking-wide ${
-                    d.requirement === "mandatory" ? "text-red-500" : "text-muted-foreground"
-                  }`}
-                >
-                  {d.requirement}
-                </span>
+                <p className={`text-sm ${d.status === "not_applicable" ? "text-muted-foreground line-through" : "text-foreground"}`}>{d.doc_name}</p>
+                <span className={`text-[10px] font-semibold uppercase tracking-wide ${d.requirement === "mandatory" ? "text-red-500" : "text-muted-foreground"}`}>{d.requirement}</span>
               </div>
               <div className="flex gap-1 shrink-0">
                 {DOC_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    disabled={updating}
-                    onClick={() => d.status !== opt.value && onUpdate(d.id, opt.value)}
-                    className={`px-2 py-1 rounded-md text-xs font-medium border disabled:opacity-60 ${
-                      d.status === opt.value
-                        ? opt.activeClass
-                        : "bg-card text-muted-foreground border-border hover:bg-muted"
-                    }`}
-                  >
+                  <button key={opt.value} disabled={updating} onClick={() => d.status !== opt.value && onUpdate(d.id, opt.value)}
+                    className={`px-2 py-1 rounded-md text-xs font-medium border disabled:opacity-60 ${d.status === opt.value ? opt.activeClass : "bg-card text-muted-foreground border-border hover:bg-muted"}`}>
                     {opt.label}
                   </button>
                 ))}
@@ -751,28 +590,15 @@ function ChecklistModal({
             </div>
           ))}
         </div>
-
-        {/* Footer */}
         <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-3 flex-wrap">
           <p className="text-xs text-muted-foreground">
-            {engagement.last_reminder_date
-              ? `Last reminder: ${format(new Date(engagement.last_reminder_date), "dd MMM yyyy")} · ${engagement.reminder_count ?? 0} sent`
-              : "No reminder sent yet"}
+            {engagement.last_reminder_date ? `Last reminder: ${format(new Date(engagement.last_reminder_date), "dd MMM yyyy")} · ${engagement.reminder_count ?? 0} sent` : "No reminder sent yet"}
           </p>
           <div className="flex gap-2">
-            <button
-              onClick={onChase}
-              disabled={s.pendingCount === 0}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-green-600 text-primary-foreground hover:bg-green-700 disabled:opacity-50"
-            >
+            <button onClick={onChase} disabled={s.pendingCount === 0} className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-green-600 text-primary-foreground hover:bg-green-700 disabled:opacity-50">
               <MessageCircle size={14} /> Chase on WhatsApp
             </button>
-            <button
-              onClick={onClose}
-              className="px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted"
-            >
-              Close
-            </button>
+            <button onClick={onClose} className="px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Close</button>
           </div>
         </div>
       </div>
@@ -780,14 +606,11 @@ function ChecklistModal({
   );
 }
 
-// ---------- Add / Edit engagement modal ----------
-
-function EngagementModal({
-  mode, initialEngagement, clients, onClose, onSubmit, pending,
-}: {
+function EngagementModal({ mode, initialEngagement, clients, staffList, onClose, onSubmit, pending }: {
   mode: "create" | "edit";
   initialEngagement?: any;
   clients: Pick<Client, "id" | "name">[];
+  staffList?: any[];
   onClose: () => void;
   onSubmit: (data: any) => void;
   pending: boolean;
@@ -807,18 +630,12 @@ function EngagementModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="font-semibold text-foreground">{mode === "edit" ? "Edit Engagement" : "Add Engagement"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit({ ...form, deadline: form.deadline || null, reviewed_by: form.reviewed_by || null });
-          }}
-          className="p-5 space-y-4"
-        >
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, deadline: form.deadline || null, reviewed_by: form.reviewed_by || null }); }} className="p-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Client *</label>
             <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className={inputClass}>
@@ -847,9 +664,7 @@ function EngagementModal({
 
           {mode === "create" && (
             <p className="text-xs text-muted-foreground -mt-2">
-              {templateCount > 0
-                ? `📋 A ${templateCount}-item document checklist will be created automatically.`
-                : "No document checklist for this type."}
+              {templateCount > 0 ? `📋 A ${templateCount}-item document checklist will be created automatically.` : "No document checklist for this type."}
             </p>
           )}
 
@@ -858,27 +673,38 @@ function EngagementModal({
             <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className={inputClass} />
           </div>
 
-          {/* Maker-Checker Fields */}
+          {/* ✅ Maker-Checker — Staff Dropdown */}
           <div className="bg-purple-50 border border-purple-100 rounded-lg p-3 space-y-3">
             <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Maker — Checker</p>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Assigned To (Maker)</label>
-              <input
-                value={form.assigned_to}
-                onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
-                placeholder="e.g. Rahul (Article)"
-                className={inputClass}
-              />
+              {staffList && staffList.length > 0 ? (
+                <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className={inputClass}>
+                  <option value="">Select staff member</option>
+                  {staffList.map((s: any) => (
+                    <option key={s.id} value={s.name}>{s.name}{s.role ? ` (${s.role})` : ""}</option>
+                  ))}
+                </select>
+              ) : (
+                <input value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} placeholder="Add staff from Staff page first" className={inputClass} />
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Reviewed By (Checker)</label>
-              <input
-                value={form.reviewed_by}
-                onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })}
-                placeholder="e.g. CA Ismaeel"
-                className={inputClass}
-              />
+              {staffList && staffList.length > 0 ? (
+                <select value={form.reviewed_by} onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })} className={inputClass}>
+                  <option value="">Select staff member</option>
+                  {staffList.map((s: any) => (
+                    <option key={s.id} value={s.name}>{s.name}{s.role ? ` (${s.role})` : ""}</option>
+                  ))}
+                </select>
+              ) : (
+                <input value={form.reviewed_by} onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })} placeholder="Add staff from Staff page first" className={inputClass} />
+              )}
             </div>
+            {(!staffList || staffList.length === 0) && (
+              <p className="text-xs text-amber-600">⚠️ No staff added yet. Go to Staff page to add team members.</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
