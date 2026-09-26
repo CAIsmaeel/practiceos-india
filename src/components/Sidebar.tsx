@@ -10,6 +10,7 @@ const navItems = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/leads", label: "Leads", icon: UserPlus },
   { to: "/engagements", label: "Engagements", icon: Briefcase },
+  { to: "/staff", label: "Staff", icon: Users },
   { to: "/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/fee-estimator", label: "Fee Estimator", icon: Calculator },
