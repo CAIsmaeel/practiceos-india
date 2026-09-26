@@ -16,17 +16,8 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   // Fetch firm settings for logo + name
-  const { data: settings } = useQuery({
-    queryKey: ["login-firm-settings"],
-    queryFn: async () => {
-      const { data } = await supabase.from("settings").select("firm_name, logo_url").limit(1);
-      return data?.[0] ?? null;
-    },
-    staleTime: 60_000,
-  });
-
-  const firmName = (settings as any)?.firm_name || "Firmora";
-  const logoUrl = (settings as any)?.logo_url ?? null;
+  const firmName = "Firmora";
+  const logoUrl = null;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
