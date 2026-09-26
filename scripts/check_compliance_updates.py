@@ -66,14 +66,22 @@ Articles:
 {content}"""
 
     try:
-        response = httpx.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={GEMINI_API_KEY}",
+        # Retry up to 3 times on 503
+        response = None
+        for attempt in range(3):
+            response = httpx.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={GEMINI_API_KEY}",
             headers={"Content-Type": "application/json"},
             json={"contents": [{"parts": [{"text": prompt}]}],
                   "generationConfig": {"temperature": 0.1, "maxOutputTokens": 600}},
             timeout=45
         )
-        data = response.json()
+            data = response.json()
+            if response.status_code == 503:
+                print(f"  503 retry {attempt+1}/3...")
+                time.sleep(10)
+                continue
+            break
 
         if "candidates" not in data:
             print(f"  Gemini error: {str(data)[:100]}")
@@ -121,7 +129,7 @@ def main():
                 print(f"  → {u.get('title','')[:70]}")
             save_to_supabase(updates, source["type"], source["name"])
             total += len(updates)
-        time.sleep(8)
+        time.sleep(12)
     print(f"\n✅ Done! Total: {total}")
 
 if __name__ == "__main__":
