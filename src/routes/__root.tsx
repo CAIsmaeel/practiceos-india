@@ -153,8 +153,11 @@ function AppLayout() {
       <Sidebar
         firmName={firmName}
         onLogout={async () => {
-          await supabase.auth.signOut();
-          router.navigate({ to: "/login" });
+        await supabase.auth.signOut();
+        // Favicon reset on logout
+        const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+        if (link) link.href = "/favicon.ico";
+        router.navigate({ to: "/login" });
         }}
       />
       <main className="p-4 md:p-8">

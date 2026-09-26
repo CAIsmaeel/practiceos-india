@@ -104,6 +104,16 @@ function SettingsPage() {
       const urlWithCache = `${publicUrl}?t=${Date.now()}`;
       setForm(f => ({ ...f, logo_url: urlWithCache }));
       setLogoPreview(urlWithCache);
+      const { data: { user: u } } = await supabase.auth.getUser();
+      const { data: rows } = await supabase.from("settings").select("id").eq("user_id", u?.id ?? "").limit(1);
+      const existingId = rows?.[0]?.id;
+      if (existingId) {
+        await supabase.from("settings").update({ logo_url: urlWithCache }).eq("id", existingId);
+      } else {
+        await supabase.from("settings").insert({ logo_url: urlWithCache, user_id: u?.id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      queryClient.invalidateQueries({ queryKey: ["firm-settings"] });
     } catch (err) {
       setError("Logo upload failed: " + ((err as any)?.message ?? "Unknown error"));
     } finally {
