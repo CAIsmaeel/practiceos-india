@@ -124,17 +124,22 @@ function AppLayout() {
   const logoUrl = (settings as any)?.logo_url ?? null;
 
   // ✅ Dynamic favicon — logo set hone par browser tab mein dikhega
+    // Favicon — session aur logo ke hisaab se set/reset
   useEffect(() => {
-    if (!logoUrl) return;
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (!link) {
       link = document.createElement("link");
       link.rel = "icon";
       document.head.appendChild(link);
     }
-    link.href = logoUrl;
-    link.type = "image/png";
-  }, [logoUrl]);
+    if (session && logoUrl) {
+      link.href = logoUrl;
+      link.type = "image/png";
+    } else {
+      link.href = "/favicon.ico";
+      link.type = "image/x-icon";
+    }
+  }, [logoUrl, session]);
 
   if (isLoginPage) return <Outlet />;
 
