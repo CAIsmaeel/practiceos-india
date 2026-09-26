@@ -20,6 +20,7 @@ import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportAgentRouteImport } from './routes/support-agent'
 import { Route as TasksRouteImport } from './routes/tasks'
 
@@ -78,6 +79,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportAgentRoute = SupportAgentRouteImport.update({
   id: '/support-agent',
   path: '/support-agent',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/staff': typeof StaffRoute
   '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/staff': typeof StaffRoute
   '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/staff': typeof StaffRoute
   '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/login'
     | '/settings'
+    | '/staff'
     | '/support-agent'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/login'
     | '/settings'
+    | '/staff'
     | '/support-agent'
     | '/tasks'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/login'
     | '/settings'
+    | '/staff'
     | '/support-agent'
     | '/tasks'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
+  StaffRoute: typeof StaffRoute
   SupportAgentRoute: typeof SupportAgentRoute
   TasksRoute: typeof TasksRoute
 }
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support-agent': {
       id: '/support-agent'
       path: '/support-agent'
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
+  StaffRoute: StaffRoute,
   SupportAgentRoute: SupportAgentRoute,
   TasksRoute: TasksRoute,
 }
