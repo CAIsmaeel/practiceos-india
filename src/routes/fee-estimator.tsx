@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getGroqCompletion } from "@/lib/groq.server";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -448,23 +449,8 @@ async function getGroqReasoning(form: FeeForm, range: PriceRange, recommendedFee
   const prompt = `You are a senior CA pricing advisor. Explain the pricing logic for this engagement in a concise but professional, client-friendly style. Use Indian CA firm context. Keep the response under 180 words, no markdown tables. Use the inputs below to justify the estimate. Inputs: serviceType=${form.serviceType}; entityType=${form.entityType}; turnoverBand=${form.turnoverBand}; transactionVolume=${form.transactionVolume}; complexity=${form.complexity}; cityTier=${form.cityTier}; experience=${form.experience}; foreignTransactions=${form.foreignTransactions}; relatedParty=${form.relatedParty}; priorLitigation=${form.priorLitigation}; messyBooks=${form.messyBooks}; multipleGstin=${form.multipleGstin}; urgentDeadline=${form.urgentDeadline}; priceRange=${range.min}-${range.max}; recommendedFee=${recommendedFee}.`;
 
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 400,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!response.ok) throw new Error(`Groq error ${response.status}`);
-    const data = await response.json();
-    const text = data?.choices?.[0]?.message?.content ?? "";
-    return text.trim() || getFallbackReasoning(form, range, recommendedFee);
+    const text = await getGroqCompletion({ data: { messages: [{ role: "user", content: prompt }] } });
+    return text || getFallbackReasoning(form, range, recommendedFee);
   } catch {
     return getFallbackReasoning(form, range, recommendedFee);
   }

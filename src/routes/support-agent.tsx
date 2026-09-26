@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, type Client, type FirmSettings } from "@/lib/supabase";
+import { getGroqCompletion } from "@/lib/groq.server";
 import { useState } from "react";
 // @ts-ignore - lucide-react does not currently ship TypeScript declarations in this setup
 import { Bot, Send } from "lucide-react";
@@ -34,28 +35,14 @@ async function getGroqReply(firmName: string, history: ChatMessage[]): Promise<s
   const systemPrompt = `You are a CA firm assistant for ${firmName}. Answer client queries about GST, ITR, compliance deadlines. Be helpful and professional. Reply in the same language as the client.`;
 
   const messages = [
-    { role: "system", content: systemPrompt },
-    ...history.map((m) => ({ role: m.role === "client" ? "user" : "assistant", content: m.text })),
+    { role: "system" as const, content: systemPrompt },
+    ...history.map((m) => ({
+      role: (m.role === "client" ? "user" : "assistant") as "user" | "assistant",
+      content: m.text,
+    })),
   ];
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      max_tokens: 400,
-      messages,
-    }),
-  });
-
-  if (!response.ok) throw new Error(`Groq error ${response.status}`);
-  const data = await response.json();
-  const text = data?.choices?.[0]?.message?.content ?? "";
-  if (!text.trim()) throw new Error("Empty response from Groq");
-  return text.trim();
+  return getGroqCompletion({ data: { messages } });
 }
 
 function SupportAgentPage() {
@@ -118,7 +105,7 @@ function SupportAgentPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">AI Client Support Agent</h1>
         <p className="text-muted-foreground text-sm">
-          WhatsApp & Email se aane wale client queries ka AI automatically reply karta hai
+          AI automatically replies to client queries coming in via WhatsApp & Email
         </p>
       </div>
 
