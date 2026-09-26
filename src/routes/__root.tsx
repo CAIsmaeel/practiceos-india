@@ -20,14 +20,9 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist.</p>
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
             Go home
           </Link>
         </div>
@@ -46,26 +41,15 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try refreshing or go home.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+          <button onClick={() => { router.invalidate(); reset(); }}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
             Try again
           </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
+          <a href="/"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">
             Go home
           </a>
         </div>
@@ -80,7 +64,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Firmora — Practice Management for CA Firms" },
-      { name: "description", content: "Manage clients, engagements, deadlines and tasks — built for Indian CA and professional services firms." },
+      { name: "description", content: "Manage clients, engagements, deadlines and tasks — built for Indian CA firms." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -109,41 +93,26 @@ function AppLayout() {
   const [session, setSession] = useState<any>(null);
   const [checking, setChecking] = useState(true);
   const pathname = router.state.location.pathname;
-
-  // Skip auth check for login page
   const isLoginPage = pathname === "/login";
 
   useEffect(() => {
-    if (isLoginPage) {
-      setChecking(false);
-      return;
-    }
-
+    if (isLoginPage) { setChecking(false); return; }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setChecking(false);
-      if (!session) {
-        router.navigate({ to: "/login" });
-      }
+      if (!session) router.navigate({ to: "/login" });
     });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (!session && router.state.location.pathname !== "/login") {
-        router.navigate({ to: "/login" });
-      }
+      if (!session && router.state.location.pathname !== "/login") router.navigate({ to: "/login" });
     });
-
     return () => subscription.unsubscribe();
   }, [isLoginPage]);
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("settings")
-        .select("firm_name")
-        .limit(1);
+      const { data, error } = await supabase.from("settings").select("firm_name, logo_url").limit(1);
       if (error) throw error;
       return data?.[0] ?? null;
     },
@@ -152,13 +121,23 @@ function AppLayout() {
   });
 
   const firmName = settings?.firm_name || "CA Practice Manager";
+  const logoUrl = (settings as any)?.logo_url ?? null;
 
-  // Login page — render without sidebar
-  if (isLoginPage) {
-    return <Outlet />;
-  }
+  // ✅ Dynamic favicon — logo set hone par browser tab mein dikhega
+  useEffect(() => {
+    if (!logoUrl) return;
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = logoUrl;
+    link.type = "image/png";
+  }, [logoUrl]);
 
-  // Loading spinner
+  if (isLoginPage) return <Outlet />;
+
   if (checking) {
     return (
       <div className="min-h-screen bg-sidebar flex items-center justify-center">
@@ -167,10 +146,8 @@ function AppLayout() {
     );
   }
 
-  // Not logged in — render nothing (redirect happening)
   if (!session) return null;
 
-  // Logged in — render full app
   return (
     <div className="min-h-screen bg-background md:pl-64">
       <Sidebar
@@ -190,7 +167,6 @@ function AppLayout() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
   return (
     <QueryClientProvider client={queryClient}>
       <AppLayout />

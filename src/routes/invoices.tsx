@@ -222,7 +222,22 @@ function InvoicesPage() {
       const address = firm?.address ?? "";
       const phone = firm?.phone ?? "";
       const email = firm?.email ?? "";
+      const logoUrl = (firm as any)?.logo_url ?? null;
       const invoiceDate = invoice.created_at ? format(new Date(invoice.created_at), "dd MMM yyyy") : "—";
+
+      // Convert logo to base64 so it works in print window
+      let logoBase64 = "";
+      if (logoUrl) {
+        try {
+          const res = await fetch(logoUrl);
+          const blob = await res.blob();
+          logoBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        } catch { logoBase64 = ""; }
+      }
 
       // Line items support
       const lineItems: LineItem[] = (invoice as any).line_items ?? [];
@@ -237,7 +252,7 @@ function InvoicesPage() {
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title>
       <style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}.header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}.firm-name{font-size:22px;font-weight:bold}.firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}.invoice-label{font-size:20px;font-weight:bold;letter-spacing:3px;text-align:center;border-top:2px solid #111;border-bottom:2px solid #111;padding:8px 0;margin:16px 0}.meta-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px}.bill-to{background:#f8f8f8;padding:12px;border-radius:4px;margin-bottom:20px;font-size:13px}.bill-to-title{font-weight:bold;margin-bottom:6px;font-size:14px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}thead tr{background:#f3f4f6;border-bottom:2px solid #111}th{padding:10px 8px}td{padding:10px 8px;border-bottom:1px solid #eee}.text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}.grand-total{font-weight:bold;border-top:2px solid #111;font-size:14px}</style>
       </head><body>
-      <div class="header"><div><div class="firm-name">${firmNamePdf}</div><div class="firm-details">${address?address.replace(/\n/g,"<br/>"):""}${phone?`<br/>Phone: ${phone}`:""}${email?`<br/>Email: ${email}`:""}</div></div>
+      <div class="header"><div style="display:flex;align-items:center;gap:12px">${logoBase64 ? `<img src="${logoBase64}" style="width:60px;height:60px;object-fit:contain;" alt="logo"/>` : ""}<div><div class="firm-name">${firmNamePdf}</div><div class="firm-details">${address?address.replace(/\n/g,"<br/>"):""}${phone?`<br/>Phone: ${phone}`:""}${email?`<br/>Email: ${email}`:""}</div></div></div>
       <div style="text-align:right;font-size:13px"><div>GSTIN: ${gstin}</div><div>PAN/CA Reg: ${pan}</div></div></div>
       <div class="invoice-label">TAX INVOICE</div>
       <div class="meta-row"><div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "—"}</div><div><strong>Date:</strong> ${invoiceDate}</div></div>
