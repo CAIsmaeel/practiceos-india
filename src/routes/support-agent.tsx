@@ -91,10 +91,16 @@ function SupportAgentPage() {
       setMessages((prev) => [...prev, { role: "ai", text: reply }]);
     } catch (err) {
       console.error("Support agent reply error:", err);
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", text: "Couldn't reach the AI assistant right now. Please try again.", error: true },
-      ]);
+      try {
+        await new Promise(r => setTimeout(r, 1500));
+        const retry = await getGroqReply(firmName, nextHistory);
+        setMessages((prev) => [...prev, { role: "ai", text: retry }]);
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", text: "Couldn't reach the AI assistant right now. Please try again.", error: true },
+        ]);
+      }
     } finally {
       setSending(false);
     }
