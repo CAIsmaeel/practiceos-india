@@ -71,7 +71,7 @@ Articles:
             headers={"Content-Type": "application/json"},
             json={"contents": [{"parts": [{"text": prompt}]}],
                   "generationConfig": {"temperature": 0.1, "maxOutputTokens": 600}},
-            timeout=30
+            timeout=45
         )
         data = response.json()
 
