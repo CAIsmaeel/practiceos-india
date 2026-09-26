@@ -20,7 +20,7 @@ export const getGroqCompletion = createServerFn({ method: "POST" })
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-20b",
         max_tokens: 400,
         messages: data.messages,
       }),
