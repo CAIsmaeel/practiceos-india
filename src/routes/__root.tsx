@@ -124,22 +124,17 @@ function AppLayout() {
   const logoUrl = (settings as any)?.logo_url ?? null;
 
   // ✅ Dynamic favicon — logo set hone par browser tab mein dikhega
-    // Favicon — session aur logo ke hisaab se set/reset
   useEffect(() => {
+    if (!logoUrl) return;
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (!link) {
       link = document.createElement("link");
       link.rel = "icon";
       document.head.appendChild(link);
     }
-    if (session && logoUrl) {
-      link.href = logoUrl;
-      link.type = "image/png";
-    } else {
-      link.href = "/favicon.ico";
-      link.type = "image/x-icon";
-    }
-  }, [logoUrl, session]);
+    link.href = logoUrl;
+    link.type = "image/png";
+  }, [logoUrl]);
 
   if (isLoginPage) return <Outlet />;
 
@@ -158,11 +153,8 @@ function AppLayout() {
       <Sidebar
         firmName={firmName}
         onLogout={async () => {
-        await supabase.auth.signOut();
-        // Favicon reset on logout
-        const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-        if (link) link.href = "/favicon.ico";
-        router.navigate({ to: "/login" });
+          await supabase.auth.signOut();
+          router.navigate({ to: "/login" });
         }}
       />
       <main className="p-4 md:p-8">
