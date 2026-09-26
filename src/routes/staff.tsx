@@ -4,7 +4,7 @@ import { supabase, getCurrentUserId } from "@/lib/supabase";
 import { useState } from "react";
 import { Plus, X, Pencil, Trash2, Users } from "lucide-react";
 
-export const Route = createFileRoute("/staff" as any)({
+export const Route = createFileRoute("/staff")({
   head: () => ({ meta: [{ title: "Staff — Firmora" }] }),
   component: StaffPage,
 });
