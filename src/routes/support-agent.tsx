@@ -24,10 +24,10 @@ const STATS = [
 ];
 
 const TOP_FAQS = [
-  "GSTR-3B ki deadline kab hai?",
-  "ITR file karne ke liye kaun se documents chahiye?",
-  "GST registration ke liye fees kitni hai?",
-  "Late filing penalty kya hogi?",
+  "When is GSTR-3B deadline?",
+  "What documents are needed for ITR filing?",
+  "What are fees for GST registration?",
+  "What is the penalty for late filing?",
 ];
 
 async function getGroqReply(firmName: string, history: ChatMessage[]): Promise<string> {
