@@ -430,19 +430,28 @@
     oth.value = 'Other'; oth.textContent = 'Other'; sel.appendChild(oth);
   }
 
-  function groupServices(services) {
-    const seen = new Set();
+  // ✅ FIXED: Category-based grouping matching settings.tsx
+  const LANDING_CATEGORIES = [
+    { category: "GST & Indirect Tax", icon: "🧾", services: ["GST Registration","GSTR-1 Filing","GSTR-3B Filing","GSTR-9 Annual Return","GSTR-9C Reconciliation","GST Notice Reply","GST Refund Application","E-Invoice Compliance","LUT Filing","ITC Reconciliation"] },
+    { category: "Income Tax & Direct Tax", icon: "📄", services: ["Individual ITR Filing","Business & Firm ITR","Company ITR Filing","Tax Audit (u/s 44AB)","Advance Tax Calculation","Capital Gains Tax","Income Tax Notice Reply","TDS Return Filing","Form 16 / 16A Generation","NRI Taxation"] },
+    { category: "Audit & Assurance", icon: "🔍", services: ["Statutory Audit","Internal Audit","Tax Audit","Concurrent Audit","Stock Audit","Bank Audit","Trust & NGO Audit","Due Diligence Audit","Forensic Accounting"] },
+    { category: "Company Law & ROC", icon: "🏢", services: ["Private Limited Company Incorporation","LLP Incorporation","OPC Incorporation","Annual ROC Filings (AOC-4 / MGT-7)","LLP Annual Filings (Form 11 / Form 8)","Director KYC (DIR-3 KYC)","Company Strike-off","Share Transfer Documentation","MOA & AOA Drafting"] },
+    { category: "Accounting & Bookkeeping", icon: "📊", services: ["Monthly Bookkeeping","Financial Statements Preparation","Bank Reconciliation","MIS Reports","Tally / Zoho Accounting Setup","Fixed Asset Register","Virtual Accounting Support"] },
+    { category: "Payroll & Labour Law", icon: "💰", services: ["Payroll Processing","PF / EPF Registration & Returns","ESI Registration & Returns","Professional Tax Returns","TDS on Salary (Sec 192)","Employee Full & Final Settlement","Labour Welfare Fund Compliance"] },
+    { category: "Business Registrations", icon: "📋", services: ["Udyam / MSME Registration","Professional Tax Registration","Import Export Code (IEC)","FSSAI Registration","Trademark Registration Assistance","Shops & Establishments Registration","Digital Signature Certificate (DSC)"] },
+    { category: "Advisory & CFO Services", icon: "🤝", services: ["Virtual CFO Services","Business Valuation","Project Report Preparation","CMA Data & Report","Startup Advisory","Merger & Acquisition Advisory","Financial Due Diligence","FEMA Compliance","Transfer Pricing"] },
+  ];
+
+  function groupServices(selectedServices) {
     const result = [];
-    services.forEach(s => {
-      const words = s.split(' ');
-      const key = words.slice(0,2).join(' ');
-      if (!seen.has(key)) {
-        seen.add(key);
-        const related = services.filter(x => x.startsWith(words[0]));
-        result.push({ title: words[0], icon: getIcon(s), desc: related.slice(0,3).join(' • ') + (related.length > 3 ? ' & more' : '') });
+    LANDING_CATEGORIES.forEach(cat => {
+      const matched = cat.services.filter(s => selectedServices.includes(s));
+      if (matched.length > 0) {
+        const preview = matched.slice(0, 3).join(', ') + (matched.length > 3 ? ` & ${matched.length - 3} more` : '');
+        result.push({ title: cat.category, icon: cat.icon, desc: preview });
       }
     });
-    return result.slice(0, 9);
+    return result;
   }
 
   function toggleFaq(btn) {
