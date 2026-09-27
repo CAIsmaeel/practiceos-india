@@ -117,7 +117,7 @@
     .chat-header-name { font-weight:700; font-size:14px; }
     .chat-header-status { font-size:11px; opacity:0.8; }
     .chat-close { background:none; border:none; color:white; font-size:20px; cursor:pointer; padding:0 4px; margin-left:auto; }
-    .chat-messages { flex:1; padding:16px; height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; background:var(--bg); }
+    .chat-messages { flex:1; padding:16px; height:280px; max-height:280px; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; gap:10px; background:var(--bg); scroll-behavior:smooth; }
     .chat-msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.5; }
     .chat-msg.bot { background:white; border:1px solid var(--green-border); color:var(--text); align-self:flex-start; border-radius:4px 14px 14px 14px; }
     .chat-msg.user { background:var(--green-deep); color:white; align-self:flex-end; border-radius:14px 4px 14px 14px; }
@@ -316,7 +316,7 @@
 <script>
   const SUPABASE_URL = "https://xjcknltsldywczvqmzwp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2tubHRzbGR5d2N6dnFtendwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTM3ODksImV4cCI6MjA5ODAyOTc4OX0.qAijhwhTg1-OD0avyMgh59r_ai3OC5T47R6C7HQi8mY";
-  const GROQ_API_KEY = "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";
+  const GROQ_API_KEY = "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";
 
   const SERVICE_ICONS = { "GST":"-🧾","Income":"📄","Tax Audit":"🔍","Statutory":"🔍","Company":"🏢","LLP":"🏢","Bookkeeping":"📊","Accounting":"📊","TDS":"💳","Payroll":"💰","PF":"💰","Udyam":"📋","MSME":"📋","FEMA":"🌐","Virtual":"🤝","Business":"🤝","Trust":"🏛️","NGO":"🏛️" };
   function getIcon(s){ for(const [k,v] of Object.entries(SERVICE_ICONS)){ if(s.includes(k)) return v; } return "✅"; }
@@ -502,16 +502,56 @@
   let leadCaptureMode = false;
   let capturedQuery = '';
 
+  // ✅ Rate limiting — 20 messages per day per browser
+  const RATE_LIMIT = 20;
+  const RATE_KEY = 'chat_usage';
+
+  function getRateData() {
+    try {
+      const raw = localStorage.getItem(RATE_KEY);
+      if (!raw) return { count: 0, date: new Date().toDateString() };
+      return JSON.parse(raw);
+    } catch(e) { return { count: 0, date: new Date().toDateString() }; }
+  }
+
+  function incrementRate() {
+    try {
+      const data = getRateData();
+      const today = new Date().toDateString();
+      const count = data.date === today ? data.count + 1 : 1;
+      localStorage.setItem(RATE_KEY, JSON.stringify({ count, date: today }));
+      return count;
+    } catch(e) { return 0; }
+  }
+
+  function isRateLimited() {
+    try {
+      const data = getRateData();
+      const today = new Date().toDateString();
+      return data.date === today && data.count >= RATE_LIMIT;
+    } catch(e) { return false; }
+  }
+
   function toggleChat() {
     chatOpen = !chatOpen;
     document.getElementById('chatWindow').classList.toggle('open', chatOpen);
     if (chatOpen) document.getElementById('chatInput').focus();
   }
 
+  function stripMarkdown(text) {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^[-*]\s+/gm, '• ')
+      .replace(/\|/g, '')
+      .trim();
+  }
+
   function addMsg(text, type) {
     const div = document.createElement('div');
     div.className = `chat-msg ${type}`;
-    div.textContent = text;
+    div.textContent = type === 'bot' ? stripMarkdown(text) : text;
     const msgs = document.getElementById('chatMessages');
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
@@ -594,6 +634,14 @@
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     if (!text) return;
+
+    // ✅ Rate limit check
+    if (isRateLimited()) {
+      addMsg('You have reached today\'s chat limit. Please WhatsApp us directly for more help! 👇', 'bot');
+      return;
+    }
+    incrementRate();
+
     input.value = '';
     addMsg(text, 'user');
 
@@ -639,7 +687,7 @@
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'openai/gpt-oss-20b', messages: chatHistory, max_tokens: 150, temperature: 0.7 }),
+        body: JSON.stringify({ model: 'openai/gpt-oss-20b', messages: chatHistory, max_tokens: 500, temperature: 0.7 }),
       });
       const data = await res.json();
       const reply = data.choices?.[0]?.message?.content ?? "I'm having trouble. Please contact us directly.";
@@ -665,7 +713,10 @@
       }
     } catch(e) {
       loading.remove();
-      addMsg("Sorry, I'm offline. Please contact us directly.", 'bot');
+      const waNum = firmData?.whatsapp_number || '';
+      const wa = waNum.replace(/\D/g,'');
+      const waFull = wa.startsWith('91') ? wa : '91'+wa;
+      addMsg(`Our AI assistant is busy right now. Please WhatsApp us directly at ${firmData?.phone || 'our number'} — we typically respond within a few hours! 😊`, 'bot');
     }
   }
 
