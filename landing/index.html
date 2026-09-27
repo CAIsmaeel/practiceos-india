@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CA Firm — Chartered Accountants</title>
+  <link rel="icon" id="dynamicFavicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>₹</text></svg>"/>
   <style>
     :root {
       --green-deep: #14532D; --green-accent: #2F855A; --green-sage: #A7C4A0;
@@ -386,6 +387,9 @@
     document.title = `${firmName} — Chartered Accountants`;
     if (d.logo_url) {
       document.getElementById('navLogo').innerHTML = `<img src="${d.logo_url}" alt="${firmName}"/>`;
+      // ✅ Dynamic favicon from firm logo
+      const favicon = document.getElementById('dynamicFavicon');
+      if (favicon) favicon.href = d.logo_url;
     }
 
     // Hero
