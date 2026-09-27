@@ -76,10 +76,22 @@ function buildChaseMessage(e: any, pendingDocs: DocRow[], clientName: string, fi
 }
 
 async function generateChecklist(engagementId: string, clientId: string | null, type: string) {
-  const template = getTemplate(type);
-  if (template.length === 0) return;
   const userId = await getCurrentUserId();
-  const rows = template.map((t, i) => ({
+
+  // User ka custom template check karo pehle
+  const { data: customTpls } = await supabase
+    .from("checklist_templates")
+    .select("doc_name, requirement, sort_order")
+    .eq("user_id", userId ?? "")
+    .eq("service_type", type)
+    .order("sort_order", { ascending: true });
+
+  const template = (customTpls && customTpls.length > 0)
+    ? customTpls.map((t) => ({ name: t.doc_name, requirement: t.requirement as "mandatory" | "optional" }))
+    : getTemplate(type);
+
+  if (template.length === 0) return;
+    const rows = template.map((t, i) => ({
     user_id: userId,
     engagement_id: engagementId,
     client_id: clientId || null,

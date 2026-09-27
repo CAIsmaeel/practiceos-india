@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
-import { Upload, X, Globe, Copy, Check } from "lucide-react";
+import { Upload, X, Globe, Copy, Check, Plus } from "lucide-react";
+import { ENGAGEMENT_TYPES, getTemplate } from "@/lib/checklistTemplates";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Firmora" }] }),
@@ -22,32 +23,29 @@ const SERVICE_CATEGORIES = [
 
 const CLIENT_TYPES = ["Individuals / Salaried","Proprietorships","Partnership Firms","LLPs","Private Limited Companies","Startups","MSMEs","Trusts / NGOs","NRIs / Foreign Clients"];
 
+type TemplateDoc = {
+  id?: string;
+  doc_name: string;
+  requirement: "mandatory" | "optional";
+  sort_order: number;
+};
+
 function SettingsPage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<"firm" | "website">("firm");
+  const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates">("firm");
   const [copied, setCopied] = useState(false);
-
-  // ✅ Fix 1 — Get user ID directly from auth (not from firmSettingsRow)
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
-    // Get user on mount
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user?.id) setCurrentUserId(data.user.id);
     });
-
-    // ✅ Fix 2 — Listen for auth changes → refetch settings
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user?.id) {
-        setCurrentUserId(session.user.id);
-      } else {
-        setCurrentUserId("");
-      }
-      // Invalidate settings so fresh data loads for new user
+      if (session?.user?.id) setCurrentUserId(session.user.id);
+      else setCurrentUserId("");
       queryClient.invalidateQueries({ queryKey: ["settings"] });
     });
-
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
@@ -66,7 +64,15 @@ function SettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
-  // ✅ Fix 3 — Query key includes currentUserId so it refetches on user change
+  // Template state
+  const [selectedServiceType, setSelectedServiceType] = useState<string>(ENGAGEMENT_TYPES[0]);
+  const [templateDocs, setTemplateDocs] = useState<TemplateDoc[]>([]);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const [newDocName, setNewDocName] = useState("");
+  const [newDocReq, setNewDocReq] = useState<"mandatory" | "optional">("mandatory");
+
   const { data: firmSettingsRow } = useQuery({
     queryKey: ["settings", currentUserId],
     enabled: !!currentUserId,
@@ -81,31 +87,100 @@ function SettingsPage() {
     },
   });
 
-  // ✅ Fix 4 — Populate form whenever settings load
   useEffect(() => {
     if (firmSettingsRow) {
       const r = firmSettingsRow as any;
       setForm({
-        firm_name: r.firm_name ?? "",
-        gst_number: r.gst_number ?? "",
-        ca_reg_number: r.ca_reg_number ?? "",
-        address: r.address ?? "",
-        state: r.state ?? "",
-        bank_name: r.bank_name ?? "",
-        bank_account_no: r.bank_account_no ?? "",
-        bank_ifsc: r.bank_ifsc ?? "",
-        invoice_prefix: r.invoice_prefix ?? "INV",
-        phone: r.phone ?? "",
-        email: r.email ?? "",
-        logo_url: r.logo_url ?? "",
-        whatsapp_number: r.whatsapp_number ?? "",
-        website_tagline: r.website_tagline ?? "",
+        firm_name: r.firm_name ?? "", gst_number: r.gst_number ?? "",
+        ca_reg_number: r.ca_reg_number ?? "", address: r.address ?? "",
+        state: r.state ?? "", bank_name: r.bank_name ?? "",
+        bank_account_no: r.bank_account_no ?? "", bank_ifsc: r.bank_ifsc ?? "",
+        invoice_prefix: r.invoice_prefix ?? "INV", phone: r.phone ?? "",
+        email: r.email ?? "", logo_url: r.logo_url ?? "",
+        whatsapp_number: r.whatsapp_number ?? "", website_tagline: r.website_tagline ?? "",
       });
       if (r.logo_url) setLogoPreview(r.logo_url);
       if (Array.isArray(r.website_services)) setSelectedServices(r.website_services);
       if (Array.isArray(r.website_client_types)) setSelectedClientTypes(r.website_client_types);
     }
   }, [firmSettingsRow]);
+
+  // Load templates when tab or service type changes
+  const loadTemplateForService = async (serviceType: string) => {
+    if (!currentUserId) return;
+    const { data } = await supabase
+      .from("checklist_templates")
+      .select("id, doc_name, requirement, sort_order")
+      .eq("user_id", currentUserId)
+      .eq("service_type", serviceType)
+      .order("sort_order", { ascending: true });
+
+    if (data && data.length > 0) {
+      setTemplateDocs(data as TemplateDoc[]);
+    } else {
+      // Pre-populate with defaults so user can see and edit
+      const defaults = getTemplate(serviceType);
+      setTemplateDocs(defaults.map((t, i) => ({
+        doc_name: t.name,
+        requirement: t.requirement,
+        sort_order: i,
+      })));
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "templates" && currentUserId) {
+      loadTemplateForService(selectedServiceType);
+    }
+  }, [activeTab, selectedServiceType, currentUserId]);
+
+  const saveTemplate = async () => {
+    if (!currentUserId) return;
+    setIsSavingTemplate(true);
+    setTemplateError(null);
+    try {
+      const { error: delErr } = await supabase
+        .from("checklist_templates")
+        .delete()
+        .eq("user_id", currentUserId)
+        .eq("service_type", selectedServiceType);
+      if (delErr) throw delErr;
+
+      if (templateDocs.length > 0) {
+        const rows = templateDocs.map((d, i) => ({
+          user_id: currentUserId,
+          service_type: selectedServiceType,
+          doc_name: d.doc_name,
+          requirement: d.requirement,
+          sort_order: i,
+        }));
+        const { error: insErr } = await supabase.from("checklist_templates").insert(rows);
+        if (insErr) throw insErr;
+      }
+      setTemplateSaved(true);
+      setTimeout(() => setTemplateSaved(false), 3000);
+    } catch (err: any) {
+      setTemplateError("Save failed: " + (err?.message ?? ""));
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  const addDoc = () => {
+    const name = newDocName.trim();
+    if (!name) return;
+    if (templateDocs.some((d) => d.doc_name.toLowerCase() === name.toLowerCase())) {
+      alert("This document already exists in the list.");
+      return;
+    }
+    setTemplateDocs((prev) => [...prev, { doc_name: name, requirement: newDocReq, sort_order: prev.length }]);
+    setNewDocName("");
+  };
+
+  const removeDoc = (i: number) => setTemplateDocs((prev) => prev.filter((_, idx) => idx !== i));
+
+  const toggleDocReq = (i: number, req: "mandatory" | "optional") =>
+    setTemplateDocs((prev) => prev.map((d, idx) => idx === i ? { ...d, requirement: req } : d));
 
   const toggleService = (service: string) => setSelectedServices(prev => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
   const toggleClientType = (type: string) => setSelectedClientTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
@@ -152,17 +227,13 @@ function SettingsPage() {
       if (fetchError) throw fetchError;
       const existingId = rows?.[0]?.id;
       const payload = {
-        firm_name: form.firm_name.trim(),
-        ca_reg_number: form.ca_reg_number.trim(),
-        gst_number: form.gst_number.trim(),
-        address: form.address.trim(),
-        state: form.state.trim(),
-        bank_name: form.bank_name.trim(),
+        firm_name: form.firm_name.trim(), ca_reg_number: form.ca_reg_number.trim(),
+        gst_number: form.gst_number.trim(), address: form.address.trim(),
+        state: form.state.trim(), bank_name: form.bank_name.trim(),
         bank_account_no: form.bank_account_no.trim(),
         bank_ifsc: form.bank_ifsc.trim().toUpperCase(),
         invoice_prefix: form.invoice_prefix.trim().toUpperCase() || "INV",
-        phone: form.phone.trim(),
-        email: form.email.trim(),
+        phone: form.phone.trim(), email: form.email.trim(),
         logo_url: form.logo_url || null,
         whatsapp_number: form.whatsapp_number.trim() || null,
         website_tagline: form.website_tagline.trim() || null,
@@ -196,17 +267,21 @@ function SettingsPage() {
         <p className="text-muted-foreground text-sm">Configure your firm details and website</p>
       </div>
 
-      <div className="flex gap-2 border-b border-border">
+      <div className="flex gap-2 border-b border-border flex-wrap">
         <button onClick={() => setActiveTab("firm")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "firm" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
           🏢 Firm Details
         </button>
         <button onClick={() => setActiveTab("website")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "website" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
           🌐 Website Settings
         </button>
+        <button onClick={() => setActiveTab("templates")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "templates" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          📋 Checklist Templates
+        </button>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
 
+        {/* ---- FIRM TAB ---- */}
         {activeTab === "firm" && (
           <>
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
@@ -254,44 +329,23 @@ function SettingsPage() {
           </>
         )}
 
+        {/* ---- WEBSITE TAB ---- */}
         {activeTab === "website" && (
           <>
-            {/* ✅ Your Website Link */}
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔗</span>
-                <h3 className="text-sm font-semibold text-green-800">Your Website Link</h3>
-              </div>
+              <div className="flex items-center gap-2"><span className="text-lg">🔗</span><h3 className="text-sm font-semibold text-green-800">Your Website Link</h3></div>
               <p className="text-xs text-green-700">Share this link with clients — it shows your firm's details, services and contact info automatically.</p>
               <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={websiteLink || "Loading..."}
-                  className="flex-1 border border-green-200 rounded-md px-3 py-2 text-xs bg-white text-green-900 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!websiteLink) return;
-                    navigator.clipboard.writeText(websiteLink);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  disabled={!websiteLink}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-700 text-white rounded-md text-sm font-medium hover:bg-green-800 whitespace-nowrap disabled:opacity-50"
-                >
+                <input readOnly value={websiteLink || "Loading..."} className="flex-1 border border-green-200 rounded-md px-3 py-2 text-xs bg-white text-green-900 font-mono" />
+                <button type="button" onClick={() => { if (!websiteLink) return; navigator.clipboard.writeText(websiteLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }} disabled={!websiteLink} className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-700 text-white rounded-md text-sm font-medium hover:bg-green-800 whitespace-nowrap disabled:opacity-50">
                   {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
                 </button>
               </div>
               <p className="text-xs text-green-600">💡 Tip: Share on WhatsApp, Instagram bio, visiting card or email signature.</p>
             </div>
 
-            {/* Website Info */}
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Globe size={16} className="text-primary" />
-                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Website Info</h2>
-              </div>
+              <div className="flex items-center gap-2"><Globe size={16} className="text-primary" /><h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Website Info</h2></div>
               <p className="text-xs text-muted-foreground">This info will appear on your public landing page</p>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">WhatsApp Number (for landing page)</label>
@@ -307,7 +361,6 @@ function SettingsPage() {
               </div>
             </div>
 
-            {/* Client Types */}
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Clients We Serve</h2>
               <p className="text-xs text-muted-foreground">Select which types of clients your firm works with</p>
@@ -322,12 +375,8 @@ function SettingsPage() {
               </div>
             </div>
 
-            {/* Services */}
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Services Offered</h2>
-                <p className="text-xs text-muted-foreground mt-1">Select services to show on your website • {selectedServices.length} selected</p>
-              </div>
+              <div><h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Services Offered</h2><p className="text-xs text-muted-foreground mt-1">Select services to show on your website • {selectedServices.length} selected</p></div>
               <div className="space-y-3">
                 {SERVICE_CATEGORIES.map(cat => {
                   const isExpanded = expandedCategories.includes(cat.category);
@@ -341,12 +390,7 @@ function SettingsPage() {
                           {selectedCount > 0 && <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-bold">{selectedCount}</span>}
                         </div>
                         <div className="flex items-center gap-2">
-                          {isExpanded && (
-                            <>
-                              <button type="button" onClick={(e) => { e.stopPropagation(); selectAllInCategory(cat.services); }} className="text-xs text-primary hover:underline">All</button>
-                              <button type="button" onClick={(e) => { e.stopPropagation(); clearAllInCategory(cat.services); }} className="text-xs text-muted-foreground hover:underline">None</button>
-                            </>
-                          )}
+                          {isExpanded && (<><button type="button" onClick={(e) => { e.stopPropagation(); selectAllInCategory(cat.services); }} className="text-xs text-primary hover:underline">All</button><button type="button" onClick={(e) => { e.stopPropagation(); clearAllInCategory(cat.services); }} className="text-xs text-muted-foreground hover:underline">None</button></>)}
                           <span className="text-muted-foreground text-xs">{isExpanded ? "▲" : "▼"}</span>
                         </div>
                       </div>
@@ -369,11 +413,128 @@ function SettingsPage() {
           </>
         )}
 
-        <div className="flex justify-end pt-2">
-          <button type="submit" disabled={isSaving} className="px-6 py-2.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
-            {isSaving ? "Saving..." : "Save Settings"}
-          </button>
-        </div>
+        {/* ---- CHECKLIST TEMPLATES TAB ---- */}
+        {activeTab === "templates" && (
+          <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-5">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Checklist Templates</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Customize which documents are required for each service. When a new engagement is created, your custom template is used. If you haven't saved one, the default list is used.
+              </p>
+            </div>
+
+            {/* Service type selector */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <select
+                value={selectedServiceType}
+                onChange={(e) => setSelectedServiceType(e.target.value)}
+                className="border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {ENGAGEMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <span className="text-xs text-muted-foreground">{templateDocs.length} documents</span>
+            </div>
+
+            {/* Doc list */}
+            <div className="space-y-2">
+              {templateDocs.length === 0 && (
+                <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground">No documents yet.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Add documents below.</p>
+                </div>
+              )}
+              {templateDocs.map((doc, i) => (
+                <div key={i} className="flex items-center gap-2 p-2.5 border border-border rounded-md bg-card hover:bg-muted/30 transition-colors">
+                  <div className="flex gap-1 shrink-0">
+                    {(["mandatory", "optional"] as const).map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => toggleDocReq(i, r)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors ${
+                          doc.requirement === r
+                            ? r === "mandatory"
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : "bg-slate-100 text-slate-600 border-slate-300"
+                            : "bg-card text-muted-foreground border-border hover:bg-muted"
+                        }`}
+                        title={r === "mandatory" ? "Mandatory" : "Optional"}
+                      >
+                        {r === "mandatory" ? "M" : "O"}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-sm text-foreground flex-1 min-w-0">{doc.doc_name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeDoc(i)}
+                    className="text-muted-foreground hover:text-red-500 shrink-0 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add new document */}
+            <div className="flex items-center gap-2 pt-3 border-t border-border flex-wrap">
+              <select
+                value={newDocReq}
+                onChange={(e) => setNewDocReq(e.target.value as "mandatory" | "optional")}
+                className="border border-input rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring shrink-0"
+              >
+                <option value="mandatory">Mandatory</option>
+                <option value="optional">Optional</option>
+              </select>
+              <input
+                value={newDocName}
+                onChange={(e) => setNewDocName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }}
+                placeholder="Document name… (Enter to add)"
+                className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={addDoc}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 shrink-0"
+              >
+                <Plus size={13} /> Add
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              <strong>M</strong> = Mandatory — blocks engagement until received ·{" "}
+              <strong>O</strong> = Optional / Conditional
+            </p>
+
+            {/* Save template */}
+            <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
+              <div>
+                {templateError && <p className="text-sm text-red-600">{templateError}</p>}
+                {templateSaved && <p className="text-sm text-green-600">✅ Template saved for {selectedServiceType}.</p>}
+              </div>
+              <button
+                type="button"
+                onClick={saveTemplate}
+                disabled={isSavingTemplate}
+                className="px-5 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium"
+              >
+                {isSavingTemplate ? "Saving..." : "Save Template"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Save Settings — only for firm and website tabs */}
+        {activeTab !== "templates" && (
+          <div className="flex justify-end pt-2">
+            <button type="submit" disabled={isSaving} className="px-6 py-2.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
+              {isSaving ? "Saving..." : "Save Settings"}
+            </button>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600 text-right">{error}</p>}
         {saved && <p className="text-sm text-green-600 text-right">✅ Settings saved successfully.</p>}
