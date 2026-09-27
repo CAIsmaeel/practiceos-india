@@ -4,42 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CA Firm — Chartered Accountants</title>
-  <meta name="description" content="Expert Chartered Accountants for GST, ITR, Audit, Company Registration and more."/>
   <style>
     :root {
-      --green-deep: #14532D;
-      --green-accent: #2F855A;
-      --green-sage: #A7C4A0;
-      --green-light: #F0F7F0;
-      --green-border: #E2EAE2;
-      --green-hover: #166534;
-      --white: #ffffff;
-      --bg: #F7FAF7;
-      --text: #1F2937;
-      --text-mid: #4B5563;
-      --text-light: #6B7280;
-      --wa-green: #25D366;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-      --shadow-md: 0 4px 16px rgba(20,83,45,0.10);
-      --shadow-lg: 0 8px 32px rgba(20,83,45,0.14);
+      --green-deep: #14532D; --green-accent: #2F855A; --green-sage: #A7C4A0;
+      --green-light: #F0F7F0; --green-border: #E2EAE2; --green-hover: #166534;
+      --white: #ffffff; --bg: #F7FAF7; --text: #1F2937;
+      --text-mid: #4B5563; --text-light: #6B7280; --wa-green: #25D366;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 8px 32px rgba(20,83,45,0.14);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
 
-    /* NAV */
     nav { background: var(--white); border-bottom: 1px solid var(--green-border); padding: 0 32px; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
     .nav-brand { display: flex; align-items: center; gap: 12px; }
-    .nav-logo { width: 40px; height: 40px; background: var(--green-deep); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; overflow: hidden; }
+    .nav-logo { width: 40px; height: 40px; background: var(--green-deep); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; overflow: hidden; flex-shrink:0; }
     .nav-logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
     .nav-name { font-weight: 700; font-size: 16px; color: var(--text); }
     .nav-sub { font-size: 11px; color: var(--text-light); }
     .nav-right { display: flex; align-items: center; gap: 12px; }
     .nav-login { color: var(--green-accent); font-weight: 600; font-size: 14px; text-decoration: none; padding: 8px 16px; border: 1.5px solid var(--green-accent); border-radius: 8px; transition: all 0.2s; }
     .nav-login:hover { background: var(--green-accent); color: white; }
-    .nav-cta { background: var(--green-deep); color: white; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; transition: background 0.2s; }
+    .nav-cta { background: var(--green-deep); color: white; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; }
     .nav-cta:hover { background: var(--green-hover); }
 
-    /* HERO */
     .hero { background: linear-gradient(135deg, #0D3B1E 0%, #14532D 55%, #1a6635 100%); color: white; padding: 90px 32px 110px; text-align: center; position: relative; overflow: hidden; }
     .hero::before { content:''; position:absolute; top:-80px; right:-80px; width:350px; height:350px; background:rgba(167,196,160,0.08); border-radius:50%; }
     .hero::after { content:''; position:absolute; bottom:-100px; left:-60px; width:300px; height:300px; background:rgba(167,196,160,0.06); border-radius:50%; }
@@ -48,18 +35,16 @@
     .hero h1 span { color:var(--green-sage); }
     .hero p { font-size:clamp(15px,2.5vw,18px); opacity:0.85; max-width:580px; margin:0 auto 40px; }
     .hero-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
-    .btn-primary { background:white; color:var(--green-deep); padding:14px 30px; border-radius:10px; font-weight:700; font-size:15px; text-decoration:none; border:none; cursor:pointer; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 4px 16px rgba(0,0,0,0.15); }
-    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+    .btn-primary { background:white; color:var(--green-deep); padding:14px 30px; border-radius:10px; font-weight:700; font-size:15px; text-decoration:none; border:none; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.15); transition: transform 0.15s; }
+    .btn-primary:hover { transform:translateY(-2px); }
     .btn-wa { background:var(--wa-green); color:white; padding:14px 28px; border-radius:10px; font-weight:700; font-size:15px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:transform 0.15s; }
     .btn-wa:hover { transform:translateY(-2px); }
 
-    /* STATS */
     .stats { background:var(--white); border-bottom:1px solid var(--green-border); padding:36px 32px; }
     .stats-inner { max-width:960px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:24px; text-align:center; }
     .stat-num { font-size:34px; font-weight:800; color:var(--green-deep); }
     .stat-label { font-size:13px; color:var(--text-light); margin-top:4px; }
 
-    /* SECTIONS */
     .section { padding:80px 32px; }
     .section-alt { background:var(--green-light); }
     .section-white { background:var(--white); }
@@ -68,26 +53,24 @@
     .section-title { font-size:clamp(22px,3.5vw,36px); font-weight:800; color:var(--text); margin-bottom:14px; }
     .section-sub { font-size:16px; color:var(--text-mid); max-width:580px; margin-bottom:52px; }
 
-    /* SERVICES */
     .services-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:20px; }
     .service-card { background:var(--white); border:1px solid var(--green-border); border-radius:16px; padding:28px 24px; transition:box-shadow 0.2s,transform 0.2s,border-color 0.2s; }
     .service-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-3px); border-color:var(--green-sage); }
     .service-icon { font-size:32px; margin-bottom:14px; }
     .service-title { font-size:17px; font-weight:700; color:var(--text); margin-bottom:8px; }
     .service-desc { font-size:14px; color:var(--text-mid); line-height:1.65; }
+    .loading-skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:16px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* CLIENT TYPES */
     .client-types { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
     .client-tag { background:var(--white); border:1px solid var(--green-border); color:var(--green-deep); padding:6px 14px; border-radius:100px; font-size:13px; font-weight:500; }
 
-    /* WHY US */
     .why-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:28px; }
     .why-card { display:flex; gap:14px; align-items:flex-start; }
     .why-icon { width:44px; height:44px; background:var(--green-deep); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
     .why-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px; }
     .why-desc { font-size:13px; color:var(--text-mid); line-height:1.6; }
 
-    /* FAQ */
     .faq-list { max-width:740px; margin:0 auto; }
     .faq-item { border:1px solid var(--green-border); border-radius:12px; margin-bottom:12px; overflow:hidden; background:white; }
     .faq-q { width:100%; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; font-size:15px; font-weight:600; color:var(--text); text-align:left; gap:12px; }
@@ -97,7 +80,6 @@
     .faq-a { display:none; padding:0 22px 18px; font-size:14px; color:var(--text-mid); line-height:1.7; }
     .faq-item.open .faq-a { display:block; }
 
-    /* CONTACT */
     .contact-section { background:linear-gradient(135deg,#0D3B1E 0%,#14532D 100%); padding:80px 32px; color:white; }
     .contact-inner { max-width:1040px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:start; }
     @media(max-width:720px){ .contact-inner{grid-template-columns:1fr;gap:44px;} }
@@ -111,7 +93,7 @@
     .form-group input,.form-group select,.form-group textarea { width:100%; border:1.5px solid var(--green-border); border-radius:8px; padding:10px 14px; font-size:14px; color:var(--text); outline:none; transition:border-color 0.2s; font-family:inherit; background:white; }
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:var(--green-accent); box-shadow:0 0 0 3px rgba(47,133,90,0.12); }
     .form-group textarea { resize:vertical; min-height:80px; }
-    .form-submit { width:100%; background:var(--green-deep); color:white; border:none; padding:14px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; transition:background 0.2s; margin-top:4px; }
+    .form-submit { width:100%; background:var(--green-deep); color:white; border:none; padding:14px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-top:4px; }
     .form-submit:hover { background:var(--green-hover); }
     .form-submit:disabled { opacity:0.6; cursor:not-allowed; }
     .form-success { display:none; text-align:center; padding:24px; }
@@ -119,11 +101,11 @@
     .form-success h3 { color:var(--green-accent); font-size:20px; margin-bottom:10px; }
     .form-success p { font-size:14px; color:var(--text-mid); }
 
-    /* LOADING */
-    .loading-skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    /* NOT FOUND */
+    .not-found { min-height:60vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:40px; }
+    .not-found h2 { font-size:28px; font-weight:800; color:var(--green-deep); margin-bottom:12px; }
+    .not-found p { color:var(--text-mid); margin-bottom:24px; }
 
-    /* CHAT */
     .chat-bubble { position:fixed; bottom:100px; right:24px; z-index:998; }
     .chat-toggle { width:56px; height:56px; background:var(--green-deep); border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:var(--shadow-lg); transition:transform 0.2s; }
     .chat-toggle:hover { transform:scale(1.1); }
@@ -142,23 +124,17 @@
     .chat-input { flex:1; border:1.5px solid var(--green-border); border-radius:8px; padding:8px 12px; font-size:13px; outline:none; font-family:inherit; }
     .chat-input:focus { border-color:var(--green-accent); }
     .chat-send { background:var(--green-deep); color:white; border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:16px; }
-    .chat-send:hover { background:var(--green-hover); }
     .chat-escalate { margin:0 14px 14px; }
     .btn-wa-small { width:100%; background:var(--wa-green); color:white; border:none; border-radius:8px; padding:9px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; }
-
-    /* WA FLOAT */
     .wa-float { position:fixed; bottom:24px; right:24px; background:var(--wa-green); color:white; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 4px 20px rgba(37,211,102,0.4); text-decoration:none; z-index:997; transition:transform 0.2s; }
     .wa-float:hover { transform:scale(1.1); }
-
     footer { background:var(--green-deep); color:rgba(255,255,255,0.7); text-align:center; padding:32px 24px; font-size:13px; }
     footer strong { color:white; }
-
     @media(max-width:640px){ nav{padding:0 16px;} .hero{padding:64px 20px 84px;} .section{padding:56px 20px;} .nav-login{display:none;} .chat-window{width:calc(100vw - 32px);right:16px;} }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <div class="nav-brand">
     <div class="nav-logo" id="navLogo">₹</div>
@@ -173,159 +149,152 @@
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-badge">✦ Trusted CA Firm</div>
-  <h1 id="heroTitle">Expert CA Services for <span id="heroSpan">GST, ITR,</span> Audit & Business Compliance</h1>
-  <p id="heroTagline">Helping businesses and individuals stay compliant, save taxes, and grow.</p>
-  <div class="hero-btns">
-    <a href="#contact" class="btn-primary">📋 Book a Consultation</a>
-    <a href="#" id="heroWhatsApp" target="_blank" class="btn-wa">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
-      WhatsApp Us
-    </a>
-  </div>
-</section>
+<div id="mainContent" style="display:none">
+  <section class="hero">
+    <div class="hero-badge">✦ Trusted CA Firm</div>
+    <h1>Expert CA Services for <span>GST, ITR,</span> Audit & Business Compliance</h1>
+    <p id="heroTagline">Helping businesses and individuals stay compliant, save taxes, and grow.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-primary">📋 Book a Consultation</a>
+      <a href="#" id="heroWhatsApp" target="_blank" class="btn-wa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
+        WhatsApp Us
+      </a>
+    </div>
+  </section>
 
-<!-- STATS -->
-<div class="stats">
-  <div class="stats-inner">
-    <div><div class="stat-num">200+</div><div class="stat-label">Clients Served</div></div>
-    <div><div class="stat-num">5+</div><div class="stat-label">Years Experience</div></div>
-    <div><div class="stat-num">₹2Cr+</div><div class="stat-label">Tax Savings Delivered</div></div>
-    <div><div class="stat-num">100%</div><div class="stat-label">On-Time Filing Rate</div></div>
+  <div class="stats">
+    <div class="stats-inner">
+      <div><div class="stat-num">200+</div><div class="stat-label">Clients Served</div></div>
+      <div><div class="stat-num">5+</div><div class="stat-label">Years Experience</div></div>
+      <div><div class="stat-num">₹2Cr+</div><div class="stat-label">Tax Savings Delivered</div></div>
+      <div><div class="stat-num">100%</div><div class="stat-label">On-Time Filing Rate</div></div>
+    </div>
+  </div>
+
+  <section class="section section-white">
+    <div class="section-inner">
+      <div class="section-label">What We Do</div>
+      <h2 class="section-title">Services We Offer</h2>
+      <p class="section-sub">From GST filings to company registration — we handle your compliance so you can focus on growing.</p>
+      <div class="services-grid" id="servicesGrid">
+        <div class="service-card loading-skeleton" style="height:160px"></div>
+        <div class="service-card loading-skeleton" style="height:160px"></div>
+        <div class="service-card loading-skeleton" style="height:160px"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="clientTypesSection" style="display:none">
+    <div class="section-inner">
+      <div class="section-label">Who We Serve</div>
+      <h2 class="section-title">Our Clients</h2>
+      <p class="section-sub">We work with a wide range of clients across industries and business types.</p>
+      <div class="client-types" id="clientTypesList"></div>
+    </div>
+  </section>
+
+  <section class="section section-white">
+    <div class="section-inner">
+      <div class="section-label">Why Choose Us</div>
+      <h2 class="section-title">CA Services That Actually Work</h2>
+      <p class="section-sub">Professional expertise with technology — fast, accurate, stress-free compliance.</p>
+      <div class="why-grid">
+        <div class="why-card"><div class="why-icon">⚡</div><div><div class="why-title">Quick Turnaround</div><div class="why-desc">Most filings done within 24-48 hours.</div></div></div>
+        <div class="why-card"><div class="why-icon">📱</div><div><div class="why-title">WhatsApp First</div><div class="why-desc">Reach us anytime. No formal appointments.</div></div></div>
+        <div class="why-card"><div class="why-icon">🔔</div><div><div class="why-title">Deadline Reminders</div><div class="why-desc">Never miss a filing or pay a late fee.</div></div></div>
+        <div class="why-card"><div class="why-icon">🔒</div><div><div class="why-title">100% Confidential</div><div class="why-desc">Complete privacy for your financial data.</div></div></div>
+        <div class="why-card"><div class="why-icon">💸</div><div><div class="why-title">Transparent Pricing</div><div class="why-desc">Fixed, upfront pricing. No hidden charges.</div></div></div>
+        <div class="why-card"><div class="why-icon">🤝</div><div><div class="why-title">Long-Term Partner</div><div class="why-desc">We grow with your business — startup to scale.</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="section-inner">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title" style="text-align:center">Frequently Asked Questions</h2>
+      <p class="section-sub" style="text-align:center;margin:0 auto 44px">Quick answers to things clients ask us most.</p>
+      <div class="faq-list">
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Do I need a CA if I'm a freelancer?<span class="faq-arrow">▼</span></button><div class="faq-a">Yes — even freelancers need to file ITR and handle TDS. A CA ensures you're compliant and saves taxes legally.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How much does GST return filing cost?<span class="faq-arrow">▼</span></button><div class="faq-a">Pricing depends on turnover and transactions. Contact us for a free quote based on your situation.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can you help with a GST or income tax notice?<span class="faq-arrow">▼</span></button><div class="faq-a">Absolutely. We handle notices, scrutiny cases, demand orders and represent you before the department.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How do I share my documents?<span class="faq-arrow">▼</span></button><div class="faq-a">WhatsApp is our primary channel. We also accept email and Google Drive. No need to visit for routine work.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Do you work outside your city?<span class="faq-arrow">▼</span></button><div class="faq-a">Yes! We serve clients pan-India digitally via WhatsApp and email.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact">
+    <div class="contact-inner">
+      <div class="contact-left">
+        <div class="section-label" style="color:var(--green-sage)">Get In Touch</div>
+        <h2>Let's Talk About Your Business</h2>
+        <p>Fill the form or reach out directly — we'll respond within a few hours.</p>
+        <div class="contact-info-item"><span>📱</span><span id="contactPhone">—</span></div>
+        <div class="contact-info-item"><span>📧</span><span id="contactEmail">—</span></div>
+        <div class="contact-info-item"><span>📍</span><span id="contactAddress">—</span></div>
+        <div class="contact-info-item"><span>🕐</span><span>Mon–Sat, 10 AM – 7 PM</span></div>
+        <br/>
+        <a href="#" id="contactWhatsApp" target="_blank" class="btn-wa" style="display:inline-flex;margin-top:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
+          Chat on WhatsApp
+        </a>
+      </div>
+      <div class="form-card">
+        <div id="formView">
+          <div class="form-title">📋 Book a Consultation</div>
+          <div class="form-group"><label>Your Name *</label><input type="text" id="fname" placeholder="Ramesh Sharma" required/></div>
+          <div class="form-group"><label>Phone / WhatsApp *</label><input type="tel" id="fphone" placeholder="+91 98765 43210" required/></div>
+          <div class="form-group"><label>Email</label><input type="email" id="femail" placeholder="ramesh@business.com"/></div>
+          <div class="form-group"><label>Service Required *</label><select id="fservice" onchange="toggleOtherBox(this)"><option value="">Select a service...</option></select></div>
+          <div class="form-group" id="otherBox" style="display:none;"><label>Please describe your requirement *</label><textarea id="fotherdetail" placeholder="Tell us what you need..."></textarea></div>
+          <div class="form-group"><label>Message (optional)</label><textarea id="fmessage" placeholder="Brief about your business or query..."></textarea></div>
+          <div id="formError" style="color:#dc2626;font-size:13px;margin-bottom:10px;display:none;"></div>
+          <button class="form-submit" id="submitBtn" onclick="submitForm()">Book Consultation →</button>
+          <p style="font-size:12px;color:#94a3b8;text-align:center;margin-top:10px;">We respond within 2-4 hours on business days.</p>
+        </div>
+        <div class="form-success" id="formSuccess">
+          <div class="form-success-icon">🎉</div>
+          <h3>Consultation Booked!</h3>
+          <p>Thank you! We'll reach out within a few hours.</p>
+          <br/>
+          <a id="successWhatsApp" href="#" target="_blank" class="btn-wa" style="justify-content:center;display:inline-flex;">💬 Also chat on WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <strong id="footerFirmName">CA Firm</strong> — Chartered Accountants<br/>
+    <span style="font-size:12px;opacity:0.6;">© 2025 All rights reserved.</span>
+  </footer>
+</div>
+
+<!-- NOT FOUND — shown when no ?ca= param -->
+<div id="notFound" style="display:none">
+  <div class="not-found">
+    <div>
+      <div style="font-size:64px;margin-bottom:16px;">🔍</div>
+      <h2>CA Firm Not Found</h2>
+      <p>This link doesn't have a valid CA firm. Please check the link you received.</p>
+      <a href="https://practiceos-india.vercel.app" class="btn-primary" style="display:inline-block;">Go to Firmora</a>
+    </div>
   </div>
 </div>
 
-<!-- SERVICES — Dynamic -->
-<section class="section section-white">
-  <div class="section-inner">
-    <div class="section-label">What We Do</div>
-    <h2 class="section-title">Services We Offer</h2>
-    <p class="section-sub">From GST filings to company registration — we handle your compliance so you can focus on growing your business.</p>
-    <div class="services-grid" id="servicesGrid">
-      <!-- Loaded dynamically -->
-      <div class="service-card loading-skeleton" style="height:160px"></div>
-      <div class="service-card loading-skeleton" style="height:160px"></div>
-      <div class="service-card loading-skeleton" style="height:160px"></div>
-    </div>
-  </div>
-</section>
-
-<!-- CLIENT TYPES — Dynamic -->
-<section class="section section-alt" id="clientTypesSection" style="display:none">
-  <div class="section-inner">
-    <div class="section-label">Who We Serve</div>
-    <h2 class="section-title">Our Clients</h2>
-    <p class="section-sub">We work with a wide range of clients across industries and business types.</p>
-    <div class="client-types" id="clientTypesList"></div>
-  </div>
-</section>
-
-<!-- WHY US -->
-<section class="section section-white">
-  <div class="section-inner">
-    <div class="section-label">Why Choose Us</div>
-    <h2 class="section-title">CA Services That Actually Work</h2>
-    <p class="section-sub">We combine professional expertise with technology to deliver fast, accurate, and stress-free compliance.</p>
-    <div class="why-grid">
-      <div class="why-card"><div class="why-icon">⚡</div><div><div class="why-title">Quick Turnaround</div><div class="why-desc">Most filings done within 24-48 hours of receiving documents.</div></div></div>
-      <div class="why-card"><div class="why-icon">📱</div><div><div class="why-title">WhatsApp First</div><div class="why-desc">Reach us on WhatsApp anytime. No formal appointments needed.</div></div></div>
-      <div class="why-card"><div class="why-icon">🔔</div><div><div class="why-title">Deadline Reminders</div><div class="why-desc">We remind you before every due date so you never pay a late fee.</div></div></div>
-      <div class="why-card"><div class="why-icon">🔒</div><div><div class="why-title">100% Confidential</div><div class="why-desc">Your financial data is handled with complete privacy.</div></div></div>
-      <div class="why-card"><div class="why-icon">💸</div><div><div class="why-title">Transparent Pricing</div><div class="why-desc">Fixed, upfront pricing. No hidden charges.</div></div></div>
-      <div class="why-card"><div class="why-icon">🤝</div><div><div class="why-title">Long-Term Partner</div><div class="why-desc">We grow with your business — from startup to scale.</div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section class="section section-alt">
-  <div class="section-inner">
-    <div class="section-label">FAQ</div>
-    <h2 class="section-title" style="text-align:center">Frequently Asked Questions</h2>
-    <p class="section-sub" style="text-align:center;margin:0 auto 44px">Quick answers to things clients ask us most.</p>
-    <div class="faq-list">
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Do I need a CA if I'm a freelancer or small business?<span class="faq-arrow">▼</span></button><div class="faq-a">Yes — even freelancers need to file ITR and handle TDS. If your turnover crosses ₹20L, GST registration is mandatory. A CA ensures you're compliant and helps save taxes legally.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How much does GST return filing cost?<span class="faq-arrow">▼</span></button><div class="faq-a">Pricing depends on your turnover and transactions. We offer affordable packages starting from ₹500/month. Contact us for a quote.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can you help with a GST notice or income tax notice?<span class="faq-arrow">▼</span></button><div class="faq-a">Absolutely. We handle GST notices, scrutiny cases, demand orders, and income tax notices. We prepare the response and represent you if needed.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How do I share my documents?<span class="faq-arrow">▼</span></button><div class="faq-a">WhatsApp is our primary channel. We also accept email and Google Drive. No need to visit our office for routine work.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Do you work with clients outside your city?<span class="faq-arrow">▼</span></button><div class="faq-a">Yes! Most of our work is done digitally. We serve clients pan-India via WhatsApp and email.</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section class="contact-section" id="contact">
-  <div class="contact-inner">
-    <div class="contact-left">
-      <div class="section-label" style="color:var(--green-sage)">Get In Touch</div>
-      <h2>Let's Talk About Your Business</h2>
-      <p>Fill the form or reach out directly — we'll respond within a few hours.</p>
-      <div class="contact-info-item"><span>📱</span><span id="contactPhone">—</span></div>
-      <div class="contact-info-item"><span>📧</span><span id="contactEmail">—</span></div>
-      <div class="contact-info-item"><span>📍</span><span id="contactAddress">—</span></div>
-      <div class="contact-info-item"><span>🕐</span><span>Mon–Sat, 10 AM – 7 PM</span></div>
-      <br/>
-      <a href="#" id="contactWhatsApp" target="_blank" class="btn-wa" style="display:inline-flex;margin-top:8px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
-        Chat on WhatsApp
-      </a>
-    </div>
-
-    <div class="form-card">
-      <div id="formView">
-        <div class="form-title">📋 Book a Consultation</div>
-        <div class="form-group"><label>Your Name *</label><input type="text" id="fname" placeholder="Ramesh Sharma" required/></div>
-        <div class="form-group"><label>Phone / WhatsApp *</label><input type="tel" id="fphone" placeholder="+91 98765 43210" required/></div>
-        <div class="form-group"><label>Email</label><input type="email" id="femail" placeholder="ramesh@business.com"/></div>
-        <div class="form-group">
-          <label>Service Required *</label>
-          <select id="fservice" onchange="toggleOtherBox(this)">
-            <option value="">Select a service...</option>
-          </select>
-        </div>
-        <div class="form-group" id="otherBox" style="display:none;">
-          <label>Please describe your requirement *</label>
-          <textarea id="fotherdetail" placeholder="Tell us what you need help with..."></textarea>
-        </div>
-        <div class="form-group"><label>Message (optional)</label><textarea id="fmessage" placeholder="Brief about your business or query..."></textarea></div>
-        <div id="formError" style="color:#dc2626;font-size:13px;margin-bottom:10px;display:none;"></div>
-        <button class="form-submit" id="submitBtn" onclick="submitForm()">Book Consultation →</button>
-        <p style="font-size:12px;color:#94a3b8;text-align:center;margin-top:10px;">We respond within 2-4 hours on business days.</p>
-      </div>
-      <div class="form-success" id="formSuccess">
-        <div class="form-success-icon">🎉</div>
-        <h3>Consultation Booked!</h3>
-        <p>Thank you! We'll reach out to you on WhatsApp or call within a few hours.</p>
-        <br/>
-        <a id="successWhatsApp" href="#" target="_blank" class="btn-wa" style="justify-content:center;display:inline-flex;">💬 Also chat on WhatsApp</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <strong id="footerFirmName">CA Firm</strong> — Chartered Accountants<br/>
-  <span style="font-size:12px;opacity:0.6;">© 2025 All rights reserved.</span>
-</footer>
-
-<!-- AI CHATBOT -->
-<div class="chat-bubble">
-  <button class="chat-toggle" onclick="toggleChat()" title="Ask our AI assistant">🤖</button>
+<!-- CHAT -->
+<div class="chat-bubble" id="chatBubble" style="display:none">
+  <button class="chat-toggle" onclick="toggleChat()">🤖</button>
 </div>
 <div class="chat-window" id="chatWindow">
   <div class="chat-header">
     <div class="chat-avatar">🤖</div>
-    <div>
-      <div class="chat-header-name" id="chatFirmName">CA Assistant</div>
-      <div class="chat-header-status">Powered by AI</div>
-    </div>
+    <div><div class="chat-header-name" id="chatFirmName">CA Assistant</div><div class="chat-header-status">Powered by AI</div></div>
     <button class="chat-close" onclick="toggleChat()">×</button>
   </div>
   <div class="chat-messages" id="chatMessages">
-    <div class="chat-msg bot">Namaste! 🙏 I'm the CA assistant. Ask me anything about GST, ITR, company registration, or our services!</div>
+    <div class="chat-msg bot">Namaste! 🙏 Ask me anything about GST, ITR, company registration, or our services!</div>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chatInput" placeholder="Ask about GST, ITR, audit..." onkeydown="if(event.key==='Enter') sendChat()"/>
@@ -339,8 +308,7 @@
   </div>
 </div>
 
-<!-- WA FLOAT -->
-<a class="wa-float" id="waFloat" href="#" target="_blank">
+<a class="wa-float" id="waFloat" href="#" target="_blank" style="display:none">
   <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.115 1.528 5.845L0 24l6.335-1.508A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.214-3.76.895.953-3.667-.234-.376A9.818 9.818 0 1112 21.818z"/></svg>
 </a>
 
@@ -349,148 +317,134 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2tubHRzbGR5d2N6dnFtendwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTM3ODksImV4cCI6MjA5ODAyOTc4OX0.qAijhwhTg1-OD0avyMgh59r_ai3OC5T47R6C7HQi8mY";
   const GROQ_API_KEY = "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";
 
-  // Service icons map
-  const SERVICE_ICONS = {
-    "GST": "🧾", "Income Tax": "📄", "Audit": "🔍", "Company": "🏢",
-    "Accounting": "📊", "Payroll": "💰", "Registration": "📋", "Advisory": "🤝",
-    "TDS": "💳", "Bookkeeping": "📒", "ROC": "🏛️", "FEMA": "🌐"
-  };
+  const SERVICE_ICONS = { "GST":"-🧾","Income":"📄","Tax Audit":"🔍","Statutory":"🔍","Company":"🏢","LLP":"🏢","Bookkeeping":"📊","Accounting":"📊","TDS":"💳","Payroll":"💰","PF":"💰","Udyam":"📋","MSME":"📋","FEMA":"🌐","Virtual":"🤝","Business":"🤝","Trust":"🏛️","NGO":"🏛️" };
+  function getIcon(s){ for(const [k,v] of Object.entries(SERVICE_ICONS)){ if(s.includes(k)) return v; } return "✅"; }
 
-  function getServiceIcon(service) {
-    for (const [key, icon] of Object.entries(SERVICE_ICONS)) {
-      if (service.toLowerCase().includes(key.toLowerCase())) return icon;
-    }
-    return "✅";
-  }
-
-  // Group services by category prefix
-  function groupServices(services) {
-    const groups = {};
-    services.forEach(s => {
-      const key = s.split(" ")[0];
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(s);
-    });
-    return groups;
-  }
-
-  // Default services if none selected
   const DEFAULT_SERVICES = [
-    { title: "GST Registration & Filing", icon: "🧾", desc: "GSTR-1, GSTR-3B, GSTR-9 filings. New registration and amendments." },
-    { title: "Income Tax Return (ITR)", icon: "📄", desc: "ITR filing for individuals, firms, companies. Tax planning and refunds." },
-    { title: "Statutory & Tax Audit", icon: "🔍", desc: "Audits under Companies Act and Section 44AB." },
-    { title: "Company & LLP Registration", icon: "🏢", desc: "Private Limited, LLP, OPC registration. ROC filings and MCA compliance." },
-    { title: "TDS Compliance", icon: "💰", desc: "TDS deduction, challan payment, quarterly returns, Form 16." },
-    { title: "Bookkeeping & Accounting", icon: "📊", desc: "Monthly bookkeeping, P&L, Balance Sheet, MIS reports." },
+    {title:"GST Registration & Filing",icon:"🧾",desc:"GSTR-1, GSTR-3B, GSTR-9 filings and new registrations."},
+    {title:"Income Tax Return (ITR)",icon:"📄",desc:"ITR for individuals, firms, companies. Tax planning & refunds."},
+    {title:"Statutory & Tax Audit",icon:"🔍",desc:"Audits under Companies Act and Section 44AB."},
+    {title:"Company & LLP Registration",icon:"🏢",desc:"Private Limited, LLP, OPC registration and ROC filings."},
+    {title:"TDS Compliance",icon:"💳",desc:"TDS deduction, returns, Form 16 generation."},
+    {title:"Bookkeeping & Accounting",icon:"📊",desc:"Monthly bookkeeping, P&L, Balance Sheet, MIS reports."},
   ];
 
   let firmData = null;
+  let caUserId = null;
 
-  async function loadFirmData() {
+  async function init() {
+    // ✅ Read ?ca= from URL
+    const params = new URLSearchParams(window.location.search);
+    caUserId = params.get('ca');
+
+    if (!caUserId) {
+      // No CA param — show not found
+      document.getElementById('notFound').style.display = '';
+      document.getElementById('navFirmName').textContent = 'Firmora';
+      return;
+    }
+
+    // Fetch that specific CA's settings
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?select=firm_name,phone,email,address,logo_url,whatsapp_number,website_tagline,website_services,website_client_types&limit=1`, {
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-      });
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/settings?select=firm_name,phone,email,address,logo_url,whatsapp_number,website_tagline,website_services,website_client_types&user_id=eq.${caUserId}&limit=1`,
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
       const data = await res.json();
       firmData = data?.[0] ?? null;
-    } catch(e) {
-      firmData = null;
+    } catch(e) { firmData = null; }
+
+    if (!firmData) {
+      document.getElementById('notFound').style.display = '';
+      document.getElementById('navFirmName').textContent = 'CA Not Found';
+      return;
     }
-    applyFirmData();
+
+    applyData();
   }
 
-  function applyFirmData() {
+  function applyData() {
     const d = firmData;
-    const firmName = d?.firm_name || "CA Firm";
-    const phone = d?.phone || "+91 99999 99999";
-    const email = d?.email || "info@cafirm.in";
-    const address = d?.address || "Mumbai, Maharashtra";
-    const wa = d?.whatsapp_number || "919999999999";
-    const waNum = wa.replace(/\D/g, '').replace(/^0/, '91').replace(/^(?!91)/, '91');
+    const firmName = d.firm_name || "CA Firm";
+    const phone = d.phone || "";
+    const email = d.email || "";
+    const address = d.address || "";
+    const wa = (d.whatsapp_number || phone || "").replace(/\D/g,'');
+    const waNum = wa.startsWith('91') ? wa : '91'+wa;
     const waUrl = `https://wa.me/${waNum}?text=Hi%2C%20I%20want%20to%20know%20more%20about%20your%20CA%20services.`;
-    const tagline = d?.website_tagline || "Helping businesses and individuals stay compliant, save taxes, and grow.";
-    const services = Array.isArray(d?.website_services) && d.website_services.length > 0 ? d.website_services : null;
-    const clientTypes = Array.isArray(d?.website_client_types) && d.website_client_types.length > 0 ? d.website_client_types : null;
-    const logoUrl = d?.logo_url || null;
+    const tagline = d.website_tagline || "Helping businesses and individuals stay compliant, save taxes, and grow.";
+    const services = Array.isArray(d.website_services) && d.website_services.length > 0 ? d.website_services : null;
+    const clientTypes = Array.isArray(d.website_client_types) && d.website_client_types.length > 0 ? d.website_client_types : null;
 
-    // Nav
+    // Show content
+    document.getElementById('mainContent').style.display = '';
+    document.getElementById('chatBubble').style.display = '';
+    document.getElementById('waFloat').style.display = '';
+
+    // Nav + title
     document.getElementById('navFirmName').textContent = firmName;
     document.title = `${firmName} — Chartered Accountants`;
-    const navLogo = document.getElementById('navLogo');
-    if (logoUrl) { navLogo.innerHTML = `<img src="${logoUrl}" alt="${firmName}" />`; }
+    if (d.logo_url) {
+      document.getElementById('navLogo').innerHTML = `<img src="${d.logo_url}" alt="${firmName}"/>`;
+    }
 
     // Hero
     document.getElementById('heroTagline').textContent = tagline;
     document.getElementById('heroWhatsApp').href = waUrl;
 
     // Contact
-    document.getElementById('contactPhone').textContent = phone;
-    document.getElementById('contactEmail').textContent = email;
-    document.getElementById('contactAddress').textContent = address;
+    document.getElementById('contactPhone').textContent = phone || "—";
+    document.getElementById('contactEmail').textContent = email || "—";
+    document.getElementById('contactAddress').textContent = address || "—";
     document.getElementById('contactWhatsApp').href = waUrl;
     document.getElementById('successWhatsApp').href = `https://wa.me/${waNum}`;
     document.getElementById('waFloat').href = waUrl;
     document.getElementById('chatWhatsApp').href = waUrl;
-
-    // Footer
     document.getElementById('footerFirmName').textContent = firmName;
     document.getElementById('chatFirmName').textContent = firmName + " Assistant";
 
-    // Services
+    // Services grid
     const grid = document.getElementById('servicesGrid');
     grid.innerHTML = '';
-    if (services) {
-      // Group selected services
-      const grouped = {};
-      services.forEach(s => {
-        const parts = s.match(/^(GST|Income Tax|TDS|Tax Audit|Statutory|Company|LLP|Bookkeeping|Payroll|PF|ESI|Udyam|FEMA|Transfer|Virtual CFO|Business)/i);
-        const key = parts ? parts[0] : s.split(' ').slice(0,2).join(' ');
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(s);
-      });
-
-      Object.entries(grouped).slice(0, 9).forEach(([group, items]) => {
-        const card = document.createElement('div');
-        card.className = 'service-card';
-        card.innerHTML = `
-          <div class="service-icon">${getServiceIcon(group)}</div>
-          <div class="service-title">${group}</div>
-          <div class="service-desc">${items.slice(0, 3).join(' • ')}${items.length > 3 ? ' & more' : ''}</div>
-        `;
-        grid.appendChild(card);
-      });
-    } else {
-      DEFAULT_SERVICES.forEach(s => {
-        const card = document.createElement('div');
-        card.className = 'service-card';
-        card.innerHTML = `<div class="service-icon">${s.icon}</div><div class="service-title">${s.title}</div><div class="service-desc">${s.desc}</div>`;
-        grid.appendChild(card);
-      });
-    }
-
-    // Client Types
-    if (clientTypes && clientTypes.length > 0) {
-      const section = document.getElementById('clientTypesSection');
-      const list = document.getElementById('clientTypesList');
-      section.style.display = '';
-      list.innerHTML = clientTypes.map(t => `<span class="client-tag">✓ ${t}</span>`).join('');
-    }
-
-    // Form dropdown — services
-    const select = document.getElementById('fservice');
-    select.innerHTML = '<option value="">Select a service...</option>';
-    const formServices = services || DEFAULT_SERVICES.map(s => s.title);
-    formServices.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s; opt.textContent = s;
-      select.appendChild(opt);
+    (services ? groupServices(services) : DEFAULT_SERVICES).forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'service-card';
+      card.innerHTML = `<div class="service-icon">${item.icon}</div><div class="service-title">${item.title}</div><div class="service-desc">${item.desc}</div>`;
+      grid.appendChild(card);
     });
-    const other = document.createElement('option');
-    other.value = 'Other'; other.textContent = 'Other';
-    select.appendChild(other);
+
+    // Client types
+    if (clientTypes && clientTypes.length > 0) {
+      document.getElementById('clientTypesSection').style.display = '';
+      document.getElementById('clientTypesList').innerHTML = clientTypes.map(t => `<span class="client-tag">✓ ${t}</span>`).join('');
+    }
+
+    // Form dropdown
+    const sel = document.getElementById('fservice');
+    sel.innerHTML = '<option value="">Select a service...</option>';
+    (services || DEFAULT_SERVICES.map(s => s.title)).forEach(s => {
+      const o = document.createElement('option');
+      o.value = s; o.textContent = s; sel.appendChild(o);
+    });
+    const oth = document.createElement('option');
+    oth.value = 'Other'; oth.textContent = 'Other'; sel.appendChild(oth);
   }
 
-  // FAQ
+  function groupServices(services) {
+    const seen = new Set();
+    const result = [];
+    services.forEach(s => {
+      const words = s.split(' ');
+      const key = words.slice(0,2).join(' ');
+      if (!seen.has(key)) {
+        seen.add(key);
+        const related = services.filter(x => x.startsWith(words[0]));
+        result.push({ title: words[0], icon: getIcon(s), desc: related.slice(0,3).join(' • ') + (related.length > 3 ? ' & more' : '') });
+      }
+    });
+    return result.slice(0, 9);
+  }
+
   function toggleFaq(btn) {
     const item = btn.closest('.faq-item');
     const isOpen = item.classList.contains('open');
@@ -498,12 +452,10 @@
     if (!isOpen) item.classList.add('open');
   }
 
-  // Others box
   function toggleOtherBox(sel) {
     document.getElementById('otherBox').style.display = sel.value === 'Other' ? 'block' : 'none';
   }
 
-  // Form submit
   async function submitForm() {
     const name = document.getElementById('fname').value.trim();
     const phone = document.getElementById('fphone').value.trim();
@@ -514,7 +466,7 @@
     const errEl = document.getElementById('formError');
     const btn = document.getElementById('submitBtn');
     errEl.style.display = 'none';
-    if (!name || !phone || !service) { errEl.textContent = 'Please fill in name, phone and service.'; errEl.style.display = 'block'; return; }
+    if (!name || !phone || !service) { errEl.textContent = 'Please fill name, phone and service.'; errEl.style.display = 'block'; return; }
     if (service === 'Other' && !otherDetail) { errEl.textContent = 'Please describe your requirement.'; errEl.style.display = 'block'; return; }
     btn.disabled = true; btn.textContent = 'Sending...';
     const requirement = service === 'Other' ? `Other: ${otherDetail}` : service;
@@ -522,15 +474,15 @@
       const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ name, phone, email: email||null, source: 'Website', requirement, notes: message||null, status: 'New' }),
+        // ✅ Lead saved with CA's user_id so it goes to right CA's leads
+        body: JSON.stringify({ name, phone, email: email||null, source: 'Website', requirement, notes: message||null, status: 'New', user_id: caUserId }),
       });
       if (res.ok) { document.getElementById('formView').style.display='none'; document.getElementById('formSuccess').style.display='block'; }
       else { errEl.textContent = "Something went wrong. Please try WhatsApp instead."; errEl.style.display='block'; }
-    } catch(err) { errEl.textContent = "Connection error. Please try WhatsApp instead."; errEl.style.display='block'; }
+    } catch(e) { errEl.textContent = "Connection error. Please try WhatsApp."; errEl.style.display='block'; }
     btn.disabled = false; btn.textContent = 'Book Consultation →';
   }
 
-  // AI Chat
   let chatOpen = false;
   let chatHistory = [];
 
@@ -556,10 +508,8 @@
     if (!text) return;
     input.value = '';
     addMsg(text, 'user');
-    const firmName = firmData?.firm_name || 'CA Firm';
-    const phone = firmData?.phone || '';
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'system', content: `You are a helpful assistant for ${firmName}, a Chartered Accountancy firm. Help visitors with questions about GST, ITR, tax audits, company registration, TDS, bookkeeping, and CA services. Be concise, professional, and friendly. If someone wants to speak to the CA directly, suggest phone: ${phone}. Keep responses under 80 words.` });
+      chatHistory.push({ role: 'system', content: `You are a helpful assistant for ${firmData?.firm_name || 'CA Firm'}, a Chartered Accountancy firm. Help with GST, ITR, audits, company registration, TDS, accounting. Be concise and professional. If they want to speak to CA, suggest calling ${firmData?.phone || 'us directly'}. Keep responses under 80 words.` });
     }
     chatHistory.push({ role: 'user', content: text });
     const loading = addMsg('Typing...', 'bot');
@@ -570,18 +520,13 @@
         body: JSON.stringify({ model: 'openai/gpt-oss-20b', messages: chatHistory, max_tokens: 150, temperature: 0.7 }),
       });
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content ?? "I'm having trouble connecting. Please call or WhatsApp us directly.";
-      loading.remove();
-      addMsg(reply, 'bot');
+      const reply = data.choices?.[0]?.message?.content ?? "I'm having trouble. Please contact us directly.";
+      loading.remove(); addMsg(reply, 'bot');
       chatHistory.push({ role: 'assistant', content: reply });
-    } catch(err) {
-      loading.remove();
-      addMsg("Sorry, I'm offline. Please contact us directly.", 'bot');
-    }
+    } catch(e) { loading.remove(); addMsg("Sorry, I'm offline. Please contact us directly.", 'bot'); }
   }
 
-  // Load on page load
-  loadFirmData();
+  init();
 </script>
 </body>
 </html>
