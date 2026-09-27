@@ -316,7 +316,7 @@
 <script>
   const SUPABASE_URL = "https://xjcknltsldywczvqmzwp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2tubHRzbGR5d2N6dnFtendwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTM3ODksImV4cCI6MjA5ODAyOTc4OX0.qAijhwhTg1-OD0avyMgh59r_ai3OC5T47R6C7HQi8mY";
-  const GROQ_API_KEY = "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";
+  const GROQ_API_KEY = "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";
 
   const SERVICE_ICONS = { "GST":"-🧾","Income":"📄","Tax Audit":"🔍","Statutory":"🔍","Company":"🏢","LLP":"🏢","Bookkeeping":"📊","Accounting":"📊","TDS":"💳","Payroll":"💰","PF":"💰","Udyam":"📋","MSME":"📋","FEMA":"🌐","Virtual":"🤝","Business":"🤝","Trust":"🏛️","NGO":"🏛️" };
   function getIcon(s){ for(const [k,v] of Object.entries(SERVICE_ICONS)){ if(s.includes(k)) return v; } return "✅"; }
@@ -518,6 +518,51 @@
     return div;
   }
 
+  // ✅ Save conversation to query_log (Support Agent inbox)
+  let queryLogId = null;
+
+  async function saveQueryLog(name, phone, messages) {
+    try {
+      const payload = {
+        user_id: caUserId || null,
+        client_name: name,
+        client_phone: phone || null,
+        source: 'Website Chatbot',
+        messages: messages,
+        status: 'open',
+      };
+
+      if (queryLogId) {
+        // Update existing
+        await fetch(`${SUPABASE_URL}/rest/v1/query_log?id=eq.${queryLogId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({ messages: messages }),
+        });
+      } else {
+        // Create new
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/query_log`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=representation',
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        queryLogId = data?.[0]?.id ?? null;
+      }
+    } catch(e) { console.error('Query log error', e); }
+  }
+
+  // ✅ Save lead when contact captured
   async function saveChatLead(name, phone, query) {
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
@@ -567,6 +612,14 @@
           return;
         }
         await saveChatLead(lcName, phone, capturedQuery);
+        // Update query_log with captured phone
+        if (queryLogId) {
+          await fetch(`${SUPABASE_URL}/rest/v1/query_log?id=eq.${queryLogId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ client_name: lcName, client_phone: phone }),
+          });
+        }
         addMsg(`Thank you, ${lcName}! 🎉 Our CA will contact you on ${text} shortly. You can also WhatsApp us directly using the button below.`, 'bot');
         leadCaptureMode = false;
         lcStep = 0;
@@ -593,6 +646,13 @@
       loading.remove();
       addMsg(reply, 'bot');
       chatHistory.push({ role: 'assistant', content: reply });
+
+      // ✅ Save to query_log after every message
+      const allMsgs = chatHistory.filter(m => m.role !== 'system').map(m => ({
+        role: m.role === 'user' ? 'user' : 'bot',
+        text: m.content,
+      }));
+      await saveQueryLog(lcName || 'Website Visitor', null, allMsgs);
 
       // ✅ After 3 messages — ask for contact details
       if (chatMsgCount === 3) {
