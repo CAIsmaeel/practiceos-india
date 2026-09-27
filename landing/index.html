@@ -488,7 +488,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
         // ✅ Lead saved with CA's user_id so it goes to right CA's leads
-        body: JSON.stringify({ name, phone, email: email||null, source: 'Website', requirement, notes: message||null, status: 'New', user_id: caUserId }),
+        body: JSON.stringify({ name, phone, email: email||null, source: 'Website', requirement, notes: message||null, status: 'New', user_id: caUserId || null }),
       });
       if (res.ok) { document.getElementById('formView').style.display='none'; document.getElementById('formSuccess').style.display='block'; }
       else { errEl.textContent = "Something went wrong. Please try WhatsApp instead."; errEl.style.display='block'; }
@@ -498,6 +498,9 @@
 
   let chatOpen = false;
   let chatHistory = [];
+  let chatMsgCount = 0;
+  let leadCaptureMode = false;
+  let capturedQuery = '';
 
   function toggleChat() {
     chatOpen = !chatOpen;
@@ -515,17 +518,70 @@
     return div;
   }
 
+  async function saveChatLead(name, phone, query) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          name: name,
+          phone: phone,
+          source: 'AI Chatbot',
+          requirement: 'General Enquiry',
+          notes: `Chat query: ${query}`,
+          status: 'New',
+          user_id: caUserId || null,
+        }),
+      });
+    } catch(e) { console.error('Lead save error', e); }
+  }
+
+  // Lead capture flow state
+  let lcStep = 0; // 0=not started, 1=asked name, 2=asked phone
+  let lcName = '';
+
   async function sendChat() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
     addMsg(text, 'user');
+
+    // ✅ Lead capture mode
+    if (leadCaptureMode) {
+      if (lcStep === 1) {
+        lcName = text;
+        lcStep = 2;
+        addMsg(`Nice to meet you, ${lcName}! What's your WhatsApp number so our CA can reach you?`, 'bot');
+        return;
+      }
+      if (lcStep === 2) {
+        const phone = text.replace(/\D/g, '');
+        if (phone.length < 10) {
+          addMsg('Please enter a valid 10-digit phone number.', 'bot');
+          return;
+        }
+        await saveChatLead(lcName, phone, capturedQuery);
+        addMsg(`Thank you, ${lcName}! 🎉 Our CA will contact you on ${text} shortly. You can also WhatsApp us directly using the button below.`, 'bot');
+        leadCaptureMode = false;
+        lcStep = 0;
+        return;
+      }
+    }
+
+    // Normal AI chat
+    chatMsgCount++;
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'system', content: `You are a helpful assistant for ${firmData?.firm_name || 'CA Firm'}, a Chartered Accountancy firm. Help with GST, ITR, audits, company registration, TDS, accounting. Be concise and professional. If they want to speak to CA, suggest calling ${firmData?.phone || 'us directly'}. Keep responses under 80 words.` });
+      chatHistory.push({ role: 'system', content: `You are a helpful assistant for ${firmData?.firm_name || 'CA Firm'}, a Chartered Accountancy firm. Help with GST, ITR, audits, company registration, TDS, accounting. Be concise and professional. Keep responses under 80 words.` });
     }
     chatHistory.push({ role: 'user', content: text });
     const loading = addMsg('Typing...', 'bot');
+
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -534,9 +590,23 @@
       });
       const data = await res.json();
       const reply = data.choices?.[0]?.message?.content ?? "I'm having trouble. Please contact us directly.";
-      loading.remove(); addMsg(reply, 'bot');
+      loading.remove();
+      addMsg(reply, 'bot');
       chatHistory.push({ role: 'assistant', content: reply });
-    } catch(e) { loading.remove(); addMsg("Sorry, I'm offline. Please contact us directly.", 'bot'); }
+
+      // ✅ After 3 messages — ask for contact details
+      if (chatMsgCount === 3) {
+        capturedQuery = chatHistory.filter(m => m.role === 'user').map(m => m.content).join(' | ');
+        setTimeout(() => {
+          addMsg('I can see you have some questions! Would you like our CA to personally call you back? Just share your name and I will arrange it. 😊', 'bot');
+          leadCaptureMode = true;
+          lcStep = 1;
+        }, 800);
+      }
+    } catch(e) {
+      loading.remove();
+      addMsg("Sorry, I'm offline. Please contact us directly.", 'bot');
+    }
   }
 
   init();
