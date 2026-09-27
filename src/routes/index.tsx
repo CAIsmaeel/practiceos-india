@@ -303,36 +303,7 @@ function Dashboard() {
   const todaysFocus: FocusItem[] = [];
   const today = format(startOfDay(now), "yyyy-MM-dd");
 
-  // 1. Overdue compliance (critical)
-  (complianceItems ?? []).filter((i: any) => i.isOverdue).slice(0, 3).forEach((i: any) => {
-    const daysOverdue = differenceInDays(now, new Date(i.dueDate));
-    todaysFocus.push({
-      id: `comp-${i.id}`,
-      priority: "critical",
-      type: "compliance",
-      clientName: i.clientName,
-      description: `${i.complianceType} — ${daysOverdue === 0 ? "due today" : `${daysOverdue}d overdue`}`,
-      detail: i.complianceType,
-      href: "/compliance",
-      action: "Review",
-    });
-  });
-
-  // 2. Compliance due today (critical)
-  (complianceItems ?? []).filter((i: any) => !i.isOverdue && i.dueDate === today).forEach((i: any) => {
-    todaysFocus.push({
-      id: `comp-today-${i.id}`,
-      priority: "critical",
-      type: "compliance",
-      clientName: i.clientName,
-      description: `${i.complianceType} — due today`,
-      detail: i.complianceType,
-      href: "/compliance",
-      action: "Review",
-    });
-  });
-
-  // 3. Overdue invoices (critical)
+  // 1. Overdue invoices (critical)
   (invoices ?? []).filter((inv: any) => {
     if (!inv.due_date || inv.status === "Paid") return false;
     return new Date(inv.due_date) < now;
@@ -353,7 +324,7 @@ function Dashboard() {
     });
   });
 
-  // 4. Engagements with blocked docs (attention)
+  // 2. Engagements with blocked docs (attention)
   (engagements ?? []).filter(isActiveEng).forEach((e: any) => {
     const blocked = activePendingDocs.filter(d => d.engagement_id === e.id && d.requirement === "mandatory");
     if (blocked.length > 0) {
@@ -371,7 +342,7 @@ function Dashboard() {
     }
   });
 
-  // 5. Hot leads needing follow-up (attention)
+  // 3. Hot leads needing follow-up (attention)
   (recentLeads ?? []).filter((l: any) => l.qualification_score === "Hot").slice(0, 2).forEach((l: any) => {
     todaysFocus.push({
       id: `lead-${l.id}`,
