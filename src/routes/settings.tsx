@@ -23,6 +23,15 @@ const SERVICE_CATEGORIES = [
 
 const CLIENT_TYPES = ["Individuals / Salaried","Proprietorships","Partnership Firms","LLPs","Private Limited Companies","Startups","MSMEs","Trusts / NGOs","NRIs / Foreign Clients"];
 
+const EMAIL_PROVIDERS = [
+  { value: "default", label: "Default (mailto:)" },
+  { value: "gmail", label: "Gmail" },
+  { value: "outlook", label: "Outlook / Office 365" },
+  { value: "zoho", label: "Zoho Mail" },
+  { value: "titan", label: "Titan Mail" },
+  { value: "custom", label: "Custom (enter webmail URL)" },
+];
+
 type TemplateDoc = {
   id?: string;
   doc_name: string;
@@ -53,7 +62,7 @@ function SettingsPage() {
     firm_name: "", gst_number: "", ca_reg_number: "", address: "", state: "",
     bank_name: "", bank_account_no: "", bank_ifsc: "", invoice_prefix: "INV",
     phone: "", email: "", logo_url: "", whatsapp_number: "", website_tagline: "",
-    email_provider: "default",
+    email_provider: "default", email_custom_url: "",
   });
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -77,11 +86,7 @@ function SettingsPage() {
     queryKey: ["settings", currentUserId],
     enabled: !!currentUserId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("user_id", currentUserId)
-        .limit(1);
+      const { data, error } = await supabase.from("settings").select("*").eq("user_id", currentUserId).limit(1);
       if (error) throw error;
       return (data?.[0] ?? null) as FirmSettings | null;
     },
@@ -91,21 +96,15 @@ function SettingsPage() {
     if (firmSettingsRow) {
       const r = firmSettingsRow as any;
       setForm({
-        firm_name: r.firm_name ?? "",
-        gst_number: r.gst_number ?? "",
-        ca_reg_number: r.ca_reg_number ?? "",
-        address: r.address ?? "",
-        state: r.state ?? "",
-        bank_name: r.bank_name ?? "",
-        bank_account_no: r.bank_account_no ?? "",
-        bank_ifsc: r.bank_ifsc ?? "",
-        invoice_prefix: r.invoice_prefix ?? "INV",
-        phone: r.phone ?? "",
-        email: r.email ?? "",
-        logo_url: r.logo_url ?? "",
-        whatsapp_number: r.whatsapp_number ?? "",
-        website_tagline: r.website_tagline ?? "",
+        firm_name: r.firm_name ?? "", gst_number: r.gst_number ?? "",
+        ca_reg_number: r.ca_reg_number ?? "", address: r.address ?? "",
+        state: r.state ?? "", bank_name: r.bank_name ?? "",
+        bank_account_no: r.bank_account_no ?? "", bank_ifsc: r.bank_ifsc ?? "",
+        invoice_prefix: r.invoice_prefix ?? "INV", phone: r.phone ?? "",
+        email: r.email ?? "", logo_url: r.logo_url ?? "",
+        whatsapp_number: r.whatsapp_number ?? "", website_tagline: r.website_tagline ?? "",
         email_provider: r.email_provider ?? "default",
+        email_custom_url: r.email_custom_url ?? "",
       });
       if (r.logo_url) setLogoPreview(r.logo_url);
       if (Array.isArray(r.website_services)) setSelectedServices(r.website_services);
@@ -115,12 +114,7 @@ function SettingsPage() {
 
   const loadTemplateForService = async (serviceType: string) => {
     if (!currentUserId) return;
-    const { data } = await supabase
-      .from("checklist_templates")
-      .select("id, doc_name, requirement, sort_order")
-      .eq("user_id", currentUserId)
-      .eq("service_type", serviceType)
-      .order("sort_order", { ascending: true });
+    const { data } = await supabase.from("checklist_templates").select("id, doc_name, requirement, sort_order").eq("user_id", currentUserId).eq("service_type", serviceType).order("sort_order", { ascending: true });
     if (data && data.length > 0) {
       setTemplateDocs(data as TemplateDoc[]);
     } else {
@@ -130,15 +124,12 @@ function SettingsPage() {
   };
 
   useEffect(() => {
-    if (activeTab === "templates" && currentUserId) {
-      loadTemplateForService(selectedServiceType);
-    }
+    if (activeTab === "templates" && currentUserId) loadTemplateForService(selectedServiceType);
   }, [activeTab, selectedServiceType, currentUserId]);
 
   const saveTemplate = async () => {
     if (!currentUserId) return;
-    setIsSavingTemplate(true);
-    setTemplateError(null);
+    setIsSavingTemplate(true); setTemplateError(null);
     try {
       const { error: delErr } = await supabase.from("checklist_templates").delete().eq("user_id", currentUserId).eq("service_type", selectedServiceType);
       if (delErr) throw delErr;
@@ -151,9 +142,7 @@ function SettingsPage() {
       setTimeout(() => setTemplateSaved(false), 3000);
     } catch (err: any) {
       setTemplateError("Save failed: " + (err?.message ?? ""));
-    } finally {
-      setIsSavingTemplate(false);
-    }
+    } finally { setIsSavingTemplate(false); }
   };
 
   const addDoc = () => {
@@ -213,19 +202,16 @@ function SettingsPage() {
       if (fetchError) throw fetchError;
       const existingId = rows?.[0]?.id;
       const payload = {
-        firm_name: form.firm_name.trim(),
-        ca_reg_number: form.ca_reg_number.trim(),
-        gst_number: form.gst_number.trim(),
-        address: form.address.trim(),
-        state: form.state.trim(),
-        bank_name: form.bank_name.trim(),
+        firm_name: form.firm_name.trim(), ca_reg_number: form.ca_reg_number.trim(),
+        gst_number: form.gst_number.trim(), address: form.address.trim(),
+        state: form.state.trim(), bank_name: form.bank_name.trim(),
         bank_account_no: form.bank_account_no.trim(),
         bank_ifsc: form.bank_ifsc.trim().toUpperCase(),
         invoice_prefix: form.invoice_prefix.trim().toUpperCase() || "INV",
-        phone: form.phone.trim(),
-        email: form.email.trim(),
+        phone: form.phone.trim(), email: form.email.trim(),
         logo_url: form.logo_url || null,
         email_provider: form.email_provider || "default",
+        email_custom_url: form.email_custom_url.trim() || null,
         whatsapp_number: form.whatsapp_number.trim() || null,
         website_tagline: form.website_tagline.trim() || null,
         website_services: selectedServices,
@@ -259,31 +245,24 @@ function SettingsPage() {
       </div>
 
       <div className="flex gap-2 border-b border-border flex-wrap">
-        <button onClick={() => setActiveTab("firm")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "firm" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-          🏢 Firm Details
-        </button>
-        <button onClick={() => setActiveTab("website")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "website" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-          🌐 Website Settings
-        </button>
-        <button onClick={() => setActiveTab("templates")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "templates" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-          📋 Checklist Templates
-        </button>
+        {(["firm", "website", "templates"] as const).map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            {tab === "firm" ? "🏢 Firm Details" : tab === "website" ? "🌐 Website Settings" : "📋 Checklist Templates"}
+          </button>
+        ))}
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
 
-        {/* ---- FIRM TAB ---- */}
         {activeTab === "firm" && (
           <>
+            {/* Logo */}
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Firm Logo</h2>
               <p className="text-xs text-muted-foreground">Appears on sidebar, login page, invoices and browser tab</p>
               <div className="flex items-center gap-6">
                 <div className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted overflow-hidden flex-shrink-0">
-                  {logoPreview
-                    ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
-                    : <div className="text-center"><div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto">₹</div><p className="text-xs text-muted-foreground mt-1">No logo</p></div>
-                  }
+                  {logoPreview ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" /> : <div className="text-center"><div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto">₹</div><p className="text-xs text-muted-foreground mt-1">No logo</p></div>}
                 </div>
                 <div className="space-y-2">
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
@@ -296,6 +275,7 @@ function SettingsPage() {
               </div>
             </div>
 
+            {/* Firm Details */}
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-5">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Firm Details</h2>
               <div><label className="block text-sm font-medium text-foreground mb-1">Firm Name</label><input value={form.firm_name} onChange={(e) => setForm({...form, firm_name: e.target.value})} placeholder="CA Ismaeel & Co." className={inputClass} /></div>
@@ -313,22 +293,36 @@ function SettingsPage() {
                 <div><label className="block text-sm font-medium text-foreground mb-1">Email</label><input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className={inputClass} /></div>
               </div>
 
-              {/* ✅ Email Provider for Reminders */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Email Provider for Reminders</label>
-                <select
-                  value={form.email_provider}
-                  onChange={(e) => setForm({...form, email_provider: e.target.value})}
-                  className={`${inputClass} max-w-xs`}
-                >
-                  <option value="default">Default (mailto:)</option>
-                  <option value="gmail">Gmail</option>
-                  <option value="outlook">Outlook / Office 365</option>
-                  <option value="zoho">Zoho Mail</option>
-                </select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Email reminders is provider mein khulenge · Firm email jo use hoga: <strong>{form.email || "—"}</strong>
-                </p>
+              {/* Email Provider */}
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
+                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Email Provider for Reminders</p>
+                <div>
+                  <select value={form.email_provider} onChange={(e) => setForm({...form, email_provider: e.target.value})} className={`${inputClass} max-w-xs`}>
+                    {EMAIL_PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Email reminders is provider mein khulenge · Firm email: <strong>{form.email || "—"}</strong>
+                  </p>
+                </div>
+                {form.email_provider === "custom" && (
+                  <div>
+                    <label className="block text-xs font-medium text-foreground mb-1">Webmail Compose URL <span className="text-red-500">*</span></label>
+                    <input
+                      value={form.email_custom_url}
+                      onChange={(e) => setForm({...form, email_custom_url: e.target.value})}
+                      placeholder="https://webmail.yourdomain.com/compose"
+                      className={inputClass}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      App will append <code className="bg-muted px-1 rounded">?to=...&subject=...&body=...</code> to this URL.
+                    </p>
+                  </div>
+                )}
+                {form.email_provider === "titan" && (
+                  <p className="text-xs text-amber-600">
+                    ⚠ Titan Mail ka standard compose URL available nahi hai. Email default mail client mein khulega. Agar custom Titan webmail URL ho toh "Custom" option use karein.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -340,7 +334,6 @@ function SettingsPage() {
           </>
         )}
 
-        {/* ---- WEBSITE TAB ---- */}
         {activeTab === "website" && (
           <>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
@@ -357,7 +350,6 @@ function SettingsPage() {
 
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
               <div className="flex items-center gap-2"><Globe size={16} className="text-primary" /><h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Website Info</h2></div>
-              <p className="text-xs text-muted-foreground">This info will appear on your public landing page</p>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">WhatsApp Number (for landing page)</label>
                 <div className="flex items-center">
@@ -368,13 +360,11 @@ function SettingsPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Hero Tagline</label>
                 <input value={form.website_tagline} onChange={(e) => setForm({...form, website_tagline: e.target.value})} placeholder="Expert CA services for GST, ITR, Audit & Business Compliance" className={inputClass} />
-                <p className="text-xs text-muted-foreground mt-1">Shown as subtitle on your landing page</p>
               </div>
             </div>
 
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Clients We Serve</h2>
-              <p className="text-xs text-muted-foreground">Select which types of clients your firm works with</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {CLIENT_TYPES.map(type => (
                   <label key={type} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all text-sm ${selectedClientTypes.includes(type) ? "border-primary bg-primary/5 text-primary font-medium" : "border-border hover:border-primary/50"}`}>
@@ -387,7 +377,7 @@ function SettingsPage() {
             </div>
 
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
-              <div><h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Services Offered</h2><p className="text-xs text-muted-foreground mt-1">Select services to show on your website • {selectedServices.length} selected</p></div>
+              <div><h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Services Offered</h2><p className="text-xs text-muted-foreground mt-1">{selectedServices.length} selected</p></div>
               <div className="space-y-3">
                 {SERVICE_CATEGORIES.map(cat => {
                   const isExpanded = expandedCategories.includes(cat.category);
@@ -396,8 +386,7 @@ function SettingsPage() {
                     <div key={cat.category} className="border border-border rounded-lg overflow-hidden">
                       <div className="flex items-center justify-between p-3 bg-muted/40 cursor-pointer hover:bg-muted/70" onClick={() => toggleCategory(cat.category)}>
                         <div className="flex items-center gap-2">
-                          <span>{cat.icon}</span>
-                          <span className="font-medium text-sm text-foreground">{cat.category}</span>
+                          <span>{cat.icon}</span><span className="font-medium text-sm text-foreground">{cat.category}</span>
                           {selectedCount > 0 && <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-bold">{selectedCount}</span>}
                         </div>
                         <div className="flex items-center gap-2">
@@ -424,14 +413,11 @@ function SettingsPage() {
           </>
         )}
 
-        {/* ---- CHECKLIST TEMPLATES TAB ---- */}
         {activeTab === "templates" && (
           <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-5">
             <div>
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Checklist Templates</h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Customize which documents are required for each service. When a new engagement is created, your custom template is used. If you haven't saved one, the default list is used.
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Customize documents for each service type. Custom template is used when creating new engagements.</p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <select value={selectedServiceType} onChange={(e) => setSelectedServiceType(e.target.value)} className="border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
@@ -440,17 +426,12 @@ function SettingsPage() {
               <span className="text-xs text-muted-foreground">{templateDocs.length} documents</span>
             </div>
             <div className="space-y-2">
-              {templateDocs.length === 0 && (
-                <div className="text-center py-8 border border-dashed border-border rounded-lg">
-                  <p className="text-sm text-muted-foreground">No documents yet. Add documents below.</p>
-                </div>
-              )}
+              {templateDocs.length === 0 && <div className="text-center py-8 border border-dashed border-border rounded-lg"><p className="text-sm text-muted-foreground">No documents yet. Add below.</p></div>}
               {templateDocs.map((doc, i) => (
-                <div key={i} className="flex items-center gap-2 p-2.5 border border-border rounded-md bg-card hover:bg-muted/30 transition-colors">
+                <div key={i} className="flex items-center gap-2 p-2.5 border border-border rounded-md bg-card hover:bg-muted/30">
                   <div className="flex gap-1 shrink-0">
                     {(["mandatory", "optional"] as const).map((r) => (
-                      <button key={r} type="button" onClick={() => toggleDocReq(i, r)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors ${doc.requirement === r ? r === "mandatory" ? "bg-red-50 text-red-700 border-red-200" : "bg-slate-100 text-slate-600 border-slate-300" : "bg-card text-muted-foreground border-border hover:bg-muted"}`}>
+                      <button key={r} type="button" onClick={() => toggleDocReq(i, r)} className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${doc.requirement === r ? r === "mandatory" ? "bg-red-50 text-red-700 border-red-200" : "bg-slate-100 text-slate-600 border-slate-300" : "bg-card text-muted-foreground border-border hover:bg-muted"}`}>
                         {r === "mandatory" ? "M" : "O"}
                       </button>
                     ))}
@@ -466,11 +447,9 @@ function SettingsPage() {
                 <option value="optional">Optional</option>
               </select>
               <input value={newDocName} onChange={(e) => setNewDocName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }} placeholder="Document name… (Enter to add)" className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-              <button type="button" onClick={addDoc} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 shrink-0">
-                <Plus size={13} /> Add
-              </button>
+              <button type="button" onClick={addDoc} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 shrink-0"><Plus size={13} /> Add</button>
             </div>
-            <p className="text-xs text-muted-foreground"><strong>M</strong> = Mandatory · <strong>O</strong> = Optional / Conditional</p>
+            <p className="text-xs text-muted-foreground"><strong>M</strong> = Mandatory · <strong>O</strong> = Optional</p>
             <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
               <div>
                 {templateError && <p className="text-sm text-red-600">{templateError}</p>}
@@ -490,7 +469,6 @@ function SettingsPage() {
             </button>
           </div>
         )}
-
         {error && <p className="text-sm text-red-600 text-right">{error}</p>}
         {saved && <p className="text-sm text-green-600 text-right">✅ Settings saved successfully.</p>}
       </form>
