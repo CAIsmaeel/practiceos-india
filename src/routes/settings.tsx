@@ -53,6 +53,7 @@ function SettingsPage() {
     firm_name: "", gst_number: "", ca_reg_number: "", address: "", state: "",
     bank_name: "", bank_account_no: "", bank_ifsc: "", invoice_prefix: "INV",
     phone: "", email: "", logo_url: "", whatsapp_number: "", website_tagline: "",
+    email_provider: "default",
   });
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -64,7 +65,6 @@ function SettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
-  // Template state
   const [selectedServiceType, setSelectedServiceType] = useState<string>(ENGAGEMENT_TYPES[0]);
   const [templateDocs, setTemplateDocs] = useState<TemplateDoc[]>([]);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
@@ -91,13 +91,21 @@ function SettingsPage() {
     if (firmSettingsRow) {
       const r = firmSettingsRow as any;
       setForm({
-        firm_name: r.firm_name ?? "", gst_number: r.gst_number ?? "",
-        ca_reg_number: r.ca_reg_number ?? "", address: r.address ?? "",
-        state: r.state ?? "", bank_name: r.bank_name ?? "",
-        bank_account_no: r.bank_account_no ?? "", bank_ifsc: r.bank_ifsc ?? "",
-        invoice_prefix: r.invoice_prefix ?? "INV", phone: r.phone ?? "",
-        email: r.email ?? "", logo_url: r.logo_url ?? "",
-        whatsapp_number: r.whatsapp_number ?? "", website_tagline: r.website_tagline ?? "",
+        firm_name: r.firm_name ?? "",
+        gst_number: r.gst_number ?? "",
+        ca_reg_number: r.ca_reg_number ?? "",
+        address: r.address ?? "",
+        state: r.state ?? "",
+        bank_name: r.bank_name ?? "",
+        bank_account_no: r.bank_account_no ?? "",
+        bank_ifsc: r.bank_ifsc ?? "",
+        invoice_prefix: r.invoice_prefix ?? "INV",
+        phone: r.phone ?? "",
+        email: r.email ?? "",
+        logo_url: r.logo_url ?? "",
+        whatsapp_number: r.whatsapp_number ?? "",
+        website_tagline: r.website_tagline ?? "",
+        email_provider: r.email_provider ?? "default",
       });
       if (r.logo_url) setLogoPreview(r.logo_url);
       if (Array.isArray(r.website_services)) setSelectedServices(r.website_services);
@@ -105,7 +113,6 @@ function SettingsPage() {
     }
   }, [firmSettingsRow]);
 
-  // Load templates when tab or service type changes
   const loadTemplateForService = async (serviceType: string) => {
     if (!currentUserId) return;
     const { data } = await supabase
@@ -114,17 +121,11 @@ function SettingsPage() {
       .eq("user_id", currentUserId)
       .eq("service_type", serviceType)
       .order("sort_order", { ascending: true });
-
     if (data && data.length > 0) {
       setTemplateDocs(data as TemplateDoc[]);
     } else {
-      // Pre-populate with defaults so user can see and edit
       const defaults = getTemplate(serviceType);
-      setTemplateDocs(defaults.map((t, i) => ({
-        doc_name: t.name,
-        requirement: t.requirement,
-        sort_order: i,
-      })));
+      setTemplateDocs(defaults.map((t, i) => ({ doc_name: t.name, requirement: t.requirement, sort_order: i })));
     }
   };
 
@@ -139,21 +140,10 @@ function SettingsPage() {
     setIsSavingTemplate(true);
     setTemplateError(null);
     try {
-      const { error: delErr } = await supabase
-        .from("checklist_templates")
-        .delete()
-        .eq("user_id", currentUserId)
-        .eq("service_type", selectedServiceType);
+      const { error: delErr } = await supabase.from("checklist_templates").delete().eq("user_id", currentUserId).eq("service_type", selectedServiceType);
       if (delErr) throw delErr;
-
       if (templateDocs.length > 0) {
-        const rows = templateDocs.map((d, i) => ({
-          user_id: currentUserId,
-          service_type: selectedServiceType,
-          doc_name: d.doc_name,
-          requirement: d.requirement,
-          sort_order: i,
-        }));
+        const rows = templateDocs.map((d, i) => ({ user_id: currentUserId, service_type: selectedServiceType, doc_name: d.doc_name, requirement: d.requirement, sort_order: i }));
         const { error: insErr } = await supabase.from("checklist_templates").insert(rows);
         if (insErr) throw insErr;
       }
@@ -169,16 +159,12 @@ function SettingsPage() {
   const addDoc = () => {
     const name = newDocName.trim();
     if (!name) return;
-    if (templateDocs.some((d) => d.doc_name.toLowerCase() === name.toLowerCase())) {
-      alert("This document already exists in the list.");
-      return;
-    }
+    if (templateDocs.some((d) => d.doc_name.toLowerCase() === name.toLowerCase())) { alert("Already exists."); return; }
     setTemplateDocs((prev) => [...prev, { doc_name: name, requirement: newDocReq, sort_order: prev.length }]);
     setNewDocName("");
   };
 
   const removeDoc = (i: number) => setTemplateDocs((prev) => prev.filter((_, idx) => idx !== i));
-
   const toggleDocReq = (i: number, req: "mandatory" | "optional") =>
     setTemplateDocs((prev) => prev.map((d, idx) => idx === i ? { ...d, requirement: req } : d));
 
@@ -227,14 +213,19 @@ function SettingsPage() {
       if (fetchError) throw fetchError;
       const existingId = rows?.[0]?.id;
       const payload = {
-        firm_name: form.firm_name.trim(), ca_reg_number: form.ca_reg_number.trim(),
-        gst_number: form.gst_number.trim(), address: form.address.trim(),
-        state: form.state.trim(), bank_name: form.bank_name.trim(),
+        firm_name: form.firm_name.trim(),
+        ca_reg_number: form.ca_reg_number.trim(),
+        gst_number: form.gst_number.trim(),
+        address: form.address.trim(),
+        state: form.state.trim(),
+        bank_name: form.bank_name.trim(),
         bank_account_no: form.bank_account_no.trim(),
         bank_ifsc: form.bank_ifsc.trim().toUpperCase(),
         invoice_prefix: form.invoice_prefix.trim().toUpperCase() || "INV",
-        phone: form.phone.trim(), email: form.email.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
         logo_url: form.logo_url || null,
+        email_provider: form.email_provider || "default",
         whatsapp_number: form.whatsapp_number.trim() || null,
         website_tagline: form.website_tagline.trim() || null,
         website_services: selectedServices,
@@ -289,9 +280,10 @@ function SettingsPage() {
               <p className="text-xs text-muted-foreground">Appears on sidebar, login page, invoices and browser tab</p>
               <div className="flex items-center gap-6">
                 <div className="w-24 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted overflow-hidden flex-shrink-0">
-                  {logoPreview ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" /> : (
-                    <div className="text-center"><div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto">₹</div><p className="text-xs text-muted-foreground mt-1">No logo</p></div>
-                  )}
+                  {logoPreview
+                    ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
+                    : <div className="text-center"><div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto">₹</div><p className="text-xs text-muted-foreground mt-1">No logo</p></div>
+                  }
                 </div>
                 <div className="space-y-2">
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
@@ -320,6 +312,25 @@ function SettingsPage() {
                 <div><label className="block text-sm font-medium text-foreground mb-1">Phone</label><input value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} className={inputClass} /></div>
                 <div><label className="block text-sm font-medium text-foreground mb-1">Email</label><input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className={inputClass} /></div>
               </div>
+
+              {/* ✅ Email Provider for Reminders */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Email Provider for Reminders</label>
+                <select
+                  value={form.email_provider}
+                  onChange={(e) => setForm({...form, email_provider: e.target.value})}
+                  className={`${inputClass} max-w-xs`}
+                >
+                  <option value="default">Default (mailto:)</option>
+                  <option value="gmail">Gmail</option>
+                  <option value="outlook">Outlook / Office 365</option>
+                  <option value="zoho">Zoho Mail</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Email reminders is provider mein khulenge · Firm email jo use hoga: <strong>{form.email || "—"}</strong>
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium text-foreground mb-1">Bank Name</label><input value={form.bank_name} onChange={(e) => setForm({...form, bank_name: e.target.value})} className={inputClass} /></div>
                 <div><label className="block text-sm font-medium text-foreground mb-1">Bank Account No</label><input value={form.bank_account_no} onChange={(e) => setForm({...form, bank_account_no: e.target.value})} className={inputClass} /></div>
@@ -422,112 +433,56 @@ function SettingsPage() {
                 Customize which documents are required for each service. When a new engagement is created, your custom template is used. If you haven't saved one, the default list is used.
               </p>
             </div>
-
-            {/* Service type selector */}
             <div className="flex items-center gap-3 flex-wrap">
-              <select
-                value={selectedServiceType}
-                onChange={(e) => setSelectedServiceType(e.target.value)}
-                className="border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {ENGAGEMENT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+              <select value={selectedServiceType} onChange={(e) => setSelectedServiceType(e.target.value)} className="border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                {ENGAGEMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
               <span className="text-xs text-muted-foreground">{templateDocs.length} documents</span>
             </div>
-
-            {/* Doc list */}
             <div className="space-y-2">
               {templateDocs.length === 0 && (
                 <div className="text-center py-8 border border-dashed border-border rounded-lg">
-                  <p className="text-sm text-muted-foreground">No documents yet.</p>
-                  <p className="text-xs text-muted-foreground mt-1">Add documents below.</p>
+                  <p className="text-sm text-muted-foreground">No documents yet. Add documents below.</p>
                 </div>
               )}
               {templateDocs.map((doc, i) => (
                 <div key={i} className="flex items-center gap-2 p-2.5 border border-border rounded-md bg-card hover:bg-muted/30 transition-colors">
                   <div className="flex gap-1 shrink-0">
                     {(["mandatory", "optional"] as const).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => toggleDocReq(i, r)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors ${
-                          doc.requirement === r
-                            ? r === "mandatory"
-                              ? "bg-red-50 text-red-700 border-red-200"
-                              : "bg-slate-100 text-slate-600 border-slate-300"
-                            : "bg-card text-muted-foreground border-border hover:bg-muted"
-                        }`}
-                        title={r === "mandatory" ? "Mandatory" : "Optional"}
-                      >
+                      <button key={r} type="button" onClick={() => toggleDocReq(i, r)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors ${doc.requirement === r ? r === "mandatory" ? "bg-red-50 text-red-700 border-red-200" : "bg-slate-100 text-slate-600 border-slate-300" : "bg-card text-muted-foreground border-border hover:bg-muted"}`}>
                         {r === "mandatory" ? "M" : "O"}
                       </button>
                     ))}
                   </div>
                   <span className="text-sm text-foreground flex-1 min-w-0">{doc.doc_name}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeDoc(i)}
-                    className="text-muted-foreground hover:text-red-500 shrink-0 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
+                  <button type="button" onClick={() => removeDoc(i)} className="text-muted-foreground hover:text-red-500 shrink-0"><X size={14} /></button>
                 </div>
               ))}
             </div>
-
-            {/* Add new document */}
             <div className="flex items-center gap-2 pt-3 border-t border-border flex-wrap">
-              <select
-                value={newDocReq}
-                onChange={(e) => setNewDocReq(e.target.value as "mandatory" | "optional")}
-                className="border border-input rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring shrink-0"
-              >
+              <select value={newDocReq} onChange={(e) => setNewDocReq(e.target.value as "mandatory" | "optional")} className="border border-input rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring shrink-0">
                 <option value="mandatory">Mandatory</option>
                 <option value="optional">Optional</option>
               </select>
-              <input
-                value={newDocName}
-                onChange={(e) => setNewDocName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }}
-                placeholder="Document name… (Enter to add)"
-                className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-              <button
-                type="button"
-                onClick={addDoc}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 shrink-0"
-              >
+              <input value={newDocName} onChange={(e) => setNewDocName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }} placeholder="Document name… (Enter to add)" className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+              <button type="button" onClick={addDoc} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 shrink-0">
                 <Plus size={13} /> Add
               </button>
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              <strong>M</strong> = Mandatory — blocks engagement until received ·{" "}
-              <strong>O</strong> = Optional / Conditional
-            </p>
-
-            {/* Save template */}
+            <p className="text-xs text-muted-foreground"><strong>M</strong> = Mandatory · <strong>O</strong> = Optional / Conditional</p>
             <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
               <div>
                 {templateError && <p className="text-sm text-red-600">{templateError}</p>}
                 {templateSaved && <p className="text-sm text-green-600">✅ Template saved for {selectedServiceType}.</p>}
               </div>
-              <button
-                type="button"
-                onClick={saveTemplate}
-                disabled={isSavingTemplate}
-                className="px-5 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium"
-              >
+              <button type="button" onClick={saveTemplate} disabled={isSavingTemplate} className="px-5 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
                 {isSavingTemplate ? "Saving..." : "Save Template"}
               </button>
             </div>
           </div>
         )}
 
-        {/* Save Settings — only for firm and website tabs */}
         {activeTab !== "templates" && (
           <div className="flex justify-end pt-2">
             <button type="submit" disabled={isSaving} className="px-6 py-2.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
