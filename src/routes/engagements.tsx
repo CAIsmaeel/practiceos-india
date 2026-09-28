@@ -5,7 +5,7 @@ import { ENGAGEMENT_TYPES, getTemplate } from "@/lib/checklistTemplates";
 import { useState, useEffect } from "react";
 import {
   Plus, X, Archive, Pencil, CheckCircle2, Clock,
-  ClipboardList, MessageCircle, AlertCircle, MoreHorizontal, Play,
+  ClipboardList, MessageCircle, AlertCircle, MoreHorizontal, Play, Mail,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -25,6 +25,20 @@ const statusColors: Record<string, string> = {
   on_hold: "bg-muted text-foreground",
 };
 
+// Sirf yeh roles Checker ban sakte hain
+const CHECKER_ROLES = ["Qualified CA", "Manager", "Partner", "Admin"];
+
+const ACTION_LABELS: Record<string, { label: string; color: string }> = {
+  started: { label: "Work started", color: "text-blue-600" },
+  submitted: { label: "Submitted for review", color: "text-purple-600" },
+  approved: { label: "Approved ✓", color: "text-green-600" },
+  rejected: { label: "Rejected", color: "text-red-600" },
+  on_hold: { label: "Put on hold", color: "text-gray-500" },
+  resumed: { label: "Resumed", color: "text-blue-500" },
+};
+
+// ---------- Types ----------
+
 type DocStatus = "pending" | "received" | "not_applicable";
 
 type DocRow = {
@@ -36,6 +50,16 @@ type DocRow = {
   sort_order: number;
   received_at: string | null;
 };
+
+type HistoryRow = {
+  id: string;
+  action: string;
+  actor_name: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+// ---------- Helpers ----------
 
 function summarize(docs: DocRow[] = []) {
   const total = docs.length;
@@ -60,9 +84,7 @@ function buildChaseMessage(e: any, pendingDocs: DocRow[], clientName: string, fi
     "",
     `Hope you are doing well. To complete your ${e.title} (${e.type}), we still need the following:`,
     "",
-    ...pendingDocs.map(
-      (d, i) => `${i + 1}. ${d.doc_name}${d.requirement === "optional" ? " (if applicable)" : ""}`
-    ),
+    ...pendingDocs.map((d, i) => `${i + 1}. ${d.doc_name}${d.requirement === "optional" ? " (if applicable)" : ""}`),
     "",
     e.deadline
       ? `It would be great to receive these before ${format(new Date(e.deadline), "dd MMM yyyy")} so we can complete the work on time.`
@@ -75,10 +97,24 @@ function buildChaseMessage(e: any, pendingDocs: DocRow[], clientName: string, fi
   return lines.join("\n").trim();
 }
 
+function buildEmailUrl(provider: string, to: string, subject: string, body: string): string {
+  const s = encodeURIComponent(subject);
+  const b = encodeURIComponent(body);
+  const t = encodeURIComponent(to);
+  switch (provider) {
+    case "gmail":
+      return `https://mail.google.com/mail/?view=cm&to=${t}&su=${s}&body=${b}`;
+    case "outlook":
+      return `https://outlook.live.com/mail/0/deeplink/compose?to=${t}&subject=${s}&body=${b}`;
+    case "zoho":
+      return `https://mail.zoho.in/zm/#compose?to=${t}&subject=${s}&body=${b}`;
+    default:
+      return `mailto:${to}?subject=${s}&body=${b}`;
+  }
+}
+
 async function generateChecklist(engagementId: string, clientId: string | null, type: string) {
   const userId = await getCurrentUserId();
-
-  // User ka custom template check karo pehle
   const { data: customTpls } = await supabase
     .from("checklist_templates")
     .select("doc_name, requirement, sort_order")
@@ -91,7 +127,7 @@ async function generateChecklist(engagementId: string, clientId: string | null, 
     : getTemplate(type);
 
   if (template.length === 0) return;
-    const rows = template.map((t, i) => ({
+  const rows = template.map((t, i) => ({
     user_id: userId,
     engagement_id: engagementId,
     client_id: clientId || null,
@@ -107,7 +143,6 @@ async function generateChecklist(engagementId: string, clientId: string | null, 
 }
 
 const isActive = (e: any) => e.status !== "completed" && e.status !== "billed";
-
 const primaryIsChase = (e: any, s: ReturnType<typeof summarize>) =>
   isActive(e) && e.status !== "ready_for_review" && e.status !== "on_hold" && s.state === "pending_docs";
 
@@ -116,6 +151,8 @@ const btn = "inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-
 type Tab = "all" | "review" | "docs" | "ready";
 type MenuState = { id: string; right: number; top?: number; bottom?: number } | null;
 
+// ---------- Page ----------
+
 function EngagementsPage() {
   const qc = useQueryClient();
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; engagement?: Engagement | null } | null>(null);
@@ -123,6 +160,9 @@ function EngagementsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [checklistFor, setChecklistFor] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuState>(null);
+  const [rejectModal, setRejectModal] = useState<{ engId: string; engTitle: string; checkerName: string } | null>(null);
+  const [approveModal, setApproveModal] = useState<{ engId: string; engTitle: string; checkerName: string } | null>(null);
+  const [actionPending, setActionPending] = useState(false);
 
   useEffect(() => {
     if (!menu) return;
@@ -164,7 +204,6 @@ function EngagementsPage() {
     },
   });
 
-  // ✅ Staff dropdown query
   const { data: staffList } = useQuery({
     queryKey: ["staff"],
     queryFn: async () => {
@@ -173,6 +212,7 @@ function EngagementsPage() {
         .from("staff")
         .select("id, name, role")
         .eq("user_id", userId ?? "")
+        .eq("is_active", true)
         .order("name");
       return data ?? [];
     },
@@ -192,19 +232,22 @@ function EngagementsPage() {
     },
   });
 
-  const { data: firmName } = useQuery({
+  const { data: firmSettings } = useQuery({
     queryKey: ["firm-name"],
     queryFn: async () => {
       const userId = await getCurrentUserId();
       const { data } = await supabase
         .from("settings")
-        .select("firm_name")
+        .select("firm_name, email_provider")
         .eq("user_id", userId ?? "")
         .limit(1)
         .maybeSingle();
-      return ((data as any)?.firm_name as string) ?? "";
+      return data as { firm_name: string; email_provider: string } | null;
     },
   });
+
+  const firmName = firmSettings?.firm_name ?? "";
+  const emailProvider = firmSettings?.email_provider ?? "default";
 
   const docsByEng: Record<string, DocRow[]> = {};
   (docs ?? []).forEach((d) => { (docsByEng[d.engagement_id] ??= []).push(d); });
@@ -233,9 +276,46 @@ function EngagementsPage() {
     qc.invalidateQueries({ queryKey: ["engagements-all"] });
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  // Quick status update from dropdown (no history log)
+  const quickUpdateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("engagements").update({ status }).eq("id", id);
     if (error) { alert("Could not update status: " + error.message); return; }
+    invalidateEngagements();
+  };
+
+  // Status change with history logging (for flow buttons)
+  const changeStatus = async (
+    id: string,
+    newStatus: string,
+    opts: { actorName?: string; notes?: string; checkerNotes?: string; historyAction?: string } = {}
+  ) => {
+    const userId = await getCurrentUserId();
+    const updates: Record<string, any> = {
+      status: newStatus,
+      last_action_at: new Date().toISOString(),
+    };
+    if (opts.checkerNotes !== undefined) updates.checker_notes = opts.checkerNotes;
+
+    const { error } = await supabase.from("engagements").update(updates).eq("id", id);
+    if (error) { alert("Could not update status: " + error.message); return; }
+
+    const actionMap: Record<string, string> = {
+      in_progress: "started",
+      ready_for_review: "submitted",
+      completed: "approved",
+      on_hold: "on_hold",
+    };
+    const action = opts.historyAction ?? actionMap[newStatus];
+    if (action) {
+      await supabase.from("engagement_history").insert({
+        user_id: userId,
+        engagement_id: id,
+        action,
+        actor_name: opts.actorName ?? null,
+        notes: opts.notes ?? null,
+      });
+      qc.invalidateQueries({ queryKey: ["engagement-history"] });
+    }
     invalidateEngagements();
   };
 
@@ -266,7 +346,6 @@ function EngagementsPage() {
     onSuccess: () => {
       invalidateEngagements();
       qc.invalidateQueries({ queryKey: ["engagement-docs"] });
-      qc.invalidateQueries({ queryKey: ["staff"] });
       setModalState(null);
     },
     onError: (err: any) => alert("Could not save engagement: " + (err?.message ?? "")),
@@ -279,7 +358,6 @@ function EngagementsPage() {
     },
     onSuccess: () => {
       invalidateEngagements();
-      qc.invalidateQueries({ queryKey: ["staff"] });
       setModalState(null);
     },
     onError: (err: any) => alert("Could not update engagement: " + (err?.message ?? "")),
@@ -303,31 +381,89 @@ function EngagementsPage() {
     onError: (err: any) => alert("Could not update document: " + (err?.message ?? "")),
   });
 
+  // WhatsApp chase
   const chase = async (e: any) => {
     const s = summarize(docsByEng[e.id]);
     if (s.pendingCount === 0) { alert("All documents received — no reminder needed."); return; }
     const client = clientMap[e.client_id];
     const clientName = e.clients?.name ?? client?.name ?? "Sir/Madam";
     const phone = cleanPhone(client?.phone ?? client?.mobile ?? client?.whatsapp);
-    const msg = encodeURIComponent(buildChaseMessage(e, s.pendingDocs, clientName, firmName ?? ""));
+    const msg = encodeURIComponent(buildChaseMessage(e, s.pendingDocs, clientName, firmName));
     const url = phone ? `https://wa.me/${phone}?text=${msg}` : `https://wa.me/?text=${msg}`;
     window.open(url, "_blank");
-    const { error } = await supabase.from("engagements").update({
+    await supabase.from("engagements").update({
       reminder_count: (e.reminder_count ?? 0) + 1,
       last_reminder_date: new Date().toISOString(),
     }).eq("id", e.id);
-    if (error) console.error(error);
     invalidateEngagements();
+  };
+
+  // Email chase
+  const emailChase = async (e: any) => {
+    const s = summarize(docsByEng[e.id]);
+    if (s.pendingCount === 0) { alert("All documents received — no reminder needed."); return; }
+    const client = clientMap[e.client_id];
+    const clientEmail = client?.email ?? "";
+    if (!clientEmail) { alert("Client ka email nahi mila. Client details mein email add karein."); return; }
+    const clientName = e.clients?.name ?? client?.name ?? "Sir/Madam";
+    const subject = `Documents Required — ${e.title} (${e.type})`;
+    const body = buildChaseMessage(e, s.pendingDocs, clientName, firmName);
+    window.open(buildEmailUrl(emailProvider, clientEmail, subject, body), "_blank");
+    await supabase.from("engagements").update({
+      reminder_count: (e.reminder_count ?? 0) + 1,
+      last_reminder_date: new Date().toISOString(),
+    }).eq("id", e.id);
+    invalidateEngagements();
+  };
+
+  const handleApprove = async (engId: string, checkerName: string, notes: string) => {
+    setActionPending(true);
+    await changeStatus(engId, "completed", {
+      actorName: checkerName || undefined,
+      notes: notes || undefined,
+      checkerNotes: notes || undefined,
+      historyAction: "approved",
+    });
+    setApproveModal(null);
+    setActionPending(false);
+  };
+
+  const handleReject = async (engId: string, checkerName: string, reason: string) => {
+    setActionPending(true);
+    const userId = await getCurrentUserId();
+    const { error } = await supabase.from("engagements").update({
+      status: "in_progress",
+      last_action_at: new Date().toISOString(),
+      checker_notes: reason,
+    }).eq("id", engId);
+    if (error) { alert("Could not reject: " + error.message); setActionPending(false); return; }
+    await supabase.from("engagement_history").insert({
+      user_id: userId,
+      engagement_id: engId,
+      action: "rejected",
+      actor_name: checkerName || null,
+      notes: reason,
+    });
+    qc.invalidateQueries({ queryKey: ["engagement-history"] });
+    invalidateEngagements();
+    setRejectModal(null);
+    setActionPending(false);
   };
 
   const renderPrimary = (e: any, s: ReturnType<typeof summarize>) => {
     if (e.status === "ready_for_review") {
       return (
         <>
-          <button onClick={() => void updateStatus(e.id, "completed")} className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}>
+          <button
+            onClick={() => setApproveModal({ engId: e.id, engTitle: e.title, checkerName: e.reviewed_by ?? "" })}
+            className={`${btn} bg-green-50 text-green-700 border-green-200 hover:bg-green-100`}
+          >
             <CheckCircle2 size={13} /> Approve
           </button>
-          <button onClick={() => void updateStatus(e.id, "in_progress")} className={`${btn} bg-card text-red-600 border-red-200 hover:bg-red-50`}>
+          <button
+            onClick={() => setRejectModal({ engId: e.id, engTitle: e.title, checkerName: e.reviewed_by ?? "" })}
+            className={`${btn} bg-card text-red-600 border-red-200 hover:bg-red-50`}
+          >
             <X size={13} /> Reject
           </button>
         </>
@@ -336,7 +472,10 @@ function EngagementsPage() {
     if (!isActive(e)) return <span className="text-xs text-muted-foreground">—</span>;
     if (e.status === "on_hold") {
       return (
-        <button onClick={() => void updateStatus(e.id, "in_progress")} className={`${btn} bg-muted text-foreground border-input hover:bg-muted`}>
+        <button
+          onClick={() => void changeStatus(e.id, "in_progress", { actorName: e.assigned_to || undefined, historyAction: "resumed" })}
+          className={`${btn} bg-muted text-foreground border-input hover:bg-muted`}
+        >
           <Play size={13} /> Resume
         </button>
       );
@@ -350,14 +489,20 @@ function EngagementsPage() {
     }
     if (e.status === "pending") {
       return (
-        <button onClick={() => void updateStatus(e.id, "in_progress")} className={`${btn} bg-primary/5 text-primary border-primary/20 hover:bg-primary/10`}>
+        <button
+          onClick={() => void changeStatus(e.id, "in_progress", { actorName: e.assigned_to || undefined })}
+          className={`${btn} bg-primary/5 text-primary border-primary/20 hover:bg-primary/10`}
+        >
           <Play size={13} /> Start
         </button>
       );
     }
     if (e.status === "in_progress") {
       return (
-        <button onClick={() => void updateStatus(e.id, "ready_for_review")} className={`${btn} bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100`}>
+        <button
+          onClick={() => void changeStatus(e.id, "ready_for_review", { actorName: e.assigned_to || undefined })}
+          className={`${btn} bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100`}
+        >
           <Clock size={13} /> Send for Review
         </button>
       );
@@ -369,7 +514,7 @@ function EngagementsPage() {
     if (menu?.id === id) { setMenu(null); return; }
     const r = ev.currentTarget.getBoundingClientRect();
     const right = window.innerWidth - r.right;
-    const openUp = r.bottom + 190 > window.innerHeight;
+    const openUp = r.bottom + 220 > window.innerHeight;
     setMenu(openUp ? { id, right, bottom: window.innerHeight - r.top + 4 } : { id, right, top: r.bottom + 4 });
   };
 
@@ -439,7 +584,16 @@ function EngagementsPage() {
               return (
                 <tr key={e.id} className={`hover:bg-muted ${e.status === "ready_for_review" ? "bg-purple-50/30" : ""}`}>
                   <td className="px-5 py-3 font-medium text-foreground">{e.clients?.name ?? "—"}</td>
-                  <td className="px-5 py-3 text-foreground">{e.title}</td>
+                  <td className="px-5 py-3 text-foreground">
+                    <div>
+                      {e.title}
+                      {e.checker_notes && e.status === "in_progress" && (
+                        <p className="text-[10px] text-red-600 mt-0.5 max-w-[180px] truncate" title={e.checker_notes}>
+                          ⚠ {e.checker_notes}
+                        </p>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-foreground">{e.type}</td>
                   <td className="px-5 py-3 text-foreground whitespace-nowrap">{e.deadline ? format(new Date(e.deadline), "dd MMM yyyy") : "—"}</td>
                   <td className="px-5 py-3">
@@ -454,7 +608,7 @@ function EngagementsPage() {
                     ) : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
                   <td className="px-5 py-3">
-                    <select value={e.status} onChange={(event) => { void updateStatus(e.id, event.target.value); }} className={`rounded-md border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer ${statusColors[e.status] ?? "bg-muted text-foreground"}`}>
+                    <select value={e.status} onChange={(event) => { void quickUpdateStatus(e.id, event.target.value); }} className={`rounded-md border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer ${statusColors[e.status] ?? "bg-muted text-foreground"}`}>
                       {STATUSES.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}
                     </select>
                   </td>
@@ -475,16 +629,18 @@ function EngagementsPage() {
         </table>
       </div>
 
+      {/* ⋯ Menu */}
       {menu && menuEngagement && (() => {
         const e = menuEngagement;
         const s = summarize(docsByEng[e.id]);
         const hasTemplate = getTemplate(e.type).length > 0;
+        const clientHasEmail = !!clientMap[e.client_id]?.email;
         const item = "w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted flex items-center gap-2";
         const run = (fn: () => void) => () => { setMenu(null); fn(); };
         return (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
-            <div className="fixed z-50 w-48 bg-card border border-border rounded-md shadow-lg py-1" style={{ right: menu.right, top: menu.top, bottom: menu.bottom }}>
+            <div className="fixed z-50 w-52 bg-card border border-border rounded-md shadow-lg py-1" style={{ right: menu.right, top: menu.top, bottom: menu.bottom }}>
               <button className={item} onClick={run(() => setModalState({ mode: "edit", engagement: e }))}><Pencil size={14} /> Edit</button>
               {s.total > 0 ? (
                 <button className={item} onClick={run(() => setChecklistFor(e.id))}><ClipboardList size={14} /> Open Checklist</button>
@@ -492,7 +648,13 @@ function EngagementsPage() {
                 <button className={item} onClick={run(() => generateMutation.mutate(e))}><ClipboardList size={14} /> Generate Checklist</button>
               ) : null}
               {s.pendingCount > 0 && isActive(e) && !primaryIsChase(e, s) && (
-                <button className={item} onClick={run(() => void chase(e))}><MessageCircle size={14} /> Send Reminder</button>
+                <button className={item} onClick={run(() => void chase(e))}><MessageCircle size={14} /> WhatsApp Reminder</button>
+              )}
+              {primaryIsChase(e, s) && clientHasEmail && (
+                <button className={item} onClick={run(() => void emailChase(e))}><Mail size={14} /> Email Reminder</button>
+              )}
+              {s.pendingCount > 0 && isActive(e) && !primaryIsChase(e, s) && clientHasEmail && (
+                <button className={item} onClick={run(() => void emailChase(e))}><Mail size={14} /> Email Reminder</button>
               )}
               {e.status !== "completed" && e.status !== "ready_for_review" && (
                 <>
@@ -505,6 +667,7 @@ function EngagementsPage() {
         );
       })()}
 
+      {/* Modals */}
       {modalState && (
         <EngagementModal
           mode={modalState.mode}
@@ -531,11 +694,33 @@ function EngagementsPage() {
           onUpdate={(id, status) => updateDocMutation.mutate({ id, status })}
           updating={updateDocMutation.isPending}
           onChase={() => void chase(checklistEngagement)}
+          onEmailChase={() => void emailChase(checklistEngagement)}
+          clientEmail={clientMap[checklistEngagement.client_id]?.email ?? ""}
+        />
+      )}
+
+      {rejectModal && (
+        <RejectModal
+          engTitle={rejectModal.engTitle}
+          onConfirm={(reason) => void handleReject(rejectModal.engId, rejectModal.checkerName, reason)}
+          onCancel={() => setRejectModal(null)}
+          pending={actionPending}
+        />
+      )}
+
+      {approveModal && (
+        <ApproveModal
+          engTitle={approveModal.engTitle}
+          onConfirm={(notes) => void handleApprove(approveModal.engId, approveModal.checkerName, notes)}
+          onCancel={() => setApproveModal(null)}
+          pending={actionPending}
         />
       )}
     </div>
   );
 }
+
+// ---------- TabButton ----------
 
 function TabButton({ active, activeClass, badgeClass, activeBadgeClass, onClick, icon, label, count }: {
   active: boolean; activeClass: string; badgeClass?: string; activeBadgeClass?: string;
@@ -551,18 +736,44 @@ function TabButton({ active, activeClass, badgeClass, activeBadgeClass, onClick,
   );
 }
 
+// ---------- Doc options ----------
+
 const DOC_OPTIONS: { value: DocStatus; label: string; activeClass: string }[] = [
   { value: "pending", label: "Pending", activeClass: "bg-amber-100 text-amber-800 border-amber-300" },
   { value: "received", label: "Received", activeClass: "bg-green-100 text-green-800 border-green-300" },
   { value: "not_applicable", label: "N/A", activeClass: "bg-muted text-foreground border-input" },
 ];
 
-function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase }: {
-  engagement: any; docs: DocRow[]; onClose: () => void;
-  onUpdate: (id: string, status: DocStatus) => void; updating: boolean; onChase: () => void;
+// ---------- Checklist Modal with History ----------
+
+function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase, onEmailChase, clientEmail }: {
+  engagement: any;
+  docs: DocRow[];
+  onClose: () => void;
+  onUpdate: (id: string, status: DocStatus) => void;
+  updating: boolean;
+  onChase: () => void;
+  onEmailChase: () => void;
+  clientEmail: string;
 }) {
   const s = summarize(docs);
   const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+  const [showHistory, setShowHistory] = useState(false);
+
+  const { data: history } = useQuery({
+    queryKey: ["engagement-history", engagement.id],
+    queryFn: async () => {
+      const userId = await getCurrentUserId();
+      const { data } = await supabase
+        .from("engagement_history")
+        .select("id, action, actor_name, notes, created_at")
+        .eq("engagement_id", engagement.id)
+        .eq("user_id", userId ?? "")
+        .order("created_at", { ascending: true });
+      return (data ?? []) as HistoryRow[];
+    },
+  });
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -570,9 +781,15 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
           <div>
             <h2 className="font-semibold text-foreground">Document Checklist</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{engagement.clients?.name ?? "—"} · {engagement.title} ({engagement.type})</p>
+            {engagement.checker_notes && (
+              <p className="text-xs text-red-600 mt-1.5 bg-red-50 border border-red-100 px-2 py-1 rounded">
+                ⚠ Last rejection note: {engagement.checker_notes}
+              </p>
+            )}
           </div>
           <button onClick={onClose}><X size={18} /></button>
         </div>
+
         <div className="px-5 py-3 border-b border-border space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${s.state === "ready" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>
@@ -584,7 +801,8 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
             <div className={`h-full ${s.state === "ready" ? "bg-green-500" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
           </div>
         </div>
-        <div className="overflow-y-auto divide-y divide-border">
+
+        <div className="overflow-y-auto divide-y divide-border flex-1">
           {docs.map((d) => (
             <div key={d.id} className="px-5 py-2.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -601,12 +819,51 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
               </div>
             </div>
           ))}
+
+          {/* Activity History */}
+          {history && history.length > 0 && (
+            <div className="px-5 py-3">
+              <button
+                onClick={() => setShowHistory((v) => !v)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground uppercase tracking-wide"
+              >
+                {showHistory ? "▾" : "▸"} Activity History ({history.length})
+              </button>
+              {showHistory && (
+                <div className="mt-3 space-y-3">
+                  {history.map((h) => {
+                    const info = ACTION_LABELS[h.action] ?? { label: h.action, color: "text-muted-foreground" };
+                    return (
+                      <div key={h.id} className="flex items-start gap-3 text-xs">
+                        <span className="text-muted-foreground whitespace-nowrap pt-0.5 min-w-[100px]">
+                          {format(new Date(h.created_at), "dd MMM, h:mm a")}
+                        </span>
+                        <div className="min-w-0">
+                          <span className={`font-semibold ${info.color}`}>{info.label}</span>
+                          {h.actor_name && <span className="text-muted-foreground"> — {h.actor_name}</span>}
+                          {h.notes && <p className="text-muted-foreground italic mt-0.5 bg-muted/50 px-2 py-1 rounded">"{h.notes}"</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
         <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-3 flex-wrap">
           <p className="text-xs text-muted-foreground">
-            {engagement.last_reminder_date ? `Last reminder: ${format(new Date(engagement.last_reminder_date), "dd MMM yyyy")} · ${engagement.reminder_count ?? 0} sent` : "No reminder sent yet"}
+            {engagement.last_reminder_date
+              ? `Last reminder: ${format(new Date(engagement.last_reminder_date), "dd MMM yyyy")} · ${engagement.reminder_count ?? 0} sent`
+              : "No reminder sent yet"}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {clientEmail && s.pendingCount > 0 && (
+              <button onClick={onEmailChase} className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">
+                <Mail size={14} /> Email
+              </button>
+            )}
             <button onClick={onChase} disabled={s.pendingCount === 0} className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-green-600 text-primary-foreground hover:bg-green-700 disabled:opacity-50">
               <MessageCircle size={14} /> Chase on WhatsApp
             </button>
@@ -617,6 +874,8 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
     </div>
   );
 }
+
+// ---------- Engagement Modal (role-filtered checker) ----------
 
 function EngagementModal({ mode, initialEngagement, clients, staffList, onClose, onSubmit, pending }: {
   mode: "create" | "edit";
@@ -639,6 +898,10 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
 
   const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
   const templateCount = getTemplate(form.type).length;
+
+  // Maker = all staff, Checker = only senior roles
+  const makerStaff = staffList ?? [];
+  const checkerStaff = (staffList ?? []).filter((s: any) => CHECKER_ROLES.includes(s.role));
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -685,15 +948,16 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
             <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className={inputClass} />
           </div>
 
-          {/* ✅ Maker-Checker — Staff Dropdown */}
           <div className="bg-purple-50 border border-purple-100 rounded-lg p-3 space-y-3">
             <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Maker — Checker</p>
+
+            {/* Maker: all staff */}
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">Assigned To (Maker)</label>
-              {staffList && staffList.length > 0 ? (
+              {makerStaff.length > 0 ? (
                 <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className={inputClass}>
                   <option value="">Select staff member</option>
-                  {staffList.map((s: any) => (
+                  {makerStaff.map((s: any) => (
                     <option key={s.id} value={s.name}>{s.name}{s.role ? ` (${s.role})` : ""}</option>
                   ))}
                 </select>
@@ -701,21 +965,30 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
                 <input value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} placeholder="Add staff from Staff page first" className={inputClass} />
               )}
             </div>
+
+            {/* Checker: only senior roles */}
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Reviewed By (Checker)</label>
-              {staffList && staffList.length > 0 ? (
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
+                Reviewed By (Checker)
+                <span className="ml-1 text-purple-600 font-normal">— Qualified CA, Manager, Partner, Admin only</span>
+              </label>
+              {checkerStaff.length > 0 ? (
                 <select value={form.reviewed_by} onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })} className={inputClass}>
-                  <option value="">Select staff member</option>
-                  {staffList.map((s: any) => (
-                    <option key={s.id} value={s.name}>{s.name}{s.role ? ` (${s.role})` : ""}</option>
+                  <option value="">Select reviewer</option>
+                  {checkerStaff.map((s: any) => (
+                    <option key={s.id} value={s.name}>{s.name} ({s.role})</option>
                   ))}
                 </select>
               ) : (
-                <input value={form.reviewed_by} onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })} placeholder="Add staff from Staff page first" className={inputClass} />
+                <div>
+                  <input value={form.reviewed_by} onChange={(e) => setForm({ ...form, reviewed_by: e.target.value })} placeholder="No eligible checker found" className={inputClass} />
+                  <p className="text-xs text-amber-600 mt-1">⚠ Add staff with role Qualified CA, Manager or Partner to use dropdown.</p>
+                </div>
               )}
             </div>
+
             {(!staffList || staffList.length === 0) && (
-              <p className="text-xs text-amber-600">⚠️ No staff added yet. Go to Staff page to add team members.</p>
+              <p className="text-xs text-amber-600">⚠ No staff added yet. Go to Staff page to add team members.</p>
             )}
           </div>
 
@@ -726,6 +999,104 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Reject Modal ----------
+
+function RejectModal({ engTitle, onConfirm, onCancel, pending }: {
+  engTitle: string;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+  pending: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">Reject Engagement</h2>
+          <button onClick={onCancel}><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Rejecting <strong className="text-foreground">{engTitle}</strong>. Maker ko wapas kaam karna padega.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Reason <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              autoFocus
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Form 26AS mismatch with bank statement..."
+              rows={3}
+              className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
+          <button onClick={onCancel} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
+          <button
+            disabled={!reason.trim() || pending}
+            onClick={() => onConfirm(reason.trim())}
+            className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600 disabled:opacity-60"
+          >
+            {pending ? "Rejecting..." : "Reject"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Approve Modal ----------
+
+function ApproveModal({ engTitle, onConfirm, onCancel, pending }: {
+  engTitle: string;
+  onConfirm: (notes: string) => void;
+  onCancel: () => void;
+  pending: boolean;
+}) {
+  const [notes, setNotes] = useState("");
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-sm">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">Approve Engagement</h2>
+          <button onClick={onCancel}><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Approving <strong className="text-foreground">{engTitle}</strong>.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Reviewer Note <span className="text-xs text-muted-foreground">(optional)</span>
+            </label>
+            <textarea
+              autoFocus
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. Verified with client, all figures match..."
+              rows={2}
+              className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
+          <button onClick={onCancel} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
+          <button
+            disabled={pending}
+            onClick={() => onConfirm(notes.trim())}
+            className="px-4 py-2 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
+          >
+            {pending ? "Approving..." : "Approve ✓"}
+          </button>
+        </div>
       </div>
     </div>
   );
