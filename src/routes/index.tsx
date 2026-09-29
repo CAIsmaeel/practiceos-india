@@ -147,7 +147,8 @@ function RegulatoryUpdates() {
       // Deduplicate by event_id — keep first occurrence only
       const seen = new Set<string>();
       const unique = (data ?? []).filter((u: any) => {
-        const key = u.event_id || u.id;
+        // Deduplicate by normalized title (first 60 chars)
+        const key = u.title?.toLowerCase().slice(0, 60) ?? u.id;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
