@@ -137,21 +137,25 @@ function RegulatoryUpdates() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("regulatory_updates")
-        .select("id, title, category, importance, action_required, deadline_date, published_at, url, source, relevance_reason")
+        .select("id, title, category, importance, action_required, deadline_date, published_at, url, source, event_id")
         .eq("status", "active")
+        .eq("importance", "HIGH")
         .order("published_at", { ascending: false })
-        .limit(8);
+        .limit(20);
       if (error) throw error;
-      return (data ?? []) as any[];
+
+      // Deduplicate by event_id — keep first occurrence only
+      const seen = new Set<string>();
+      const unique = (data ?? []).filter((u: any) => {
+        const key = u.event_id || u.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return unique.slice(0, 6) as any[];
     },
     staleTime: 5 * 60 * 1000,
   });
-
-  const importanceColor: Record<string, string> = {
-    HIGH: "bg-red-100 text-red-700",
-    MEDIUM: "bg-amber-100 text-amber-700",
-    LOW: "bg-slate-100 text-slate-600",
-  };
 
   const categoryIcon: Record<string, string> = {
     "Direct Tax": "💰",
@@ -186,7 +190,6 @@ function RegulatoryUpdates() {
         )}
         {(updates ?? []).map((update: any) => {
           const icon = categoryIcon[update.category] ?? "📰";
-          const impColor = importanceColor[update.importance] ?? importanceColor["LOW"];
           const pubDate = update.published_at ? format(new Date(update.published_at), "dd MMM yyyy") : "—";
           const deadline = update.deadline_date ? format(new Date(update.deadline_date), "dd MMM yyyy") : null;
 
@@ -197,12 +200,7 @@ function RegulatoryUpdates() {
                   <span className="text-xl shrink-0 mt-0.5">{icon}</span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${impColor}`}>
-                        {update.importance}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        {update.category}
-                      </span>
+                      <span className="text-[10px] text-muted-foreground font-medium">{update.category}</span>
                       {update.action_required && (
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
                           ACTION REQUIRED
@@ -219,7 +217,6 @@ function RegulatoryUpdates() {
                           📅 Deadline: {deadline}
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground">{update.source}</span>
                     </div>
                   </div>
                 </div>
@@ -463,6 +460,7 @@ function Dashboard() {
         </p>
       </div>
 
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={clients ?? 0} icon={Users} color="bg-primary" href="/clients" />
         <StatCard label="Total Outstanding" value={new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(totalOutstanding)} icon={Briefcase} color="bg-indigo-500" href="/invoices" />
@@ -474,6 +472,7 @@ function Dashboard() {
         <StatCard label="Overdue Invoices" value={overdueInvoicesCount ?? 0} icon={AlertTriangle} color="bg-red-500" href="/invoices" />
       </div>
 
+      {/* Today's Focus */}
       <TodaysFocus items={focusItems} />
 
       {/* Compliance */}
@@ -522,6 +521,12 @@ function Dashboard() {
           })}
         </div>
       </div>
+
+      {/* Regulatory Updates — after compliance */}
+      <div className="bg-card border border-border rounded-lg p-5">
+        <p>TEST - Regulatory Updates Here</p>
+      </div>
+      <RegulatoryUpdates />
 
       {/* Recent Leads */}
       <div className="bg-card border border-border rounded-lg shadow-sm">
