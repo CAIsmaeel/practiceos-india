@@ -24,4 +24,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           DRY_RUN: "false"
-        run: python scripts/fetch_regulatory_updates.py
+        run: python src/routes/scripts/fetch_regulatory_updates.py
