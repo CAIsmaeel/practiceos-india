@@ -137,35 +137,32 @@ function RegulatoryUpdates() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("regulatory_updates")
-        .select("id, title, category, importance, action_required, deadline_date, published_at, url, source, event_id")
+        .select("id, title, category, importance, action_required, deadline_date, published_at, url, source, event_id, expires_at")
         .eq("status", "active")
         .eq("importance", "HIGH")
+        .or("expires_at.is.null,expires_at.gt." + new Date().toISOString())
         .order("published_at", { ascending: false })
-        .limit(20);
+        .limit(50);
       if (error) throw error;
 
-      // Deduplicate by event_id — keep first occurrence only
-      const seen = new Set<string>();
+      // Deduplicate by event_id first, then by content_hash
+      const seenEvents = new Set<string>();
       const unique = (data ?? []).filter((u: any) => {
-        // Deduplicate by normalized title (first 60 chars)
-        const key = u.title?.toLowerCase().slice(0, 60) ?? u.id;
-        if (seen.has(key)) return false;
-        seen.add(key);
+        const key = u.event_id ?? u.id;
+        if (seenEvents.has(key)) return false;
+        seenEvents.add(key);
         return true;
       });
-      return unique.slice(0, 6) as any[];
+
+      return unique.slice(0, 5) as any[];
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const categoryIcon: Record<string, string> = {
-    "Direct Tax": "💰",
-    "GST": "🧾",
-    "Corporate Law": "🏢",
-    "Audit & Accounting": "📊",
-    "ICAI": "🎓",
-    "Compliance": "📋",
-    "General": "📰",
+    "Direct Tax": "💰", "GST": "🧾", "Corporate Law": "🏢",
+    "Audit & Accounting": "📊", "ICAI": "🎓",
+    "Compliance": "📋", "General": "📰",
   };
 
   return (
@@ -179,21 +176,15 @@ function RegulatoryUpdates() {
           </div>
         </div>
       </div>
-
       <div className="divide-y divide-border">
-        {isLoading && (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading updates...</p>
-        )}
+        {isLoading && <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading updates...</p>}
         {!isLoading && (updates ?? []).length === 0 && (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
-            No regulatory updates yet. Script will run weekly automatically.
-          </p>
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">No regulatory updates yet.</p>
         )}
         {(updates ?? []).map((update: any) => {
           const icon = categoryIcon[update.category] ?? "📰";
           const pubDate = update.published_at ? format(new Date(update.published_at), "dd MMM yyyy") : "—";
           const deadline = update.deadline_date ? format(new Date(update.deadline_date), "dd MMM yyyy") : null;
-
           return (
             <div key={update.id} className="px-5 py-3.5 hover:bg-muted/40 transition-colors">
               <div className="flex items-start justify-between gap-3">
@@ -203,31 +194,19 @@ function RegulatoryUpdates() {
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-[10px] text-muted-foreground font-medium">{update.category}</span>
                       {update.action_required && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                          ACTION REQUIRED
-                        </span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">ACTION REQUIRED</span>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">
-                      {update.title}
-                    </p>
+                    <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">{update.title}</p>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       <span className="text-xs text-muted-foreground">{pubDate}</span>
-                      {deadline && (
-                        <span className="text-xs font-medium text-red-600">
-                          📅 Deadline: {deadline}
-                        </span>
-                      )}
+                      {deadline && <span className="text-xs font-medium text-red-600">📅 Deadline: {deadline}</span>}
                     </div>
                   </div>
                 </div>
                 {update.url && (
-                  <a
-                    href={update.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium mt-1"
-                  >
+                  <a href={update.url} target="_blank" rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium mt-1">
                     Read <ExternalLink size={11} />
                   </a>
                 )}
@@ -524,9 +503,6 @@ function Dashboard() {
       </div>
 
       {/* Regulatory Updates — after compliance */}
-      <div className="bg-card border border-border rounded-lg p-5">
-        <p>TEST - Regulatory Updates Here</p>
-      </div>
       <RegulatoryUpdates />
 
       {/* Recent Leads */}
