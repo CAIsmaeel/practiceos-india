@@ -134,28 +134,15 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
 function RegulatoryUpdates() {
   const { data: updates, isLoading } = useQuery({
     queryKey: ["regulatory-updates-dashboard"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("regulatory_updates")
-        .select("id, title, category, importance, action_required, deadline_date, published_at, url, source, event_id, expires_at")
-        .eq("status", "active")
-        .eq("importance", "HIGH")
-        .or("expires_at.is.null,expires_at.gt." + new Date().toISOString())
-        .order("published_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-
-      // Deduplicate by event_id first, then by content_hash
-      const seenEvents = new Set<string>();
-      const unique = (data ?? []).filter((u: any) => {
-        const key = u.event_id ?? u.id;
-        if (seenEvents.has(key)) return false;
-        seenEvents.add(key);
-        return true;
-      });
-
-      return unique.slice(0, 5) as any[];
-    },
+     queryFn: async () => {
+  const { data, error } = await supabase
+    .from("active_regulatory_events")
+    .select("id, title, category, importance, action_required, deadline_date, published_at, url, source")
+    .order("published_at", { ascending: false })
+    .limit(6);
+  if (error) throw error;
+  return (data ?? []) as any[];
+},
     staleTime: 5 * 60 * 1000,
   });
 
