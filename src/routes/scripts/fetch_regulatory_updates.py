@@ -225,9 +225,12 @@ CATEGORY_SIGNALS = {
         "HIGH": [
             r"\bicai\s+professional", r"\bicai\s+member", r"\bicai\s+notification",
             r"\bicai\s+guideline", r"\bicai\s+standard",
+            r"\bssa\s+\d+", r"\bsa\s+\d+", r"\bsustainability\s+assurance",
+            r"\bstandard\s+on\s+auditing", r"\baccounting\s+standard",
         ],
         "MEDIUM": [
             r"\bicai\s+announcement", r"\bicai\s+circular",
+            r"\bicai\s+rolls\s+out", r"\bicai\s+issues\s+new",
         ],
         "LOW": [],
     },
