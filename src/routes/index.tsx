@@ -476,9 +476,6 @@ function Dashboard() {
 
       <TodaysFocus items={focusItems} />
 
-      {/* Regulatory Updates */}
-      <RegulatoryUpdates />
-
       {/* Compliance */}
       <div className="bg-card border border-border rounded-lg shadow-sm">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
