@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, getCurrentUserId } from "@/lib/supabase";
-import { Users, Briefcase, Calendar, AlertTriangle, FileText, MessageCircle, ChevronRight } from "lucide-react";
+import { Users, Briefcase, Calendar, AlertTriangle, FileText, MessageCircle, ChevronRight, Bell, ExternalLink } from "lucide-react";
 import { format, addDays, isBefore, differenceInCalendarDays, differenceInDays, startOfDay } from "date-fns";
 
 export const Route = createFileRoute("/")({
@@ -35,7 +35,6 @@ function StatCard({ label, value, icon: Icon, color, sub, href }: {
   );
 }
 
-// ✅ Today's Focus action item type
 type FocusItem = {
   id: string;
   priority: "critical" | "attention";
@@ -60,7 +59,6 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
     </div>
   );
 
-  // Group by type
   const critical = items.filter(i => i.priority === "critical");
   const attention = items.filter(i => i.priority === "attention");
 
@@ -79,13 +77,9 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
       task: "bg-blue-100 text-blue-700",
     };
     const typeLabels: Record<string, string> = {
-      compliance: "Compliance",
-      invoice: "Invoice",
-      document: "Documents",
-      lead: "Lead",
-      task: "Task",
+      compliance: "Compliance", invoice: "Invoice",
+      document: "Documents", lead: "Lead", task: "Task",
     };
-
     return (
       <div key={item.id} className={`flex items-center justify-between py-3 px-4 gap-3 ${item.priority === "critical" ? "border-l-4 border-red-500 bg-red-50/40" : "border-l-4 border-amber-400 bg-amber-50/30"}`}>
         <div className="min-w-0 flex-1">
@@ -99,7 +93,7 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {item.waPhone && (
-            <button onClick={() => handleWA(item)} className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-md font-medium hover:bg-green-100">
+            <button onClick={() => handleWA(item)} className="inline-flex items-center gap-1 text-xs text-green-700 border border-green-200 px-2.5 py-1 rounded-md font-medium hover:bg-green-100">
               <MessageCircle size={12} /> WA
             </button>
           )}
@@ -132,6 +126,117 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
           </div>
         )}
         {attention.map(renderItem)}
+      </div>
+    </div>
+  );
+}
+
+function RegulatoryUpdates() {
+  const { data: updates, isLoading } = useQuery({
+    queryKey: ["regulatory-updates-dashboard"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("regulatory_updates")
+        .select("id, title, category, importance, action_required, deadline_date, published_at, url, source, relevance_reason")
+        .eq("status", "active")
+        .order("published_at", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const importanceColor: Record<string, string> = {
+    HIGH: "bg-red-100 text-red-700",
+    MEDIUM: "bg-amber-100 text-amber-700",
+    LOW: "bg-slate-100 text-slate-600",
+  };
+
+  const categoryIcon: Record<string, string> = {
+    "Direct Tax": "💰",
+    "GST": "🧾",
+    "Corporate Law": "🏢",
+    "Audit & Accounting": "📊",
+    "ICAI": "🎓",
+    "Compliance": "📋",
+    "General": "📰",
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-lg shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Bell size={16} className="text-primary" />
+          <div>
+            <h2 className="font-semibold text-foreground">Regulatory Updates</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Latest CA-relevant notifications — auto-updated weekly</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="divide-y divide-border">
+        {isLoading && (
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading updates...</p>
+        )}
+        {!isLoading && (updates ?? []).length === 0 && (
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+            No regulatory updates yet. Script will run weekly automatically.
+          </p>
+        )}
+        {(updates ?? []).map((update: any) => {
+          const icon = categoryIcon[update.category] ?? "📰";
+          const impColor = importanceColor[update.importance] ?? importanceColor["LOW"];
+          const pubDate = update.published_at ? format(new Date(update.published_at), "dd MMM yyyy") : "—";
+          const deadline = update.deadline_date ? format(new Date(update.deadline_date), "dd MMM yyyy") : null;
+
+          return (
+            <div key={update.id} className="px-5 py-3.5 hover:bg-muted/40 transition-colors">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <span className="text-xl shrink-0 mt-0.5">{icon}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${impColor}`}>
+                        {update.importance}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {update.category}
+                      </span>
+                      {update.action_required && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                          ACTION REQUIRED
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">
+                      {update.title}
+                    </p>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      <span className="text-xs text-muted-foreground">{pubDate}</span>
+                      {deadline && (
+                        <span className="text-xs font-medium text-red-600">
+                          📅 Deadline: {deadline}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">{update.source}</span>
+                    </div>
+                  </div>
+                </div>
+                {update.url && (
+                  <a
+                    href={update.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium mt-1"
+                  >
+                    Read <ExternalLink size={11} />
+                  </a>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -251,19 +356,16 @@ function Dashboard() {
         const userId = await getCurrentUserId();
         const today = format(startOfDay(new Date()), "yyyy-MM-dd");
         const next7 = format(startOfDay(addDays(new Date(), 7)), "yyyy-MM-dd");
-
         const { data: overdueData } = await supabase.from("compliance_items")
           .select("id, compliance_type, due_date, status, client_id, clients!inner(name, status)")
           .eq("user_id", userId ?? "").eq("status", "pending")
           .neq("clients.status", "deleted").neq("clients.status", "archived")
           .lt("due_date", today).order("due_date", { ascending: true }).limit(5);
-
         const { data: upcomingData } = await supabase.from("compliance_items")
           .select("id, compliance_type, due_date, status, client_id, clients!inner(name, status)")
           .eq("user_id", userId ?? "").eq("status", "pending")
           .neq("clients.status", "deleted").neq("clients.status", "archived")
           .gte("due_date", today).lte("due_date", next7).order("due_date", { ascending: true });
-
         const mapItem = (item: any, isOverdue: boolean) => ({
           id: item.id,
           clientName: item.clients?.name ?? "—",
@@ -271,7 +373,6 @@ function Dashboard() {
           dueDate: item.due_date,
           isOverdue,
         });
-
         return [
           ...(overdueData ?? []).map((i: any) => mapItem(i, true)),
           ...(upcomingData ?? []).map((i: any) => mapItem(i, false)),
@@ -299,18 +400,14 @@ function Dashboard() {
   const pendingDocsTotal = activePendingDocs.length;
   const mandatoryDocsPending = activePendingDocs.filter((d) => d.requirement === "mandatory").length;
 
-  // ✅ getTodayFocus — build action items from existing data
   const todaysFocus: FocusItem[] = [];
-  const today = format(startOfDay(now), "yyyy-MM-dd");
 
-  // 1. Overdue invoices (critical)
   (invoices ?? []).filter((inv: any) => {
     if (!inv.due_date || inv.status === "Paid") return false;
     return new Date(inv.due_date) < now;
   }).slice(0, 2).forEach((inv: any) => {
     const days = differenceInDays(now, new Date(inv.due_date));
     const amt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(inv.total_amount ?? inv.amount ?? 0));
-    const phone = inv.clients?.phone ?? "";
     todaysFocus.push({
       id: `inv-${inv.id}`,
       priority: days > 30 ? "critical" : "attention",
@@ -320,11 +417,10 @@ function Dashboard() {
       detail: "Invoice",
       href: "/invoices",
       action: "Open Invoice",
-      waPhone: phone,
+      waPhone: inv.clients?.phone ?? "",
     });
   });
 
-  // 2. Engagements with blocked docs (attention)
   (engagements ?? []).filter(isActiveEng).forEach((e: any) => {
     const blocked = activePendingDocs.filter(d => d.engagement_id === e.id && d.requirement === "mandatory");
     if (blocked.length > 0) {
@@ -342,7 +438,6 @@ function Dashboard() {
     }
   });
 
-  // 3. Hot leads needing follow-up (attention)
   (recentLeads ?? []).filter((l: any) => l.qualification_score === "Hot").slice(0, 2).forEach((l: any) => {
     todaysFocus.push({
       id: `lead-${l.id}`,
@@ -357,7 +452,6 @@ function Dashboard() {
     });
   });
 
-  // Limit to 6 items max
   const focusItems = todaysFocus.slice(0, 6);
 
   return (
@@ -380,8 +474,10 @@ function Dashboard() {
         <StatCard label="Overdue Invoices" value={overdueInvoicesCount ?? 0} icon={AlertTriangle} color="bg-red-500" href="/invoices" />
       </div>
 
-      {/* ✅ TODAY'S FOCUS */}
       <TodaysFocus items={focusItems} />
+
+      {/* Regulatory Updates */}
+      <RegulatoryUpdates />
 
       {/* Compliance */}
       <div className="bg-card border border-border rounded-lg shadow-sm">
@@ -390,7 +486,7 @@ function Dashboard() {
             <h2 className="font-semibold text-foreground">Compliance — Overdue & Next 7 Days</h2>
             {overdueComplianceCount > 0 && (
               <p className="text-xs text-red-600 font-medium mt-0.5">
-                ⚠️ {overdueComplianceCount} overdue item{overdueComplianceCount > 1 ? "s" : ""}
+                ⚠ {overdueComplianceCount} overdue item{overdueComplianceCount > 1 ? "s" : ""}
               </p>
             )}
           </div>
