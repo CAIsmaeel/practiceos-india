@@ -364,21 +364,6 @@ function Dashboard() {
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-  const { data: tasksDueCount } = useQuery({
-    queryKey: ["tasks-due-week"],
-    queryFn: async () => {
-      try {
-        const userId = await getCurrentUserId();
-        const today = new Date().toISOString().split("T")[0];
-        const next7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-        const { count } = await supabase.from("tasks").select("*", { count: "exact", head: true })
-          .eq("user_id", userId ?? "").gte("due_date", today).lte("due_date", next7).eq("is_complete", false);
-        return count ?? 0;
-      } catch { return 0; }
-    },
-    refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
-  });
-
   const { data: openLeadsCount } = useQuery({
     queryKey: ["open-leads-count"],
     queryFn: async () => {
@@ -571,7 +556,6 @@ function Dashboard() {
         />
         <StatCard label="Total Outstanding" value={fmtINR(totalOutstanding)} icon={Briefcase} color="bg-indigo-500" href="/invoices" />
         <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
-        <StatCard label="Tasks Due This Week" value={tasksDueCount ?? 0} icon={Calendar} color="bg-amber-500" href="/tasks" />
         <StatCard label="Overdue Items" value={overdueCount} sub={`${overdueComplianceCount} compliance · ${overdueEngagements} engagements`} icon={AlertTriangle} color="bg-red-500" href="/compliance" />
         <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" href="/leads" />
         <StatCard label="Clients Waiting for Docs" value={clientsWaiting} sub={`${pendingDocsTotal} docs · ${mandatoryDocsPending} mandatory`} icon={FileText} color="bg-orange-500" href="/documents" />
