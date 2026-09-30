@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, getCurrentUserId } from "@/lib/supabase";
-import { Users, Briefcase, Calendar, AlertTriangle, FileText, MessageCircle, ChevronRight, Bell, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Users, Briefcase, AlertTriangle, MessageCircle, ChevronRight, Bell, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { format, addDays, isBefore, differenceInCalendarDays, differenceInDays, startOfDay, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 export const Route = createFileRoute("/")({
@@ -377,18 +377,6 @@ function Dashboard() {
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-  const { data: pendingChecklistDocs } = useQuery({
-    queryKey: ["dashboard-pending-docs"],
-    queryFn: async () => {
-      try {
-        const userId = await getCurrentUserId();
-        const { data } = await supabase.from("engagement_documents").select("engagement_id, requirement")
-          .eq("user_id", userId ?? "").eq("status", "pending");
-        return (data ?? []) as { engagement_id: string; requirement: string }[];
-      } catch { return []; }
-    },
-    refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
-  });
 
   // Invoice query — includes payment_date for accurate trend
   const { data: invoices } = useQuery({
@@ -421,20 +409,6 @@ function Dashboard() {
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-  const { data: recentLeads } = useQuery({
-    queryKey: ["recent-leads"],
-    queryFn: async () => {
-      try {
-        const userId = await getCurrentUserId();
-        const { data } = await supabase.from("leads")
-          .select("id, name, requirement, qualification_score, phone, created_at")
-          .eq("user_id", userId ?? "").not("status", "in", '("Converted","Lost","Cold-Closed")')
-          .order("created_at", { ascending: false }).limit(5);
-        return data ?? [];
-      } catch { return []; }
-    },
-    refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
-  });
 
   const { data: complianceItems } = useQuery({
     queryKey: ["dashboard-compliance"],
@@ -491,13 +465,6 @@ function Dashboard() {
   const feesPct = calcPct(collectedThisMonth, collectedLastMonth);
   const clientsPct = calcPct(clientsThisMonth ?? 0, clientsLastMonth ?? 0);
 
-  const activeEngClient: Record<string, string> = {};
-  (engagements ?? []).forEach((e: any) => { if (isActiveEng(e)) activeEngClient[e.id] = e.client_id; });
-  const activePendingDocs = (pendingChecklistDocs ?? []).filter((d) => activeEngClient[d.engagement_id]);
-  const clientsWaiting = new Set(activePendingDocs.map((d) => activeEngClient[d.engagement_id])).size;
-  const pendingDocsTotal = activePendingDocs.length;
-  const mandatoryDocsPending = activePendingDocs.filter((d) => d.requirement === "mandatory").length;
-
   const todaysFocus: FocusItem[] = [];
 
   (invoices ?? []).filter((inv: any) => {
@@ -514,25 +481,8 @@ function Dashboard() {
   });
 
   (engagements ?? []).filter(isActiveEng).forEach((e: any) => {
-    const blocked = activePendingDocs.filter(d => d.engagement_id === e.id && d.requirement === "mandatory");
-    if (blocked.length > 0) {
-      todaysFocus.push({
-        id: `doc-${e.id}`, priority: "attention", type: "document",
-        clientName: e.clients?.name ?? "—",
-        description: `${blocked.length} mandatory doc${blocked.length > 1 ? "s" : ""} pending — blocking ${e.title}`,
-        detail: "Documents", href: "/engagements", action: "Request",
-        waPhone: e.clients?.phone ?? e.clients?.whatsapp_number ?? "",
-      });
-    }
   });
 
-  (recentLeads ?? []).filter((l: any) => l.qualification_score === "Hot").slice(0, 2).forEach((l: any) => {
-    todaysFocus.push({
-      id: `lead-${l.id}`, priority: "attention", type: "lead",
-      clientName: l.name, description: `Hot lead — ${l.requirement ?? "follow-up needed"}`,
-      detail: "Lead", href: "/leads", action: "Follow Up", waPhone: l.phone ?? "",
-    });
-  });
 
   const focusItems = todaysFocus.slice(0, 6);
   const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -544,7 +494,7 @@ function Dashboard() {
         <p className="text-muted-foreground text-sm">Overview of your practice — {format(now, "EEEE, dd MMM yyyy")}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={clients ?? 0} icon={Users} color="bg-primary" href="/clients"
           trend={clientsThisMonth !== undefined && clientsLastMonth !== undefined && clientsLastMonth > 0
             ? { pct: clientsPct, label: "vs last month" } : undefined}
@@ -555,37 +505,17 @@ function Dashboard() {
           sub={collectedLastMonth === 0 ? "This month" : undefined}
         />
         <StatCard label="Total Outstanding" value={fmtINR(totalOutstanding)} icon={Briefcase} color="bg-indigo-500" href="/invoices" />
-        <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
         <StatCard label="Overdue Items" value={overdueCount} sub={`${overdueComplianceCount} compliance · ${overdueEngagements} engagements`} icon={AlertTriangle} color="bg-red-500" href="/compliance" />
         <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" href="/leads" />
-        <StatCard label="Clients Waiting for Docs" value={clientsWaiting} sub={`${pendingDocsTotal} docs · ${mandatoryDocsPending} mandatory`} icon={FileText} color="bg-orange-500" href="/documents" />
+        <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
       </div>
 
       <TodaysFocus items={focusItems} />
-      <ClientActivity engagements={engagements ?? []} pendingDocs={pendingChecklistDocs ?? []} />
+    
       <ComplianceSection items={complianceItems ?? []} overdueCount={overdueComplianceCount} />
       <RegulatoryUpdates />
 
-      <div className="bg-card border border-border rounded-lg shadow-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Recent Leads</h2>
-          <a href="/leads" className="text-primary text-sm hover:underline font-medium">View All →</a>
-        </div>
-        <div className="divide-y divide-border">
-          {(recentLeads ?? []).length === 0 && <p className="px-5 py-6 text-muted-foreground text-sm text-center">No leads yet.</p>}
-          {(recentLeads ?? []).map((lead: any) => (
-            <div key={lead.id} className="px-5 py-3 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground text-sm">{lead.name}</p>
-                <p className="text-xs text-muted-foreground">{lead.requirement ?? "—"}</p>
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${lead.qualification_score === "Hot" ? "bg-red-100 text-red-700" : lead.qualification_score === "Warm" ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"}`}>
-                {lead.qualification_score ?? "—"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 }
