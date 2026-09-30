@@ -1,0 +1,79 @@
+{
+  "_note": "Update this file after each Budget or CBIC/CBDT notification. faq.json references these keys.",
+  "current_fy": "2025-26",
+  "current_ay": "2026-27",
+
+  "gst": {
+    "registration_threshold_services": "₹20 lakh (₹10 lakh for North-East states)",
+    "registration_threshold_goods": "₹40 lakh",
+    "composition_limit_goods": "₹1.5 crore",
+    "composition_limit_services": "₹50 lakh",
+    "gstr1_monthly_due": "11th of following month",
+    "gstr3b_monthly_due": "20th of following month",
+    "gstr9_due": "31 December of following FY",
+    "lut_renewal": "Before 1 April each year",
+    "late_fee_per_day": "₹50/day (nil return ₹20/day), capped at ₹5,000 per return",
+    "gst_rates": ["0%", "5%", "12%", "18%", "28%"]
+  },
+
+  "income_tax": {
+    "basic_exemption_new_regime": "₹3 lakh (rebate up to ₹7 lakh under Section 87A)",
+    "basic_exemption_old_regime": "₹2.5 lakh",
+    "80c_limit": "₹1.5 lakh",
+    "80d_self": "₹25,000 (₹50,000 for senior citizen)",
+    "80d_parents": "₹25,000 (₹50,000 if parents are senior citizens)",
+    "80ccd_additional_nps": "₹50,000",
+    "section24_interest_limit": "₹2 lakh (self-occupied property)",
+    "80eea_interest_limit": "₹1.5 lakh (additional, first-time buyer — check current year eligibility)",
+    "ltcg_equity_exemption": "₹1.25 lakh per year",
+    "ltcg_equity_rate": "12.5%",
+    "stcg_equity_rate": "20%",
+    "tax_audit_business_turnover": "₹1 crore (₹10 crore if 95%+ digital transactions)",
+    "tax_audit_profession_receipts": "₹50 lakh",
+    "itr_due_date_individual": "31 July (non-audit cases)",
+    "itr_due_date_audit": "31 October",
+    "itr_due_date_transfer_pricing": "30 November",
+    "advance_tax_due_dates": ["15 June (15%)", "15 September (45%)", "15 December (75%)", "15 March (100%)"],
+    "belated_return_deadline": "31 December of assessment year",
+    "updated_return_window": "24 months from end of assessment year",
+    "late_filing_fee_above_5l": "₹5,000",
+    "late_filing_fee_below_5l": "₹1,000",
+    "interest_234b": "1% per month on unpaid tax",
+    "interest_234c": "1% per month on deferred advance tax"
+  },
+
+  "tds": {
+    "tds_challan_due": "7th of following month (March — 30 April)",
+    "tds_return_q1": "31 July",
+    "tds_return_q2": "31 October",
+    "tds_return_q3": "31 January",
+    "tds_return_q4": "31 May",
+    "form16_issue_deadline": "15 June",
+    "tds_interest_non_deduction": "1% per month",
+    "tds_interest_non_payment": "1.5% per month"
+  },
+
+  "company_law": {
+    "aoc4_due": "Within 30 days of AGM (or 29 October if earlier)",
+    "mgt7_due": "Within 60 days of AGM (or 28 November if earlier)",
+    "dir3kyc_due": "30 September annually",
+    "agm_due": "30 September (within 6 months of financial year end)",
+    "board_meeting_minimum": "4 per year, gap not exceeding 120 days",
+    "mca_late_fee": "₹200 per day per form",
+    "din_kyc_penalty": "₹5,000 for late filing"
+  },
+
+  "roc": {
+    "strike_off_pending_years": "Company must have no active operations for 2 consecutive years"
+  },
+
+  "payroll": {
+    "pf_threshold_employees": "20 employees",
+    "pf_employee_rate": "12% of basic salary",
+    "pf_employer_rate": "12% (8.33% to EPS, 3.67% to EPF)",
+    "esi_threshold_employees": "10 employees",
+    "esi_salary_limit": "₹21,000 per month",
+    "esi_employee_rate": "0.75%",
+    "esi_employer_rate": "3.25%"
+  }
+}

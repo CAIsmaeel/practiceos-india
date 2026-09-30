@@ -1,0 +1,552 @@
+[
+  {
+    "id": 1,
+    "keywords": ["gst registration", "gst apply", "gstin number", "gst new registration", "gst register online"],
+    "answer": "GST registration requires: PAN card, Aadhaar card, cancelled cheque or bank statement, business address proof (electricity bill or rent agreement), and a passport-size photo. The process is fully online and typically takes 7–10 working days. Registration is mandatory once turnover crosses the applicable threshold (see current thresholds in our fact sheet). We handle the entire process end-to-end. Confirm with your CA for case-specific eligibility."
+  },
+  {
+    "id": 2,
+    "keywords": ["gst return filing", "gstr filing", "gstr3b due date", "gstr1 due date", "monthly gst return"],
+    "answer": "Under the regular scheme, GSTR-1 (outward supplies) is due on the 11th and GSTR-3B (tax payment summary) on the 20th of the following month. Quarterly filers under QRMP have different deadlines. Late filing attracts a fee per day (capped per return — see fact sheet). We ensure timely filing so you avoid penalties. Confirm with your CA for your applicable filing frequency."
+  },
+  {
+    "id": 3,
+    "keywords": ["gst annual return", "gstr9 filing", "gst yearly return", "gstr9c reconciliation", "annual gst compliance"],
+    "answer": "GSTR-9 (annual return) is due on 31 December following the end of the financial year. If turnover exceeds the prescribed threshold, GSTR-9C (reconciliation statement) is also required. We handle both. Exact thresholds and due dates can shift via notifications — confirm with your CA for the current year."
+  },
+  {
+    "id": 4,
+    "keywords": ["gst notice reply", "gst demand order", "gst scrutiny response", "gst department notice", "asmt notice gst"],
+    "answer": "Received a GST notice or demand order? Do not ignore it. The response must be filed within the due date mentioned in the notice. We review the notice, identify the issue, prepare the reply with supporting documents, and represent you before the department if needed. Share the notice PDF — prompt action is critical. Confirm with your CA immediately."
+  },
+  {
+    "id": 5,
+    "keywords": ["gst refund claim", "itc refund gst", "export gst refund", "inverted duty refund", "unutilized itc refund"],
+    "answer": "GST refunds are available on exports (with or without payment of IGST), inverted duty structure, and excess ITC. The application is filed via Form RFD-01 on the GST portal. Processing typically takes 30–60 days. We handle the complete refund workflow from filing to disbursement. Confirm with your CA for eligibility and documentation."
+  },
+  {
+    "id": 6,
+    "keywords": ["gst cancellation", "gst surrender", "close gst registration", "gst revocation", "gst cancel how"],
+    "answer": "GST registration can be cancelled via Form REG-16 if the business is closed or turnover drops below the threshold. A final return (GSTR-10) must also be filed. If your registration was cancelled by the department, revocation (REG-21) is possible within the prescribed window. We manage the cancellation and final return. Confirm with your CA for applicable timelines."
+  },
+  {
+    "id": 7,
+    "keywords": ["input tax credit eligibility", "itc claim gst", "gst itc rules", "blocked credit section 17", "itc reversal rule 42"],
+    "answer": "ITC is available on business-related inputs, but Section 17(5) blocks credits on personal use, motor vehicles (unless for specified business), food, club membership, and more. Rules 42 and 43 require proportionate reversal if the business has exempt supplies. GSTR-2B is the reference statement. We perform monthly ITC reconciliation and calculate reversals. Confirm with your CA for specific transactions."
+  },
+  {
+    "id": 8,
+    "keywords": ["gstr2b reconciliation", "purchase reconciliation gst", "2b vs books mismatch", "itc 2b auto populated", "supplier not filed"],
+    "answer": "GSTR-2B is an auto-populated ITC statement based on supplier filings. Your purchase register must be reconciled with GSTR-2B each month. Mismatches can indicate supplier non-compliance, invoice errors, or timing differences — all of which need action before claiming ITC. We do monthly reconciliation and flag exceptions. Confirm with your CA."
+  },
+  {
+    "id": 9,
+    "keywords": ["gst rate finder", "gst tax rate product", "hsn code rate", "sac code rate", "gst percentage service"],
+    "answer": "GST rates vary: 0% (essential food items, healthcare), 5% (packaged food, transport), 12% (processed food, certain goods), 18% (most services, electronics), 28% (luxury and sin goods). Rates are assigned based on HSN (goods) or SAC (services) codes. Rate changes are notified via CBIC circulars — always verify the current notification. Share your product/service details for the applicable rate."
+  },
+  {
+    "id": 10,
+    "keywords": ["gst threshold limit", "gst registration when mandatory", "gst exemption turnover", "inter state gst", "ecommerce gst mandatory"],
+    "answer": "GST registration is mandatory when annual turnover crosses the prescribed threshold (₹20L for services, ₹40L for goods — lower for North-East states). Inter-state suppliers and e-commerce operators must register regardless of turnover. Thresholds are subject to government notification — confirm the current limit with your CA."
+  },
+  {
+    "id": 11,
+    "keywords": ["composition scheme gst", "gst composition eligibility", "composition vs regular gst", "composition dealer rules", "composition scheme limit"],
+    "answer": "The GST Composition Scheme allows eligible taxpayers (up to prescribed turnover thresholds) to pay tax at a fixed rate on turnover without maintaining detailed input tax credit records. Restrictions apply: no inter-state supply, no ITC claim, no collection of GST from customers. Returns are simplified (GSTR-4 annually). Share your turnover and business type — we will check eligibility. Confirm with your CA."
+  },
+  {
+    "id": 12,
+    "keywords": ["e invoice applicability", "irn generation gst", "einvoice mandatory", "invoice reference number", "e invoice threshold"],
+    "answer": "E-invoicing is mandatory for taxpayers above the prescribed turnover threshold (updated periodically). An IRN (Invoice Reference Number) and QR code must be generated on the GSTN portal before sharing invoices with customers. We assess your applicability, assist with software integration, and ensure compliance. Confirm the current threshold with your CA."
+  },
+  {
+    "id": 13,
+    "keywords": ["eway bill requirement", "eway bill generate", "eway bill exemption", "goods movement eway", "eway bill validity"],
+    "answer": "An e-way bill is required for movement of goods where the consignment value exceeds the prescribed limit (currently ₹50,000 for most goods). Exemptions exist for certain commodities and short-distance movements. Validity depends on distance (roughly 1 day per 200 km). We generate and manage e-way bills. Confirm with your CA for exemptions applicable to your goods."
+  },
+  {
+    "id": 14,
+    "keywords": ["lut filing export", "letter of undertaking gst", "export without igst lut", "lut renewal annual", "lut eligible exporter"],
+    "answer": "A Letter of Undertaking (LUT) allows eligible registered exporters to export goods or services without paying IGST upfront. LUT must be filed on the GST portal before the financial year begins, and renewed annually. We file LUT and coordinate export documentation and return reconciliation. Confirm with your CA for eligibility."
+  },
+  {
+    "id": 15,
+    "keywords": ["gst job work rules", "itc 04 filing", "job worker gst", "principal manufacturer gst", "goods sent for job work"],
+    "answer": "Under GST job work provisions, the principal manufacturer can send goods to a job worker without payment of tax, subject to conditions and time limits (1 year for inputs, 3 years for capital goods). ITC-04 must be filed periodically to report goods sent and received. We handle ITC-04 and ensure timely return of goods. Confirm with your CA for your specific arrangement."
+  },
+  {
+    "id": 16,
+    "keywords": ["gst voluntary payment drc03", "drc 03 use", "gst self payment notice", "gst pre show cause payment", "ascertain liability gst"],
+    "answer": "Form DRC-03 is used to voluntarily pay tax, interest, or penalty in certain GST situations — including pre-show-cause notice settlement and post-audit payments. The nature of payment and applicable period must be correctly selected. Incorrect use can create compliance issues. Confirm with your CA before filing DRC-03."
+  },
+  {
+    "id": 17,
+    "keywords": ["itr filing income tax", "income tax return", "itr which form", "itr form selection", "file income tax return"],
+    "answer": "The correct ITR form depends on your income sources: ITR-1 (only salary, one house property, other income below ₹50L), ITR-2 (capital gains, multiple properties, NRI, foreign income), ITR-3 (business or profession), ITR-4 (presumptive income). Filing deadlines vary — generally 31 July for individuals (non-audit) and 31 October for audit cases (current year dates — confirm with your CA)."
+  },
+  {
+    "id": 18,
+    "keywords": ["salary itr filing", "salaried person income tax", "form 16 itr", "employee tax return", "itr 1 filing"],
+    "answer": "Salaried individuals typically file ITR-1 or ITR-2. Required documents: Form 16 from employer (due by 15 June), bank statements, investment proofs for deductions (80C, 80D), home loan certificate if applicable. We also reconcile your AIS/26AS with Form 16 before filing. Confirm with your CA if you have additional income sources."
+  },
+  {
+    "id": 19,
+    "keywords": ["business income tax return", "proprietorship itr filing", "self employed itr", "professional income tax", "business itr form 3"],
+    "answer": "Business or professional income is reported in ITR-3 (books maintained) or ITR-4 (presumptive). If turnover or receipts exceed the applicable tax audit threshold, a tax audit report (Form 3CD) must be filed alongside. Maintain books, GST returns, bank statements, and expense records. Confirm with your CA for applicable form and audit requirement."
+  },
+  {
+    "id": 20,
+    "keywords": ["income tax notice reply", "scrutiny notice response", "section 143 notice", "section 148 income tax", "reassessment notice reply"],
+    "answer": "Income tax notices vary by section: Section 143(1) is a processing intimation (often auto-corrected), 143(2) is a scrutiny notice requiring detailed response, 148 is a reassessment notice. Never ignore a notice — respond before the deadline mentioned. Share the notice PDF with us — we prepare the reply and represent you. Confirm with your CA immediately."
+  },
+  {
+    "id": 21,
+    "keywords": ["tax planning deductions", "income tax saving", "section 80c investments", "tax efficient planning", "legal tax reduction"],
+    "answer": "Key deductions: Section 80C (₹1.5L — PPF, ELSS, LIC, home loan principal), 80D (health insurance), 80CCD(1B) (NPS — ₹50,000 extra), Section 24 (home loan interest). The optimal strategy depends on your income level, regime choice (new vs. old), and investment preferences. We do year-round tax planning. Confirm with your CA for case-specific advice."
+  },
+  {
+    "id": 22,
+    "keywords": ["advance tax payment", "quarterly advance tax", "advance tax due dates", "section 234b interest", "advance tax calculation"],
+    "answer": "Advance tax is payable in four instalments (15 June, 15 September, 15 December, 15 March) if your estimated tax liability exceeds ₹10,000 for the year. Missing instalments attracts interest under Sections 234B and 234C. We compute your advance tax liability and send reminders. Confirm instalments with your CA based on current year projections."
+  },
+  {
+    "id": 23,
+    "keywords": ["capital gains tax", "property sale tax", "shares capital gains", "ltcg stcg calculation", "capital loss setoff carry forward"],
+    "answer": "Capital gains depend on asset type and holding period. Equity shares/funds: LTCG (held > 1 year) taxed above ₹1.25L at 12.5%; STCG at 20%. Property: LTCG (> 2 years) with indexation benefit; STCG at slab rates. Reinvestment exemptions (Sections 54/54F) may apply for property. Capital losses can be set off and carried forward for 8 years (subject to conditions). Confirm rates and holding period with your CA — these change with Budget."
+  },
+  {
+    "id": 24,
+    "keywords": ["new tax regime vs old", "which tax regime better", "old new regime comparison", "new regime deductions", "tax regime switch"],
+    "answer": "The new tax regime offers lower slab rates but disallows most deductions (80C, HRA, home loan interest etc.). The old regime has higher slabs but permits all deductions. Generally, if you fully utilise 80C, HRA, and home loan deductions, the old regime can be beneficial — but the breakeven varies by income. We run the numbers for both regimes before filing. Confirm with your CA for the current year's slabs."
+  },
+  {
+    "id": 25,
+    "keywords": ["huf tax planning", "huf creation", "huf pan card", "hindu undivided family tax", "huf partition"],
+    "answer": "An HUF (Hindu Undivided Family) is a separate tax entity with its own PAN and basic exemption limit. It can hold ancestral property and receive gifts from members. HUF can also claim deductions under 80C separately. The Karta (senior male member) manages the HUF. Partitioning an HUF has accounting and tax implications. Confirm with your CA for case-specific eligibility."
+  },
+  {
+    "id": 26,
+    "keywords": ["clubbing of income spouse", "minor child income tax", "gift income clubbing", "deemed income transfer", "income clubbing rules"],
+    "answer": "When assets are transferred to a spouse or minor child without adequate consideration, income from those assets is clubbed back with the transferor's income. Minor children get a small annual exemption. Proper structuring (e.g., loans at market rate) can avoid clubbing in some cases. Confirm with your CA before structuring any such arrangements."
+  },
+  {
+    "id": 27,
+    "keywords": ["section 68 unexplained credit", "section 69 unexplained investment", "unexplained cash deposit", "unexplained cash tax", "black money income tax"],
+    "answer": "Unexplained cash credits (Section 68), investments (Section 69), or expenditure (Section 69A/C) are taxed at a high flat rate (currently around 60%) plus surcharge and penalty — effective tax rate can exceed 78%. Proper documentation of the source of every large transaction is critical. If you have received a notice, contact your CA immediately."
+  },
+  {
+    "id": 28,
+    "keywords": ["income tax raid response", "section 132 search", "section 133a survey", "it survey rights", "search and seizure income tax"],
+    "answer": "A survey (Section 133A) can happen at business premises without a warrant — cooperation is required but do not sign any statement without your CA present. A search (Section 132) requires a warrant and may involve seizure of documents and assets. In either case, immediately call your CA before making any statement or acknowledgement. Confirm rights and obligations with your CA."
+  },
+  {
+    "id": 29,
+    "keywords": ["mat minimum alternate tax", "book profit tax", "mat credit company", "amt alternative minimum tax", "mat vs regular tax"],
+    "answer": "Companies pay MAT (currently 15% of book profit) if regular tax is lower. MAT credit can be carried forward for 15 years. For non-corporate taxpayers, AMT applies under similar logic. We compute MAT/AMT liability and track credit utilisation. Confirm applicable rate for the current year with your CA."
+  },
+  {
+    "id": 30,
+    "keywords": ["transfer pricing 3ceb", "related party international transaction", "arm length price", "transfer pricing documentation", "safe harbour rules india"],
+    "answer": "International transactions with related parties must be at arm's length. Form 3CEB (CA certificate) must be filed along with the income tax return if such transactions exist. Safe harbour rules offer protection for certain categories and margins. Detailed documentation (Master File, Local File) may be required beyond a threshold. Confirm applicability with your CA."
+  },
+  {
+    "id": 31,
+    "keywords": ["tds compliance", "tds deduction obligation", "tds on salary", "tds on rent", "tds professional fees"],
+    "answer": "TDS must be deducted on salary, rent above ₹50,000/month, professional fees above ₹30,000, contractor payments, and property purchase above ₹50L — among others. The rate and section vary by payment type. Failure to deduct TDS results in 30% disallowance and interest/penalty. Quarterly returns (24Q for salary, 26Q for others) must be filed on time. Confirm applicable sections with your CA."
+  },
+  {
+    "id": 32,
+    "keywords": ["new tds sections 194r", "tds 194o ecommerce", "tds 194s crypto vda", "tds 194t partnership", "tds 194n cash withdrawal"],
+    "answer": "Recent TDS sections include: 194O (e-commerce operator, 1%), 194R (business benefit or perquisite, 10%), 194S (VDA/crypto transactions, 1%), 194T (payments to partners, 10%), 194N (cash withdrawals above threshold). These are frequently missed. We ensure full TDS compliance across all applicable sections. Confirm the current applicable thresholds with your CA."
+  },
+  {
+    "id": 33,
+    "keywords": ["tcs on lrs remittance", "tcs foreign tour package", "tcs on car purchase", "tax collected at source", "206c tcs compliance"],
+    "answer": "TCS applies to foreign remittances under LRS (current rate — confirm for the year), tour packages, and vehicle purchases above prescribed values. TCS credit is available to the buyer/remitter in their ITR. Section 206AB requires higher TDS/TCS if the payee has not filed ITR for the preceding 2 years. Confirm current TCS rates with your CA."
+  },
+  {
+    "id": 34,
+    "keywords": ["tds return filing", "26q 24q filing", "quarterly tds return", "tds challan due date", "tds return deadline"],
+    "answer": "TDS challan must be deposited by the 7th of the following month (30 April for March). Quarterly returns: Q1 by 31 July, Q2 by 31 October, Q3 by 31 January, Q4 by 31 May. Interest for non-deduction is 1%/month; for non-deposit it is 1.5%/month. We manage end-to-end TDS compliance. Confirm deadlines for the current year with your CA."
+  },
+  {
+    "id": 35,
+    "keywords": ["form 16 issue", "form 16a tds certificate", "traces tds download", "tds certificate employee", "form 16 deadline"],
+    "answer": "Form 16 (salary TDS certificate) must be issued by 15 June. Form 16A is for non-salary TDS. Both are downloaded from TRACES after the quarterly return is processed. If there is a mismatch between Form 16 and 26AS/AIS, the deductor must file a correction statement. We generate and issue certificates. Confirm the current issuance deadline with your CA."
+  },
+  {
+    "id": 36,
+    "keywords": ["lower tds certificate", "section 197 certificate", "nil tds application", "lower deduction certificate", "197 certificate process"],
+    "answer": "If your estimated tax liability for the year is lower than the TDS that would otherwise be deducted, you can apply to the Assessing Officer under Section 197 for a certificate authorising lower or nil deduction. The process takes approximately 30–45 days. Confirm eligibility and the current process with your CA."
+  },
+  {
+    "id": 37,
+    "keywords": ["tds correction statement", "tds wrong pan correction", "traces correction filing", "tds mismatch correction", "24q 26q amendment"],
+    "answer": "Errors in TDS returns (wrong PAN, amount, challan details) can be corrected by filing a correction statement on TRACES. Incorrect PAN means the deductee does not receive credit — this should be rectified promptly. We handle TRACES corrections. Confirm the correction process with your CA."
+  },
+  {
+    "id": 38,
+    "keywords": ["company registration india", "private limited company setup", "incorporate pvt ltd", "spice plus form", "company din dsc"],
+    "answer": "Setting up a Private Limited Company requires: DIN and DSC for directors, name approval (RUN form), filing SPICe+ form with MOA/AOA, and GST/PAN/TAN registration. The process takes approximately 10–15 working days and is fully online. Documents needed: PAN, Aadhaar, address proof for directors, and registered office address proof. We handle end-to-end incorporation. Confirm current MCA fees with your CA."
+  },
+  {
+    "id": 39,
+    "keywords": ["llp registration", "limited liability partnership india", "llp vs private limited", "llp fillip form", "llp annual compliance"],
+    "answer": "An LLP offers simpler compliance and lower registration cost compared to a Private Limited company. Registration is done via Form FiLLiP (7–10 working days). Annual filings: Form 11 (annual return) and Form 8 (financial statements). Required documents: PAN, Aadhaar, address proof for all partners. We handle LLP registration and annual compliance. Confirm current government fees with your CA."
+  },
+  {
+    "id": 40,
+    "keywords": ["roc annual filing", "aoc4 mgt7 filing", "mca annual return", "company annual compliance", "dir3kyc deadline"],
+    "answer": "Private Limited companies must file: AOC-4 (financial statements, within 30 days of AGM), MGT-7 (annual return, within 60 days of AGM), and DIR-3 KYC (director compliance, by 30 September every year). Late filings attract ₹200/day per form. We track all deadlines and file on time. Confirm exact due dates for the current year with your CA."
+  },
+  {
+    "id": 41,
+    "keywords": ["board meeting agm compliance", "annual general meeting company", "board meeting minimum frequency", "board resolution required", "quorum for board meeting"],
+    "answer": "A Private Limited company must hold at least 4 board meetings per year with no gap exceeding 120 days. The AGM must be held by 30 September (within 6 months of the financial year end). Quorum is 2 directors. Resolutions must be minuted within 30 days. We provide secretarial compliance services. Confirm current rules with your CA."
+  },
+  {
+    "id": 42,
+    "keywords": ["related party transaction section 188", "director loan section 185", "rpt approval company", "section 188 compliance", "shareholder approval rpt"],
+    "answer": "Transactions with related parties (directors, their relatives, associated entities) require prior board approval and, in certain cases, shareholder approval under Section 188. Director loans are restricted under Section 185 (with limited exceptions). Investments and guarantees are governed by Section 186. We ensure RPT disclosures and compliance. Confirm thresholds and applicable exemptions with your CA."
+  },
+  {
+    "id": 43,
+    "keywords": ["charge registration mca", "chg1 filing", "company mortgage charge", "charge satisfaction chg4", "charge on company assets"],
+    "answer": "When a company creates a charge (e.g., mortgage for a bank loan), it must be registered with MCA via Form CHG-1 within 30 days. When the loan is repaid, Form CHG-4 records the satisfaction of charge. Late registration is possible with condonation. We handle charge filings. Confirm current timelines with your CA."
+  },
+  {
+    "id": 44,
+    "keywords": ["company strike off", "company closure mca", "stk2 filing", "voluntary strike off", "dormant company india"],
+    "answer": "A company that has no operations for 2 consecutive years and has no pending liabilities or prosecution can apply for voluntary strike-off via Form STK-2. Alternatively, a dormant company status can be obtained for reduced compliance. We assess eligibility and handle the filing. Confirm with your CA before proceeding."
+  },
+  {
+    "id": 45,
+    "keywords": ["director kyc filing", "dir3 kyc compliance", "din kyc annual", "director din status", "dir kyc deadline penalty"],
+    "answer": "DIR-3 KYC must be filed annually by 30 September for all directors with an active DIN. The form requires OTP verification on the registered mobile and email. Missing the deadline deactivates the DIN and attracts a penalty of ₹5,000 for late filing. We send reminders and complete filings. Confirm the current-year deadline with your CA."
+  },
+  {
+    "id": 46,
+    "keywords": ["share transfer private company", "sh4 share transfer form", "share transfer procedure", "pre-emption rights shares", "share transfer stamp duty"],
+    "answer": "Transferring shares in a Private Limited company requires: checking Articles of Association for pre-emption rights, executing Form SH-4 (share transfer instrument), paying applicable stamp duty, and updating the register of members and share certificates. Board approval is typically required. We handle share transfer documentation. Confirm stamp duty rates for the current year with your CA."
+  },
+  {
+    "id": 47,
+    "keywords": ["statutory audit company", "mandatory company audit", "auditor appointment agm", "audit report form", "company audit obligation"],
+    "answer": "All Private Limited Companies and LLPs with turnover or contribution above the prescribed threshold must undergo a statutory audit regardless of size. The auditor is appointed at the AGM for up to 5 years. The audit report must be ready before AOC-4 is filed. We conduct statutory audits. Confirm audit thresholds for your company type with your CA."
+  },
+  {
+    "id": 48,
+    "keywords": ["tax audit 44ab report", "form 3cd 3cb", "tax audit turnover limit", "tax audit deadline", "44ab compliance"],
+    "answer": "Tax audit under Section 44AB is mandatory if business turnover exceeds ₹1 crore (₹10 crore if 95%+ transactions are digital) or professional receipts exceed ₹50 lakh. The audit report (Form 3CD with Form 3CB or 3CA) must be filed along with the income tax return. Confirm the current-year deadline with your CA — typically 31 October."
+  },
+  {
+    "id": 49,
+    "keywords": ["internal audit company", "internal controls review", "caro 2020 reporting", "icfr company", "internal audit scope"],
+    "answer": "Internal audit reviews your internal controls, business processes, and risk areas. CARO 2020 requires statutory auditors to comment on fraud, loans, inventory, and other matters. Listed companies and large companies must maintain ICFR (Internal Controls over Financial Reporting). We provide internal audit and CARO reporting services. Confirm with your CA for applicability."
+  },
+  {
+    "id": 50,
+    "keywords": ["depreciation companies act", "schedule 2 depreciation", "income tax depreciation", "wdv slm method", "deferred tax depreciation"],
+    "answer": "Companies Act prescribes depreciation rates under Schedule II (SLM or WDV). Income Tax depreciation under Section 32 uses WDV and different rates. Differences create deferred tax liability or asset in accounts. A fixed asset register must be maintained. We handle depreciation schedules and deferred tax computation. Confirm with your CA for current rates."
+  },
+  {
+    "id": 51,
+    "keywords": ["fema compliance india", "foreign remittance fema", "15ca 15cb certificate", "rbi reporting foreign", "odi fdi ecb compliance"],
+    "answer": "Foreign payments above prescribed thresholds require Form 15CA/15CB (CA certificate). FDI into India requires FC-GPR reporting to RBI. Overseas investments (ODI) require OI-1 filing. External commercial borrowings (ECB) have separate loan registration requirements. FEMA violations can attract serious penalties. We handle the complete FEMA documentation and reporting. Confirm with your CA before any foreign transaction."
+  },
+  {
+    "id": 52,
+    "keywords": ["double taxation dtaa relief", "foreign tax credit india", "form 67 filing", "dtaa india usa", "dtaa india uae"],
+    "answer": "India has DTAAs with 90+ countries to prevent double taxation. If tax has been paid abroad, Form 67 must be filed along with the ITR to claim credit. DTAA benefits (exemption or reduced rate) depend on the specific treaty and your residential status. We handle DTAA analysis and Form 67 filing. Confirm residency status and treaty provisions with your CA."
+  },
+  {
+    "id": 53,
+    "keywords": ["nri taxation india", "nri income tax return", "nri residential status", "nri tds india", "nri property income"],
+    "answer": "An NRI (Non-Resident Indian) is taxable in India only on income sourced from India — rental income, capital gains on Indian assets, interest from NRO accounts. TDS is deducted at source on payments made to NRIs. RNOR status provides a transition period. We handle NRI ITR filing, FEMA compliance, and advisory. Confirm residential status with your CA."
+  },
+  {
+    "id": 54,
+    "keywords": ["nre nro account rules", "nri bank account india", "fcnr account nri", "nri account repatriation", "nri bank account difference"],
+    "answer": "NRE account: funded from foreign earnings, fully repatriable, interest tax-free in India. NRO account: for India-sourced income, limited repatriation ($1M per year), interest taxable. FCNR: foreign currency fixed deposit, tax-free interest. The correct account type depends on your FEMA status. Confirm with your CA before opening accounts."
+  },
+  {
+    "id": 55,
+    "keywords": ["gst sector hotel", "restaurant gst rate", "healthcare gst", "real estate gst", "education gst exemption"],
+    "answer": "Sector-specific GST: Restaurants (5% generally, no ITC), Hotels (12% or 18% depending on room tariff), Healthcare (mostly exempt), Education (core services exempt), Under-construction real estate (5% affordable housing, 12% others). Rates and conditions vary — always verify the current notification. Confirm with your CA for your specific service."
+  },
+  {
+    "id": 56,
+    "keywords": ["customs duty import", "bill of entry filing", "export shipping bill", "duty drawback claim", "rodtep scheme export"],
+    "answer": "Import attracts Basic Customs Duty plus IGST (and other levies). A Bill of Entry must be filed at customs. Exporters can claim Duty Drawback (refund of duties on inputs used in exports) and RoDTEP (embedded tax refund). EPCG and Advance Authorisation allow duty-free imports for export-oriented production. Confirm current duty rates and applicable schemes with your CA."
+  },
+  {
+    "id": 57,
+    "keywords": ["startup dpiit recognition", "startup tax exemption 80iac", "angel tax exemption startup", "dpiit startup benefits", "section 80iac eligibility"],
+    "answer": "DPIIT-recognised startups may be eligible for income tax exemption under Section 80IAC (3 years out of first 10 years), exemption from angel tax under Section 56(2)(viib), and fast-track patent processing. Eligibility criteria include incorporation date, turnover limits, and innovation criteria. We handle DPIIT applications and startup tax compliance. Confirm current eligibility conditions with your CA."
+  },
+  {
+    "id": 58,
+    "keywords": ["esop tax india", "employee stock option taxation", "esop vesting tax", "startup esop deferral", "esop exercise tax"],
+    "answer": "ESOP taxation occurs at two stages: (1) On exercise — difference between FMV and exercise price is taxable as a perquisite (employer deducts TDS); (2) On sale — capital gains tax applies. For eligible startup employees, tax on perquisite can be deferred for up to 5 years or until sale/exit. We handle ESOP scheme compliance and tax reporting. Confirm with your CA."
+  },
+  {
+    "id": 59,
+    "keywords": ["msme udyam registration", "udyam certificate benefits", "msme definition criteria", "msme bank loan priority", "msme 45 day payment rule"],
+    "answer": "Udyam (MSME) registration is free and done on the Udyam portal using Aadhaar and PAN. Benefits include priority sector lending, government procurement preference, and protection under the MSME 45-day payment rule (interest at 3x bank rate on delayed payments). Classification is based on investment and turnover criteria. We assist with registration and compliance. Confirm current criteria with your CA."
+  },
+  {
+    "id": 60,
+    "keywords": ["iec import export code", "iec dgft apply", "iec code mandatory", "iec modification update", "iec ecommerce export"],
+    "answer": "An IEC (Import Export Code) is mandatory for all importers and exporters. It is issued by DGFT online with minimal documentation (PAN, bank certificate, address proof) and is valid for life. E-commerce exporters also need IEC. Modifications to business details must be updated in the IEC profile. We handle IEC applications. Confirm current fees and process with your CA."
+  },
+  {
+    "id": 61,
+    "keywords": ["payroll processing india", "salary calculation monthly", "payroll statutory compliance", "employee payslip", "full final settlement"],
+    "answer": "Payroll involves salary calculation, TDS on salary (Form 24Q), PF/ESI deductions, professional tax, and payslip generation. Full and final settlement includes unpaid salary, leave encashment, gratuity, and reimbursement clearance. We manage end-to-end payroll for all employees. Confirm applicable statutory rates for the current year with your CA."
+  },
+  {
+    "id": 62,
+    "keywords": ["pf registration epf", "pf contribution rate", "epf compliance", "pf ecr return", "pf withdrawal process"],
+    "answer": "PF registration is mandatory for establishments with 20 or more employees. Employee contributes 12% of basic salary; employer matches it (split between EPF and EPS). Monthly ECR (Electronic Challan cum Return) must be filed. PF withdrawal is permitted on retirement, medical emergency, or after 5 years. UAN is linked to the employee. We handle PF registration and monthly filings. Confirm thresholds with your CA."
+  },
+  {
+    "id": 63,
+    "keywords": ["esi registration esic", "esi contribution rate", "esi employer employee rate", "esi benefits employees", "esic monthly return"],
+    "answer": "ESI registration is mandatory for establishments with 10 or more employees earning up to the prescribed salary limit. Employee contribution rate is currently 0.75%; employer rate is 3.25%. Benefits include medical, maternity, and disability cover. Monthly challan and half-yearly returns are required. We manage ESI registration and ongoing compliance. Confirm current rates with your CA."
+  },
+  {
+    "id": 64,
+    "keywords": ["professional tax registration", "professional tax maharashtra", "pt employer compliance", "professional tax return", "pt slabs state"],
+    "answer": "Professional Tax is a state levy applicable in Maharashtra, Karnataka, Telangana, Gujarat, and several other states. Slab rates differ by state and are linked to employee salary. Employers must register and deduct PT monthly, filing periodic returns. We handle PT registration and return filing for the applicable state. Confirm the current slab rates for your state with your CA."
+  },
+  {
+    "id": 65,
+    "keywords": ["trust ngo registration", "section 8 company", "12a 80g registration", "fcra registration ngo", "ngo annual compliance"],
+    "answer": "Non-profits can be structured as a Trust, Registered Society, or Section 8 Company. For tax-deductible donations, 12A (income tax exemption) and 80G (donor deduction) registrations are required. Foreign donations require an FCRA licence. Annual compliance includes audit, ITR, and activity reports. We handle registration and ongoing compliance. Confirm current registration procedures with your CA."
+  },
+  {
+    "id": 66,
+    "keywords": ["trademark registration india", "brand registration ip india", "tm objection reply", "trademark class selection", "trademark validity period"],
+    "answer": "Trademark registration protects your brand name, logo, or tagline. The process takes 18–24 months. You can use the ™ symbol immediately on application. There are 45 trademark classes — selecting the right class(es) is important. Examination objections must be replied to within the prescribed period (currently 1 month — confirm). We handle trademark filing and prosecution. Confirm with your CA or trademark attorney."
+  },
+  {
+    "id": 67,
+    "keywords": ["fssai food license", "food business registration", "fssai renewal compliance", "fssai state central license", "food license applicability"],
+    "answer": "FSSAI registration or licence is mandatory for all food businesses (restaurants, bakeries, catering, manufacturing). Basic registration applies for small turnover; State and Central licences apply at higher thresholds. Renewal is required periodically. We handle registration, renewal, and FSSAI compliance. Confirm current turnover thresholds and renewal due dates with your CA."
+  },
+  {
+    "id": 68,
+    "keywords": ["project report bank loan", "cma data preparation", "loan project report", "bank loan documentation", "bank project report ca"],
+    "answer": "Bank loan project reports (CMA — Credit Monitoring Arrangement) include projected P&L, Balance Sheet, Cash Flow Statements for 3–5 years, and loan repayment analysis. We prepare banker-friendly reports that improve approval chances. The specific format and projections required depend on your bank and loan type. Confirm with your CA."
+  },
+  {
+    "id": 69,
+    "keywords": ["virtual cfo services", "outsourced cfo", "cfo services small business", "financial advisory startup", "business financial planning"],
+    "answer": "A Virtual CFO provides financial planning, budgeting, cash flow management, investor reporting, MIS dashboards, and strategic advice — without the cost of a full-time CFO. It is especially valuable for startups and growth-stage businesses. We act as your financial co-pilot. Confirm the scope and engagement model with your CA."
+  },
+  {
+    "id": 70,
+    "keywords": ["income tax refund status", "itr refund delay", "refund not received", "refund processing time", "income tax refund check"],
+    "answer": "Income tax refunds are typically processed within 30–90 days of filing (can vary). Check status on the Income Tax portal under 'Refund Status'. Common delays: AIS/26AS mismatch, bank account not pre-validated, or outstanding demand. If your refund has been adjusted against a demand, you will receive an intimation. We assist with refund follow-up. Confirm with your CA."
+  },
+  {
+    "id": 71,
+    "keywords": ["itr e verification", "evs income tax", "verify itr aadhaar otp", "itr invalid unverified", "itr verification deadline"],
+    "answer": "ITR must be verified within 30 days of filing, otherwise it is treated as not filed. E-verification options include Aadhaar OTP, net banking, demat account, or DSC. We complete verification immediately after filing. Confirm the current verification deadline with your CA."
+  },
+  {
+    "id": 72,
+    "keywords": ["revised income tax return", "itr revision", "correct mistake in itr", "itr correction filing", "section 139 5 revised"],
+    "answer": "You can file a revised return under Section 139(5) if you discover any omission or incorrect statement in the original ITR. The revised return must be filed before the applicable deadline (generally 31 December of the assessment year). We handle revised filings. Confirm the current deadline with your CA."
+  },
+  {
+    "id": 73,
+    "keywords": ["updated return itr u", "section 139 8a return", "updated itr filing", "additional income updated return", "itr u penalty tax"],
+    "answer": "An updated return under Section 139(8A) allows you to declare income that was omitted even after the revision deadline — up to 24 months from the end of the assessment year, subject to additional tax (25% or 50% of aggregate tax and interest depending on timing). It is a voluntary compliance option that reduces penalty exposure. Confirm eligibility with your CA."
+  },
+  {
+    "id": 74,
+    "keywords": ["ais annual information statement", "ais mismatch income tax", "ais feedback filing", "ais check before itr", "ais wrong information"],
+    "answer": "The Annual Information Statement (AIS) consolidates financial transactions reported to the tax department — interest, dividends, property transactions, share sales, high-value purchases. Review your AIS on the Income Tax portal before filing ITR. If any information is incorrect, submit feedback on the portal to dispute it. Confirm with your CA."
+  },
+  {
+    "id": 75,
+    "keywords": ["form 26as download", "26as tds credit", "26as tds mismatch", "26as before itr filing", "tax credit verification 26as"],
+    "answer": "Form 26AS shows TDS credit, advance tax paid, demand/refund status, and high-value transactions reported by third parties. Reconcile 26AS and AIS with your books before filing ITR. A mismatch can lead to a notice. We perform reconciliation as part of our ITR filing process. Confirm with your CA."
+  },
+  {
+    "id": 76,
+    "keywords": ["crypto tax india", "vda tax income tax", "bitcoin sale tax", "crypto itr filing", "section 194s tds crypto"],
+    "answer": "Virtual Digital Assets (VDAs) including crypto are taxed at a flat rate (currently 30% — confirm for the current year) with no set-off of losses against other income. TDS at 1% applies under Section 194S on transfers above the threshold. Gains are reported in Schedule VDA of the ITR. Maintain complete exchange transaction history. Confirm with your CA."
+  },
+  {
+    "id": 77,
+    "keywords": ["foreign asset disclosure itr", "schedule fa itr", "foreign bank account india tax", "foreign shares reporting itr", "foreign income schedule fsi"],
+    "answer": "Indian residents must disclose all foreign assets (bank accounts, shares, property) and foreign income in Schedule FA and Schedule FSI of the ITR. Non-disclosure can attract penalties under the Black Money Act. We handle foreign income and asset reporting. Confirm residency status and applicable schedules with your CA."
+  },
+  {
+    "id": 78,
+    "keywords": ["presumptive income scheme", "section 44ad business", "section 44ada professional", "no books of accounts", "presumptive tax calculation"],
+    "answer": "Under Section 44AD, small businesses can declare 6% (digital receipts) or 8% (cash receipts) of turnover as income without maintaining books. Under Section 44ADA, professionals declare 50% of gross receipts. No tax audit is required if income is declared at or above the prescribed percentage. Once opted out, re-entry is restricted for 5 years. Confirm applicability with your CA."
+  },
+  {
+    "id": 79,
+    "keywords": ["home loan tax benefit", "section 24 interest deduction", "80c home loan principal", "80eea first home buyer", "joint home loan deduction"],
+    "answer": "Home loan tax benefits: Section 80C (principal repayment, included in ₹1.5L limit), Section 24 (interest up to ₹2L on self-occupied property). Under 80EEA, additional interest deduction may be available for first-time buyers (check current-year eligibility). Joint borrowers can claim deductions separately. Confirm with your CA."
+  },
+  {
+    "id": 80,
+    "keywords": ["hra exemption calculation", "house rent allowance tax", "rent receipt income tax", "hra landlord pan required", "form 12bb hra"],
+    "answer": "HRA exemption is the minimum of: actual HRA received, rent paid minus 10% of salary, or 50%/40% of salary (metro/non-metro). If annual rent exceeds ₹1L, the landlord's PAN must be furnished. Form 12BB must be submitted to your employer. Confirm with your CA for the precise exemption calculation."
+  },
+  {
+    "id": 81,
+    "keywords": ["section 80c investments options", "tax saving 80c list", "elss ppf comparison", "80c limit planning", "best 80c investment"],
+    "answer": "Section 80C limit is currently ₹1.5 lakh. Eligible investments: PPF, ELSS (3-year lock-in), LIC premium, NSC, tax-saving FD (5 years), home loan principal, children's tuition. The best choice depends on your liquidity needs and risk appetite. We help you optimise 80C allocation. Confirm the current limit with your CA."
+  },
+  {
+    "id": 82,
+    "keywords": ["income tax appeal procedure", "cit a appeal filing", "itat appeal income tax", "tax demand dispute", "appeal against assessment order"],
+    "answer": "If you disagree with an assessment or demand order, the first level of appeal is before the CIT(A) — Commissioner of Income Tax (Appeals). This must be filed within 30 days of the order. The next level is ITAT (Income Tax Appellate Tribunal). High Court and Supreme Court follow. We handle appeal preparation and representation. Confirm with your CA immediately on receipt of order."
+  },
+  {
+    "id": 83,
+    "keywords": ["ibc insolvency india", "cirp process company", "nclt insolvency petition", "creditor insolvency claim", "corporate insolvency resolution"],
+    "answer": "Under the IBC (Insolvency and Bankruptcy Code), a financial or operational creditor can initiate CIRP (Corporate Insolvency Resolution Process) at NCLT for defaults above ₹1 crore. A Resolution Professional (IP) is appointed. The resolution plan must be approved within 180 days (extendable). Liquidation is the last resort. Confirm your rights and process with your legal and CA team."
+  },
+  {
+    "id": 84,
+    "keywords": ["advance ruling india", "aaar gst ruling", "aar income tax", "advance ruling binding", "pre transaction tax clarity"],
+    "answer": "An Advance Ruling provides tax certainty on the treatment of a proposed transaction before it is executed. For GST, apply to AAR (Authority for Advance Ruling); for income tax, to the Authority for Advance Ruling. The ruling is binding on the applicant and the department (for that transaction). Confirm with your CA on whether your case qualifies."
+  },
+  {
+    "id": 85,
+    "keywords": ["penalty waiver income tax", "tax demand stay application", "section 220 6 stay", "rectification 154 income tax", "condonation of delay"],
+    "answer": "You can apply for a stay on a tax demand under Section 220(6) pending appeal. Errors apparent on the face of the record can be corrected via Section 154 (rectification). Condonation of delay can be sought before the tax authority for late filings where there is a genuine reason. Interest continues to accrue on outstanding demand. Confirm with your CA immediately."
+  },
+  {
+    "id": 86,
+    "keywords": ["vivad se vishwas scheme", "tax dispute settlement scheme", "income tax pending case settle", "dispute settlement income tax", "vsvs settlement"],
+    "answer": "The Vivad Se Vishwas scheme (when available) allows taxpayers with pending income tax disputes to settle by paying the disputed tax amount — with interest and penalties waived. Eligibility and the formula depend on the nature of the dispute. Enrolment is time-bound. Confirm current scheme status and eligibility with your CA."
+  },
+  {
+    "id": 87,
+    "keywords": ["faceless assessment procedure", "faceless appeal income tax", "e assessment scheme", "nfac income tax", "faceless scrutiny response"],
+    "answer": "Under the Faceless Assessment Scheme, all notices, submissions, and hearings are conducted digitally — no physical appearance. The National Faceless Assessment Centre (NFAC) processes cases. Responses with supporting documents and legal submissions must be uploaded online within the given timeline. We prepare and file faceless responses. Confirm your case is under faceless jurisdiction with your CA."
+  },
+  {
+    "id": 88,
+    "keywords": ["pan card apply", "pan aadhaar link", "pan inactive status", "pan correction online", "permanent account number"],
+    "answer": "PAN can be applied on the NSDL or UTIITSL portal. E-PAN is issued almost instantly; physical PAN arrives in 15–20 days. PAN and Aadhaar must be linked (mandatory) — failure results in PAN becoming inoperative, triggering higher TDS/TCS. PAN corrections (name, date of birth) are also done online. Confirm current linking deadline with your CA."
+  },
+  {
+    "id": 89,
+    "keywords": ["tan registration tds", "tan apply nsdl", "tan number for tds", "tan missing penalty", "tan 49b form"],
+    "answer": "A TAN (Tax Deduction Account Number) is mandatory for any entity that deducts TDS. It is applied via Form 49B on the NSDL portal. Failure to obtain TAN before deducting TDS attracts a penalty. TAN must be quoted in all TDS challans and returns. Confirm with your CA if TDS deduction obligations apply to you."
+  },
+  {
+    "id": 90,
+    "keywords": ["dsc digital signature", "dsc class 3", "dsc apply india", "digital signature validity", "emsigner dsc"],
+    "answer": "A Class 3 DSC (Digital Signature Certificate) is required for MCA filings, GST, income tax returns (audit cases), and customs. Validity is 1 or 2 years. Required documents: PAN, Aadhaar, and photograph. Issuance takes 1–2 working days. We assist with DSC procurement and renewal. Confirm the current certification agency and process with your CA."
+  },
+  {
+    "id": 91,
+    "keywords": ["udin generation ca certificate", "udin mandatory icai", "udin verification", "unique document identification number", "udin on reports"],
+    "answer": "UDIN (Unique Document Identification Number) must be generated by a CA on the ICAI portal for every certificate, audit report, or document they attest or certify. Without a UDIN, the document is not valid. Anyone can verify a UDIN on the ICAI website. We generate UDINs for all our certificates and reports. Confirm with your CA."
+  },
+  {
+    "id": 92,
+    "keywords": ["accounting software india", "tally vs zoho books", "gst accounting software", "cloud accounting india", "billing and accounts software"],
+    "answer": "Popular accounting software options: Tally Prime (widely used, robust), Zoho Books (cloud-based, GST-ready, cost-effective), QuickBooks. CA-specific tools include Winman (ITR, TDS), ClearTax, and Suvit. The right choice depends on your business size, cloud preference, and budget. We work with Tally and Zoho Books. Confirm your requirements with your CA."
+  },
+  {
+    "id": 93,
+    "keywords": ["gst portal problem", "gst portal login", "gst portal error", "gst nil return missing", "gst portal technical issue"],
+    "answer": "GST portal technical issues (login errors, OTP failures, payment errors) should be reported via the GST helpdesk (1800-103-4786) or the portal's 'Grievance' section. Always take a screenshot of the error with the timestamp. If a due date is missed due to a portal issue, a condonation may be available (subject to GST notifications). Confirm with your CA."
+  },
+  {
+    "id": 94,
+    "keywords": ["fees professional ca", "ca services charges", "how much ca service cost", "ca fee structure", "affordable ca services"],
+    "answer": "Our fees depend on the service and complexity: basic ITR filing starts from ₹500, monthly GST compliance from ₹1,500–₹3,000, company registration packages from ₹8,000–₹15,000. We provide transparent pricing with no hidden charges. Share your specific requirement for an exact quote. Confirm with our team."
+  },
+  {
+    "id": 95,
+    "keywords": ["documents required service", "what documents to submit", "ca documents checklist", "documents for compliance", "paperwork needed ca"],
+    "answer": "Documents vary by service. Core documents for most engagements: PAN card, Aadhaar card, bank statement, and address proof. For a service-specific checklist, WhatsApp us with your requirement — we will send a precise list so nothing is missed. Confirm with your CA."
+  },
+  {
+    "id": 96,
+    "keywords": ["how long process complete", "turnaround time ca", "service processing time", "days to complete registration", "how many days compliance"],
+    "answer": "Typical turnaround times: GST registration 7–10 working days, Company incorporation 10–15 working days, ITR filing 1–2 days (once all documents are received), TDS return 1 day. Times depend on government processing and document completeness. We offer urgent processing for critical deadlines. Confirm with your CA."
+  },
+  {
+    "id": 97,
+    "keywords": ["remote ca services", "online ca without office visit", "pan india ca services", "digital ca services", "ca services from home"],
+    "answer": "We work 100% remotely — no office visit needed. Documents are shared via WhatsApp or email. Signatures (where required) are handled digitally or via courier. We serve clients across India. Confirm the communication process with your CA."
+  },
+  {
+    "id": 98,
+    "keywords": ["data confidentiality ca", "client data privacy", "financial data secure", "ca professional ethics", "information shared ca"],
+    "answer": "Client data is held in strict confidentiality as required by ICAI's Code of Ethics. No financial information is shared with any third party without explicit consent. Digital records are stored securely. Confirm your specific data handling preferences with your CA."
+  },
+  {
+    "id": 99,
+    "keywords": ["contact ca whatsapp", "book appointment ca", "ca consultation", "reach out ca", "ca query help"],
+    "answer": "WhatsApp is our primary communication channel for queries and document sharing. No formal appointment is needed for routine queries. We are available Monday to Saturday, 10 AM to 7 PM. For urgent compliance matters, we respond promptly. Confirm availability with our team."
+  },
+  {
+    "id": 100,
+    "keywords": ["mutual fund tax india", "equity fund ltcg stcg", "debt fund tax 2025", "sip tax implication", "mutual fund itr schedule"],
+    "answer": "Equity mutual funds: STCG (held < 1 year) taxed at 20%, LTCG (> 1 year) taxed at 12.5% above ₹1.25L exemption. Debt mutual funds: taxed at slab rate (indexation benefit removed from FY 2023–24 — confirm for current year). Dividend income from funds is taxable in your hands (TDS applies above ₹5,000). Report gains in Schedule CG of the ITR. Confirm current rates with your CA."
+  },
+  {
+    "id": 101,
+    "keywords": ["stamp duty property registration", "property purchase stamp duty", "registration charges property", "property transaction cost", "ready reckoner value"],
+    "answer": "Stamp duty rates vary by state: Maharashtra (around 5–7%), Karnataka (around 3–5%), Delhi (around 4–6%). Registration charges (around 1–2%) are separate. The transaction cannot be registered at below the Ready Reckoner (circle rate) value. Some states offer reduced rates for female buyers. Confirm current rates for your state with your CA."
+  },
+  {
+    "id": 102,
+    "keywords": ["cooperative society tax", "housing society 80p", "rwa tax return", "cooperative society itr", "80p deduction cooperative"],
+    "answer": "Cooperative housing societies and RWAs may avail deductions under Section 80P on interest income, dividends, and income from business with members. ITR-5 must be filed. Annual accounts must be audited. Confirm the applicable deductions and current tax treatment with your CA — this area has seen litigation."
+  },
+  {
+    "id": 103,
+    "keywords": ["benami transaction law", "benami property india", "pmla money laundering", "black money act undisclosed", "undisclosed asset penalty"],
+    "answer": "The Benami Property Transactions Act 2016 enables confiscation of property held in a fictitious name. PMLA penalties can include imprisonment for money laundering. The Black Money Act levies a flat 30% tax plus 90% penalty on undisclosed foreign assets. If you are in any such situation, seek immediate legal and CA advice."
+  },
+  {
+    "id": 104,
+    "keywords": ["insurance maturity tax", "ulip tax treatment", "life insurance tax exempt", "term insurance 80c", "insurance payout tax"],
+    "answer": "Term insurance premiums are deductible under Section 80C. Maturity proceeds may be exempt under Section 10(10D) if the annual premium does not exceed 10% of the sum assured (pre-April 2012: 20%). ULIP maturity exemption depends on issuance date and premium levels. Health insurance premiums are deductible under Section 80D. Confirm your specific policy's tax treatment with your CA."
+  },
+  {
+    "id": 105,
+    "keywords": ["gold tax india", "physical gold ltcg", "sovereign gold bond tax", "inherited gold cost", "gold jewellery capital gain"],
+    "answer": "Physical gold STCG (held < 3 years) is taxed at slab rates; LTCG (> 3 years) at 20% with indexation. Sovereign Gold Bond (SGB) redemption at maturity is exempt from capital gains. For inherited gold, the original owner's cost is used. Confirm the current rates and indexation benefit with your CA."
+  },
+  {
+    "id": 106,
+    "keywords": ["lottery gambling tax india", "online gaming tax", "fantasy sports income tax", "section 115bb tax", "gaming winnings itr"],
+    "answer": "Lottery, gambling, and online gaming winnings are taxed at a flat rate (currently 30% — confirm for the current year) under Section 115BB. No deductions are allowed against this income. TDS applies at source under Section 194B/194BA. Report in Schedule OS of the ITR. Confirm the current TDS threshold and rates with your CA."
+  },
+  {
+    "id": 107,
+    "keywords": ["employee perquisite tax", "car perquisite valuation", "accommodation perquisite", "esop perquisite tax", "lta exemption"],
+    "answer": "Perquisites are employment benefits provided in cash or kind. Taxable perquisites include: company car (notional value based on engine capacity), free accommodation (% of salary), interest-free loans, and ESOP gains on exercise. LTA (Leave Travel Allowance) exemption covers 2 journeys in a 4-year block. Confirm valuation rules and exemption limits with your CA."
+  },
+  {
+    "id": 108,
+    "keywords": ["retirement benefit tax", "gratuity tax exempt", "leave encashment tax", "vrs income tax", "pension commutation tax"],
+    "answer": "Tax on retirement benefits: Gratuity — government employees fully exempt; private sector exempt up to the prescribed limit. Leave encashment — government employees fully exempt; private sector exempt up to ₹25L. Pension commutation — 1/3rd of commuted value exempt (with gratuity). VRS payments have a separate exemption limit. Confirm the current exemption limits with your CA."
+  },
+  {
+    "id": 109,
+    "keywords": ["shop establishment registration", "labour law compliance", "gumasta license", "shops act india", "minimum wages compliance"],
+    "answer": "Shops and Establishments Act registration is mandatory for commercial establishments — the process varies by state (Maharashtra, Karnataka, etc. have different rules). Labour law compliance includes minimum wages, PF, ESI, gratuity, and maternity benefit. Non-compliance can lead to inspection and penalties. We handle state-specific registrations. Confirm with your CA."
+  },
+  {
+    "id": 110,
+    "keywords": ["bank reconciliation monthly", "brs preparation", "bank ledger mismatch", "outstanding cheques reconciliation", "reconciliation statement"],
+    "answer": "Bank Reconciliation Statement (BRS) matches your books' bank ledger with the actual bank statement. Common differences: outstanding cheques, deposits in transit, bank charges, and errors. Regular BRS helps detect fraud, duplicate entries, and missing transactions. We prepare monthly BRS as part of our bookkeeping service. Confirm with your CA."
+  }
+]
