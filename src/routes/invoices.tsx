@@ -6,7 +6,7 @@ import { Plus, X, CheckCircle2, Download, Pencil, MessageCircle, Trash2, Mail } 
 import { format, isBefore, startOfDay, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/invoices")({
-  head: () => ({ meta: [{ title: "Invoices — Firmora" }] }),
+  head: () => ({ meta: [{ title: "Invoices â€” Firmora" }] }),
   component: InvoicesPage,
 });
 
@@ -187,7 +187,7 @@ function InvoicesPage() {
     const clientEmail = (inv.clients as any)?.email ?? "";
     if (!clientEmail) { alert("Client ka email nahi mila. Client details mein email add karein."); return; }
     const days = getOverdueDays(inv);
-    const subject = `Payment Reminder — Invoice ${inv.invoice_number ?? ""} (${formatINR(Number(inv.total_amount ?? inv.amount ?? 0))})`;
+    const subject = `Payment Reminder â€” Invoice ${inv.invoice_number ?? ""} (${formatINR(Number(inv.total_amount ??inv.amount ?? 0))})`;
     const body = getWhatsAppMessage(inv, days, firmName);
     window.open(buildEmailUrl(emailProvider, emailCustomUrl, clientEmail, subject, body), "_blank");
   };
@@ -232,13 +232,13 @@ function InvoicesPage() {
       const { data: sd } = await supabase.from("settings").select("*").eq("user_id", cu?.id ?? "").limit(1);
       const firm = sd?.[0] as any;
       const firmNamePdf = firm?.firm_name ?? "Your Firm Name";
-      const gstin = firm?.gst_number ?? "—";
-      const pan = firm?.ca_reg_number ?? "—";
+      const gstin = firm?.gst_number ?? "â€”";
+      const pan = firm?.ca_reg_number ?? "â€”";
       const address = firm?.address ?? "";
       const phone = firm?.phone ?? "";
       const email = firm?.email ?? "";
       const logoUrl = firm?.logo_url ?? null;
-      const invoiceDate = invoice.created_at ? format(new Date(invoice.created_at), "dd MMM yyyy") : "—";
+      const invoiceDate = invoice.created_at ? format(new Date(invoice.created_at), "dd MMM yyyy") : "â€”";
       let logoBase64 = "";
       if (logoUrl) {
         try {
@@ -254,10 +254,10 @@ function InvoicesPage() {
       const lineItems: LineItem[] = (invoice as any).line_items ?? [];
       const hasLines = lineItems.length > 0;
       const lineRows = hasLines
-        ? lineItems.map(li => `<tr><td class="text-left">${li.description}</td><td class="text-right">₹${li.base_amount.toLocaleString("en-IN")}</td><td class="text-center">${li.gst_rate}%</td><td class="text-right">₹${li.gst_amount.toLocaleString("en-IN")}</td><td class="text-right">₹${li.total_amount.toLocaleString("en-IN")}</td></tr>`).join("")
-        : `<tr><td class="text-left">${invoice.description ?? "Professional services"}</td><td class="text-right">₹${Number(invoice.base_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td><td class="text-center">${Number((invoice as any).gst_rate ?? 0)}%</td><td class="text-right">₹${Number(invoice.gst_amount ?? 0).toLocaleString("en-IN")}</td><td class="text-right">₹${Number(invoice.total_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td></tr>`;
+        ? lineItems.map(li => `<tr><td class="text-left">${li.description}</td><td class="text-right">â‚¹${li.base_amount.toLocaleString("en-IN")}</td><td class="text-center">${li.gst_rate}%</td><td class="text-right">â‚¹${li.gst_amount.toLocaleString("en-IN")}</td><td class="text-right">â‚¹${li.total_amount.toLocaleString("en-IN")}</td></tr>`).join("")
+        : `<tr><td class="text-left">${invoice.description ?? "Professional services"}</td><td class="text-right">â‚¹${Number(invoice.base_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td><td class="text-center">${Number((invoice as any).gst_rate ?? 0)}%</td><td class="text-right">â‚¹${Number(invoice.gst_amount ?? 0).toLocaleString("en-IN")}</td><td class="text-right">â‚¹${Number(invoice.total_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td></tr>`;
       const total = Number(invoice.total_amount ?? invoice.amount ?? 0);
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title><style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}.header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}.firm-name{font-size:22px;font-weight:bold}.firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}.invoice-label{font-size:20px;font-weight:bold;letter-spacing:3px;text-align:center;border-top:2px solid #111;border-bottom:2px solid #111;padding:8px 0;margin:16px 0}.meta-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px}.bill-to{background:#f8f8f8;padding:12px;border-radius:4px;margin-bottom:20px;font-size:13px}.bill-to-title{font-weight:bold;margin-bottom:6px;font-size:14px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}thead tr{background:#f3f4f6;border-bottom:2px solid #111}th{padding:10px 8px}td{padding:10px 8px;border-bottom:1px solid #eee}.text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}.grand-total{font-weight:bold;border-top:2px solid #111;font-size:14px}</style></head><body><div class="header"><div style="display:flex;align-items:center;gap:12px">${logoBase64 ? `<img src="${logoBase64}" style="width:60px;height:60px;object-fit:contain;" alt="logo"/>` : ""}<div><div class="firm-name">${firmNamePdf}</div><div class="firm-details">${address ? address.replace(/\n/g, "<br/>") : ""}${phone ? `<br/>Phone: ${phone}` : ""}${email ? `<br/>Email: ${email}` : ""}</div></div></div><div style="text-align:right;font-size:13px"><div>GSTIN: ${gstin}</div><div>PAN/CA Reg: ${pan}</div></div></div><div class="invoice-label">TAX INVOICE</div><div class="meta-row"><div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "—"}</div><div><strong>Date:</strong> ${invoiceDate}</div></div><div class="bill-to"><div class="bill-to-title">Bill To</div><div>${(invoice.clients as any)?.name ?? "—"}</div><div>${(invoice.clients as any)?.email ?? ""}</div><div>${(invoice.clients as any)?.phone ?? ""}</div></div><table><thead><tr><th class="text-left" style="width:40%">Description</th><th class="text-right" style="width:15%">Amount</th><th class="text-center" style="width:10%">GST%</th><th class="text-right" style="width:15%">GST Amt</th><th class="text-right" style="width:20%">Total</th></tr></thead><tbody>${lineRows}</tbody><tfoot><tr class="grand-total"><td colspan="4" class="text-right">Grand Total</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tfoot></table><script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title><style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}.header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}.firm-name{font-size:22px;font-weight:bold}.firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}.invoice-label{font-size:20px;font-weight:bold;letter-spacing:3px;text-align:center;border-top:2px solid #111;border-bottom:2px solid #111;padding:8px 0;margin:16px 0}.meta-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px}.bill-to{background:#f8f8f8;padding:12px;border-radius:4px;margin-bottom:20px;font-size:13px}.bill-to-title{font-weight:bold;margin-bottom:6px;font-size:14px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}thead tr{background:#f3f4f6;border-bottom:2px solid #111}th{padding:10px 8px}td{padding:10px 8px;border-bottom:1px solid #eee}.text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}.grand-total{font-weight:bold;border-top:2px solid #111;font-size:14px}</style></head><body><div class="header"><div style="display:flex;align-items:center;gap:12px">${logoBase64 ? `<img src="${logoBase64}" style="width:60px;height:60px;object-fit:contain;" alt="logo"/>` : ""}<div><div class="firm-name">${firmNamePdf}</div><div class="firm-details">${address ? address.replace(/\n/g, "<br/>") : ""}${phone ? `<br/>Phone: ${phone}` : ""}${email ? `<br/>Email: ${email}` : ""}</div></div></div><div style="text-align:right;font-size:13px"><div>GSTIN: ${gstin}</div><div>PAN/CA Reg: ${pan}</div></div></div><div class="invoice-label">TAX INVOICE</div><div class="meta-row"><div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "â€”"}</div><div><strong>Date:</strong> ${invoiceDate}</div></div><div class="bill-to"><div class="bill-to-title">Bill To</div><div>${(invoice.clients as any)?.name ?? "â€”"}</div><div>${(invoice.clients as any)?.email ?? ""}</div><div>${(invoice.clients as any)?.phone ?? ""}</div></div><table><thead><tr><th class="text-left" style="width:40%">Description</th><th class="text-right" style="width:15%">Amount</th><th class="text-center" style="width:10%">GST%</th><th class="text-right" style="width:15%">GST Amt</th><th class="text-right" style="width:20%">Total</th></tr></thead><tbody>${lineRows}</tbody><tfoot><tr class="grand-total"><td colspan="4" class="text-right">Grand Total</td><td class="text-right">â‚¹${total.toLocaleString("en-IN")}</td></tr></tfoot></table><script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
       printWindow.document.open();
       printWindow.document.write(html);
       printWindow.document.close();
@@ -278,7 +278,7 @@ function InvoicesPage() {
           <p className="text-muted-foreground text-sm">Track invoices and payments</p>
         </div>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => setShowPaid((p) => !p)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-sidebar text-primary-foreground border-sidebar" : "bg-card text-foreground border-input hover:bg-muted"}`}>
+          <button type="button" onClick={() => setShowPaid((p) => !p)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-sidebar text-primary-foreground border-sidebar": "bg-card text-foreground border-input hover:bg-muted"}`}>
             Show Paid ({paidCount})
           </button>
           <button onClick={() => setModalState({ mode: "create" })} className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium">
@@ -329,7 +329,7 @@ function InvoicesPage() {
               <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Invoice No</th>
               <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Client</th>
               <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Services</th>
-              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Total (₹)</th>
+              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Total (â‚¹)</th>
               <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Due Date</th>
               <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Status</th>
               <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Actions</th>
@@ -344,15 +344,15 @@ function InvoicesPage() {
               const overdueDays = getOverdueDays(inv);
               const agingTag = getAgingTag(overdueDays);
               const lineItems: LineItem[] = (inv as any).line_items ?? [];
-              const servicesSummary = lineItems.length > 0 ? lineItems.map(l => l.description).filter(Boolean).join(", ") : (inv.description ?? "—");
+              const servicesSummary = lineItems.length > 0 ? lineItems.map(l => l.description).filter(Boolean).join(", ") : (inv.description ?? "â€”");
               const hasClientEmail = !!(inv.clients as any)?.email;
               return (
                 <tr key={inv.id} className="hover:bg-muted">
-                  <td className="px-5 py-3 font-medium text-foreground">{inv.invoice_number ?? "—"}</td>
-                  <td className="px-5 py-3 text-foreground">{(inv.clients as any)?.name ?? "—"}</td>
+                  <td className="px-5 py-3 font-medium text-foreground">{inv.invoice_number ?? "â€”"}</td>
+                  <td className="px-5 py-3 text-foreground">{(inv.clients as any)?.name ?? "â€”"}</td>
                   <td className="px-5 py-3 text-muted-foreground text-xs max-w-[180px] truncate" title={servicesSummary}>{servicesSummary}</td>
                   <td className="px-5 py-3 font-medium text-foreground">{formatINR(total)}</td>
-                  <td className="px-5 py-3 text-foreground">{inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "—"}</td>
+                  <td className="px-5 py-3 text-foreground">{inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "â€”"}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`px-2 py-1 rounded-md text-xs font-medium ${displayStatus === "Paid" ? "bg-green-100 text-green-800" : displayStatus === "Overdue" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{displayStatus}</span>
@@ -369,7 +369,7 @@ function InvoicesPage() {
                       </button>
                       {!isInvoicePaid(inv) && (
                         <>
-                          <button onClick={() => payMutation.mutate({ id: inv.id })} disabled={payMutation.isPending} className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50">
+                          <button onClick={() => payMutation.mutate({ id: inv.id })} disabled={payMutation.isPending}className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50">
                             <CheckCircle2 size={14} /> Paid
                           </button>
                           <button onClick={() => handleWhatsApp(inv)} className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium">
@@ -434,7 +434,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
   const updateLine = (i: number, field: keyof LineItem, value: string | number) => {
     setLines((prev) => {
       const updated = [...prev];
-      const line = { ...updated[i], [field]: typeof value === "string" && field !== "description" ? parseFloat(value) || 0 : value };
+      const line = { ...updated[i], [field]: typeof value === "string" && field !== "description" ? parseFloat(value)|| 0 : value };
       updated[i] = calcLine(line as LineItem);
       return updated;
     });
@@ -454,7 +454,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ client_id: clientId, line_items: lines, description: lines.map(l => l.description).filter(Boolean).join(", "), base_amount: totals.base, gst_amount: totals.gst, total_amount: totals.total, amount: totals.total, due_date: dueDate || null, notes: notes || null, status: mode === "edit" ? initialInvoice?.status ?? "Pending" : "Pending" });
+    onSubmit({ client_id: clientId, line_items: lines, description: lines.map(l => l.description).filter(Boolean).join(", "), base_amount: totals.base, gst_amount: totals.gst, total_amount: totals.total, amount: totals.total, due_date:dueDate || null, notes: notes || null, status: mode === "edit" ? initialInvoice?.status ?? "Pending" : "Pending" });
   };
 
   return (
@@ -481,7 +481,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
 
           {clientId && complianceItems && complianceItems.length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs font-semibold text-blue-700 mb-2">⚡ Quick Add — Pending Compliance</p>
+              <p className="text-xs font-semibold text-blue-700 mb-2">âš¡ Quick Add â€” Pending Compliance</p>
               <div className="flex flex-wrap gap-2">
                 {complianceItems.map((item: any) => (
                   <button key={item.id} type="button" onClick={() => addComplianceLine(item.compliance_type)} className="text-xs bg-white border border-blue-300 text-blue-700 px-2 py-1 rounded hover:bg-blue-100">
@@ -506,7 +506,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="text-xs text-muted-foreground">Base Amount (₹)</label>
+                      <label className="text-xs text-muted-foreground">Base Amount (â‚¹)</label>
                       <input type="number" min="0" step="0.01" value={line.base_amount || ""} onChange={(e) => updateLine(i, "base_amount", e.target.value)} className={inputClass} placeholder="0" />
                     </div>
                     <div>

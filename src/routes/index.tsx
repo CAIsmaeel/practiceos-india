@@ -9,7 +9,6 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-// ─── Stat Card with trend ─────────────────────────────────────────────────────
 function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
   label: string; value: number | string; icon: any; color: string;
   sub?: string; href?: string;
@@ -49,7 +48,6 @@ function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
   );
 }
 
-// ─── Today's Focus ────────────────────────────────────────────────────────────
 type FocusItem = {
   id: string; priority: "critical" | "attention";
   type: "compliance" | "invoice" | "document" | "lead" | "task";
@@ -121,15 +119,11 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
   );
 }
 
-// ─── Compliance — Grouped by type ─────────────────────────────────────────────
 function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount: number }) {
-  // Group items by compliance_type
   const groups: Record<string, { items: any[]; earliest: string; isOverdue: boolean }> = {};
   items.forEach((item: any) => {
     const key = `${item.complianceType}__${item.dueDate}__${item.isOverdue}`;
-    if (!groups[key]) {
-      groups[key] = { items: [], earliest: item.dueDate, isOverdue: item.isOverdue };
-    }
+    if (!groups[key]) groups[key] = { items: [], earliest: item.dueDate, isOverdue: item.isOverdue };
     groups[key].items.push(item);
   });
 
@@ -157,19 +151,16 @@ function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount
           const displayNames = clientNames.slice(0, 3).join(", ");
           const extra = clientNames.length > 3 ? ` +${clientNames.length - 3} more` : "";
           const compType = group.items[0].complianceType;
-
           let dueLabel = "", labelClass = "", rowClass = "";
           if (group.isOverdue) {
             const daysOverdue = Math.abs(daysRemaining);
             dueLabel = daysOverdue === 0 ? "Due today" : `${daysOverdue}d overdue`;
-            labelClass = "bg-red-100 text-red-700";
-            rowClass = "bg-red-50/60 border-l-4 border-red-500";
+            labelClass = "bg-red-100 text-red-700"; rowClass = "bg-red-50/60 border-l-4 border-red-500";
           } else {
             dueLabel = daysRemaining === 0 ? "Due today" : daysRemaining === 1 ? "Due tomorrow" : `Due in ${daysRemaining}d`;
             labelClass = daysRemaining <= 1 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700";
             rowClass = daysRemaining <= 1 ? "bg-red-50/60 border-l-4 border-red-400" : "bg-amber-50/60 border-l-4 border-amber-300";
           }
-
           return (
             <div key={idx} className={`flex items-center justify-between py-3 px-4 ${rowClass}`}>
               <div className="min-w-0 flex-1">
@@ -191,33 +182,26 @@ function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount
   );
 }
 
-// ─── Client Activity ──────────────────────────────────────────────────────────
 function ClientActivity({ engagements, pendingDocs }: { engagements: any[]; pendingDocs: any[] }) {
   const isActiveEng = (e: any) => e.status !== "completed" && e.status !== "billed";
-
-  // Build per-engagement pending doc count
   const docCountMap: Record<string, number> = {};
-  pendingDocs.forEach(d => {
-    docCountMap[d.engagement_id] = (docCountMap[d.engagement_id] ?? 0) + 1;
-  });
-
-  // Pick engagements with pending docs or overdue deadlines
+  pendingDocs.forEach(d => { docCountMap[d.engagement_id] = (docCountMap[d.engagement_id] ?? 0) + 1; });
   const now = new Date();
   const activityItems = engagements
     .filter(isActiveEng)
-    .map((e: any) => {
-      const pendingCount = docCountMap[e.id] ?? 0;
-      const isDeadlineOverdue = e.deadline && isBefore(new Date(e.deadline), now);
-      const daysLeft = e.deadline ? differenceInDays(new Date(e.deadline), now) : null;
-      return { ...e, pendingCount, isDeadlineOverdue, daysLeft };
-    })
+    .map((e: any) => ({
+      ...e,
+      pendingCount: docCountMap[e.id] ?? 0,
+      isDeadlineOverdue: e.deadline && isBefore(new Date(e.deadline), now),
+      daysLeft: e.deadline ? differenceInDays(new Date(e.deadline), now) : null,
+    }))
     .filter(e => e.pendingCount > 0 || e.isDeadlineOverdue)
     .sort((a, b) => {
       if (a.isDeadlineOverdue && !b.isDeadlineOverdue) return -1;
       if (!a.isDeadlineOverdue && b.isDeadlineOverdue) return 1;
       return b.pendingCount - a.pendingCount;
     })
-    .slice(0, 6);
+    .slice(0, 5);
 
   if (activityItems.length === 0) return null;
 
@@ -239,15 +223,9 @@ function ClientActivity({ engagements, pendingDocs }: { engagements: any[]; pend
                 <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{e.title}</span>
               </div>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
-                {e.pendingCount > 0 && (
-                  <span className="text-xs text-amber-600 font-medium">📄 {e.pendingCount} doc{e.pendingCount > 1 ? "s" : ""} pending</span>
-                )}
-                {e.isDeadlineOverdue && (
-                  <span className="text-xs text-red-600 font-medium">⏰ Deadline overdue</span>
-                )}
-                {!e.isDeadlineOverdue && e.daysLeft !== null && e.daysLeft <= 3 && (
-                  <span className="text-xs text-orange-500 font-medium">⚡ {e.daysLeft}d left</span>
-                )}
+                {e.pendingCount > 0 && <span className="text-xs text-amber-600 font-medium">📄 {e.pendingCount} doc{e.pendingCount > 1 ? "s" : ""} pending</span>}
+                {e.isDeadlineOverdue && <span className="text-xs text-red-600 font-medium">⏰ Deadline overdue</span>}
+                {!e.isDeadlineOverdue && e.daysLeft !== null && e.daysLeft <= 3 && <span className="text-xs text-orange-500 font-medium">⚡ {e.daysLeft}d left</span>}
               </div>
             </div>
             <a href="/engagements" className="shrink-0 text-xs text-primary hover:underline font-medium">Open →</a>
@@ -258,7 +236,6 @@ function ClientActivity({ engagements, pendingDocs }: { engagements: any[]; pend
   );
 }
 
-// ─── Regulatory Updates ───────────────────────────────────────────────────────
 function RegulatoryUpdates() {
   const { data: updates, isLoading } = useQuery({
     queryKey: ["regulatory-updates-dashboard"],
@@ -328,7 +305,6 @@ function RegulatoryUpdates() {
   );
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard() {
   const now = new Date();
   const thisMonthStart = startOfMonth(now).toISOString();
@@ -337,11 +313,11 @@ function Dashboard() {
   const lastMonthEnd = endOfMonth(subMonths(now, 1)).toISOString();
 
   const calcPct = (curr: number, prev: number) => {
-    if (prev === 0) return curr > 0 ? 100 : 0;
+    if (prev === 0 && curr === 0) return 0;
+    if (prev === 0) return 0; // avoid meaningless 100%
     return Math.round(((curr - prev) / prev) * 100);
   };
 
-  // Current clients
   const { data: clients } = useQuery({
     queryKey: ["clients-count"],
     queryFn: async () => {
@@ -352,12 +328,12 @@ function Dashboard() {
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-  // Clients added this month vs last month
   const { data: clientsThisMonth } = useQuery({
     queryKey: ["clients-this-month"],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      const { count } = await supabase.from("clients").select("*", { count: "exact", head: true }).eq("user_id", userId ?? "").gte("created_at", thisMonthStart).lte("created_at", thisMonthEnd);
+      const { count } = await supabase.from("clients").select("*", { count: "exact", head: true })
+        .eq("user_id", userId ?? "").gte("created_at", thisMonthStart).lte("created_at", thisMonthEnd);
       return count ?? 0;
     },
     staleTime: 60000,
@@ -367,7 +343,8 @@ function Dashboard() {
     queryKey: ["clients-last-month"],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      const { count } = await supabase.from("clients").select("*", { count: "exact", head: true }).eq("user_id", userId ?? "").gte("created_at", lastMonthStart).lte("created_at", lastMonthEnd);
+      const { count } = await supabase.from("clients").select("*", { count: "exact", head: true })
+        .eq("user_id", userId ?? "").gte("created_at", lastMonthStart).lte("created_at", lastMonthEnd);
       return count ?? 0;
     },
     staleTime: 60000,
@@ -394,7 +371,8 @@ function Dashboard() {
         const userId = await getCurrentUserId();
         const today = new Date().toISOString().split("T")[0];
         const next7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-        const { count } = await supabase.from("tasks").select("*", { count: "exact", head: true }).eq("user_id", userId ?? "").gte("due_date", today).lte("due_date", next7).eq("is_complete", false);
+        const { count } = await supabase.from("tasks").select("*", { count: "exact", head: true })
+          .eq("user_id", userId ?? "").gte("due_date", today).lte("due_date", next7).eq("is_complete", false);
         return count ?? 0;
       } catch { return 0; }
     },
@@ -406,7 +384,8 @@ function Dashboard() {
     queryFn: async () => {
       try {
         const userId = await getCurrentUserId();
-        const { count } = await supabase.from("leads").select("*", { count: "exact", head: true }).eq("user_id", userId ?? "").not("status", "in", '("Converted","Lost","Cold-Closed")');
+        const { count } = await supabase.from("leads").select("*", { count: "exact", head: true })
+          .eq("user_id", userId ?? "").not("status", "in", '("Converted","Lost","Cold-Closed")');
         return count ?? 0;
       } catch { return 0; }
     },
@@ -418,20 +397,21 @@ function Dashboard() {
     queryFn: async () => {
       try {
         const userId = await getCurrentUserId();
-        const { data } = await supabase.from("engagement_documents").select("engagement_id, requirement").eq("user_id", userId ?? "").eq("status", "pending");
+        const { data } = await supabase.from("engagement_documents").select("engagement_id, requirement")
+          .eq("user_id", userId ?? "").eq("status", "pending");
         return (data ?? []) as { engagement_id: string; requirement: string }[];
       } catch { return []; }
     },
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-  // Invoices — this month
+  // Invoice query — includes payment_date for accurate trend
   const { data: invoices } = useQuery({
     queryKey: ["dashboard-invoices"],
     queryFn: async () => {
       const userId = await getCurrentUserId();
       const { data } = await supabase.from("invoices")
-        .select("id, amount, total_amount, status, due_date, created_at, clients(name, phone)")
+        .select("id, amount, total_amount, status, due_date, created_at, payment_date, clients(name, phone)")
         .eq("user_id", userId ?? "")
         .order("due_date", { ascending: true, nullsFirst: false });
       return (data ?? []) as any[];
@@ -445,7 +425,8 @@ function Dashboard() {
       try {
         const userId = await getCurrentUserId();
         const today = new Date();
-        const { data } = await supabase.from("invoices").select("id, status, due_date").eq("user_id", userId ?? "").not("status", "eq", "Paid");
+        const { data } = await supabase.from("invoices").select("id, status, due_date")
+          .eq("user_id", userId ?? "").not("status", "eq", "Paid");
         return (data ?? []).filter((inv: any) => {
           if (!inv.due_date || inv.status === "Paid") return false;
           return new Date(inv.due_date) < today;
@@ -460,7 +441,10 @@ function Dashboard() {
     queryFn: async () => {
       try {
         const userId = await getCurrentUserId();
-        const { data } = await supabase.from("leads").select("id, name, requirement, qualification_score, phone, created_at").eq("user_id", userId ?? "").not("status", "in", '("Converted","Lost","Cold-Closed")').order("created_at", { ascending: false }).limit(5);
+        const { data } = await supabase.from("leads")
+          .select("id, name, requirement, qualification_score, phone, created_at")
+          .eq("user_id", userId ?? "").not("status", "in", '("Converted","Lost","Cold-Closed")')
+          .order("created_at", { ascending: false }).limit(5);
         return data ?? [];
       } catch { return []; }
     },
@@ -485,11 +469,8 @@ function Dashboard() {
           .neq("clients.status", "deleted").neq("clients.status", "archived")
           .gte("due_date", today).lte("due_date", next7).order("due_date", { ascending: true });
         const mapItem = (item: any, isOverdue: boolean) => ({
-          id: item.id,
-          clientName: item.clients?.name ?? "—",
-          complianceType: item.compliance_type ?? "—",
-          dueDate: item.due_date,
-          isOverdue,
+          id: item.id, clientName: item.clients?.name ?? "—",
+          complianceType: item.compliance_type ?? "—", dueDate: item.due_date, isOverdue,
         });
         return [
           ...(overdueData ?? []).map((i: any) => mapItem(i, true)),
@@ -506,20 +487,20 @@ function Dashboard() {
   const overdueComplianceCount = complianceItems?.filter((i: any) => i.isOverdue).length ?? 0;
   const overdueCount = overdueEngagements + overdueComplianceCount;
 
-  // Outstanding — this month vs last month
   const totalOutstanding = (invoices ?? []).reduce((sum, inv) => {
-    if (inv.status === "Paid") return sum;
+    if ((inv.status ?? "").toLowerCase() === "paid") return sum;
     return sum + Number(inv.total_amount ?? inv.amount ?? 0);
   }, 0);
 
+  // Fees collected — use payment_date (accurate)
   const collectedThisMonth = (invoices ?? []).filter((inv: any) => {
-    if (inv.status !== "Paid") return false;
-    return inv.created_at >= thisMonthStart && inv.created_at <= thisMonthEnd;
+    if ((inv.status ?? "").toLowerCase() !== "paid" || !inv.payment_date) return false;
+    return inv.payment_date >= thisMonthStart && inv.payment_date <= thisMonthEnd;
   }).reduce((sum: number, inv: any) => sum + Number(inv.total_amount ?? inv.amount ?? 0), 0);
 
   const collectedLastMonth = (invoices ?? []).filter((inv: any) => {
-    if (inv.status !== "Paid") return false;
-    return inv.created_at >= lastMonthStart && inv.created_at <= lastMonthEnd;
+    if ((inv.status ?? "").toLowerCase() !== "paid" || !inv.payment_date) return false;
+    return inv.payment_date >= lastMonthStart && inv.payment_date <= lastMonthEnd;
   }).reduce((sum: number, inv: any) => sum + Number(inv.total_amount ?? inv.amount ?? 0), 0);
 
   const feesPct = calcPct(collectedThisMonth, collectedLastMonth);
@@ -535,7 +516,7 @@ function Dashboard() {
   const todaysFocus: FocusItem[] = [];
 
   (invoices ?? []).filter((inv: any) => {
-    if (!inv.due_date || inv.status === "Paid") return false;
+    if (!inv.due_date || (inv.status ?? "").toLowerCase() === "paid") return false;
     return new Date(inv.due_date) < now;
   }).slice(0, 2).forEach((inv: any) => {
     const days = differenceInDays(now, new Date(inv.due_date));
@@ -578,12 +559,16 @@ function Dashboard() {
         <p className="text-muted-foreground text-sm">Overview of your practice — {format(now, "EEEE, dd MMM yyyy")}</p>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={clients ?? 0} icon={Users} color="bg-primary" href="/clients"
-          trend={{ pct: clientsPct, label: "vs last month" }} />
+          trend={clientsThisMonth !== undefined && clientsLastMonth !== undefined && clientsLastMonth > 0
+            ? { pct: clientsPct, label: "vs last month" } : undefined}
+          sub={clientsLastMonth === 0 || clientsLastMonth === undefined ? `+${clientsThisMonth ?? 0} this month` : undefined}
+        />
         <StatCard label="Fees Collected" value={fmtINR(collectedThisMonth)} icon={Briefcase} color="bg-green-600" href="/invoices"
-          trend={{ pct: feesPct, label: "vs last month" }} />
+          trend={collectedLastMonth > 0 ? { pct: feesPct, label: "vs last month" } : undefined}
+          sub={collectedLastMonth === 0 ? "This month" : undefined}
+        />
         <StatCard label="Total Outstanding" value={fmtINR(totalOutstanding)} icon={Briefcase} color="bg-indigo-500" href="/invoices" />
         <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
         <StatCard label="Tasks Due This Week" value={tasksDueCount ?? 0} icon={Calendar} color="bg-amber-500" href="/tasks" />
@@ -592,19 +577,11 @@ function Dashboard() {
         <StatCard label="Clients Waiting for Docs" value={clientsWaiting} sub={`${pendingDocsTotal} docs · ${mandatoryDocsPending} mandatory`} icon={FileText} color="bg-orange-500" href="/documents" />
       </div>
 
-      {/* Today's Focus */}
       <TodaysFocus items={focusItems} />
-
-      {/* Client Activity */}
       <ClientActivity engagements={engagements ?? []} pendingDocs={pendingChecklistDocs ?? []} />
-
-      {/* Compliance — grouped */}
       <ComplianceSection items={complianceItems ?? []} overdueCount={overdueComplianceCount} />
-
-      {/* Regulatory Updates */}
       <RegulatoryUpdates />
 
-      {/* Recent Leads */}
       <div className="bg-card border border-border rounded-lg shadow-sm">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="font-semibold text-foreground">Recent Leads</h2>
