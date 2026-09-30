@@ -38,7 +38,7 @@ function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
               </span>
             </div>
           )}
-          {!trend && sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+          {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
         </div>
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
           <Icon size={22} className="text-primary-foreground" />
@@ -177,60 +177,6 @@ function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-function ClientActivity({ engagements, pendingDocs }: { engagements: any[]; pendingDocs: any[] }) {
-  const isActiveEng = (e: any) => e.status !== "completed" && e.status !== "billed";
-  const docCountMap: Record<string, number> = {};
-  pendingDocs.forEach(d => { docCountMap[d.engagement_id] = (docCountMap[d.engagement_id] ?? 0) + 1; });
-  const now = new Date();
-  const activityItems = engagements
-    .filter(isActiveEng)
-    .map((e: any) => ({
-      ...e,
-      pendingCount: docCountMap[e.id] ?? 0,
-      isDeadlineOverdue: e.deadline && isBefore(new Date(e.deadline), now),
-      daysLeft: e.deadline ? differenceInDays(new Date(e.deadline), now) : null,
-    }))
-    .filter(e => e.pendingCount > 0 || e.isDeadlineOverdue)
-    .sort((a, b) => {
-      if (a.isDeadlineOverdue && !b.isDeadlineOverdue) return -1;
-      if (!a.isDeadlineOverdue && b.isDeadlineOverdue) return 1;
-      return b.pendingCount - a.pendingCount;
-    })
-    .slice(0, 5);
-
-  if (activityItems.length === 0) return null;
-
-  return (
-    <div className="bg-card border border-border rounded-lg shadow-sm">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <div>
-          <h2 className="font-semibold text-foreground">Client Activity</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Engagements needing attention</p>
-        </div>
-        <a href="/engagements" className="text-primary text-sm hover:underline font-medium">View All →</a>
-      </div>
-      <div className="divide-y divide-border">
-        {activityItems.map((e: any) => (
-          <div key={e.id} className="px-5 py-3 flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-medium text-foreground truncate">{e.clients?.name ?? "—"}</p>
-                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{e.title}</span>
-              </div>
-              <div className="flex items-center gap-3 mt-1 flex-wrap">
-                {e.pendingCount > 0 && <span className="text-xs text-amber-600 font-medium">📄 {e.pendingCount} doc{e.pendingCount > 1 ? "s" : ""} pending</span>}
-                {e.isDeadlineOverdue && <span className="text-xs text-red-600 font-medium">⏰ Deadline overdue</span>}
-                {!e.isDeadlineOverdue && e.daysLeft !== null && e.daysLeft <= 3 && <span className="text-xs text-orange-500 font-medium">⚡ {e.daysLeft}d left</span>}
-              </div>
-            </div>
-            <a href="/engagements" className="shrink-0 text-xs text-primary hover:underline font-medium">Open →</a>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -392,23 +338,6 @@ function Dashboard() {
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-  const { data: overdueInvoicesCount } = useQuery({
-    queryKey: ["overdue-invoices-count"],
-    queryFn: async () => {
-      try {
-        const userId = await getCurrentUserId();
-        const today = new Date();
-        const { data } = await supabase.from("invoices").select("id, status, due_date")
-          .eq("user_id", userId ?? "").not("status", "eq", "Paid");
-        return (data ?? []).filter((inv: any) => {
-          if (!inv.due_date || inv.status === "Paid") return false;
-          return new Date(inv.due_date) < today;
-        }).length;
-      } catch { return 0; }
-    },
-    refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
-  });
-
 
   const { data: complianceItems } = useQuery({
     queryKey: ["dashboard-compliance"],
@@ -480,9 +409,6 @@ function Dashboard() {
     });
   });
 
-  (engagements ?? []).filter(isActiveEng).forEach((e: any) => {
-  });
-
 
   const focusItems = todaysFocus.slice(0, 6);
   const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -500,16 +426,14 @@ function Dashboard() {
             ? { pct: clientsPct, label: "vs last month" } : undefined}
           sub={clientsLastMonth === 0 || clientsLastMonth === undefined ? `+${clientsThisMonth ?? 0} this month` : undefined}
         />
-        <StatCard label="Fees Collected" value={fmtINR(collectedThisMonth)} icon={Briefcase} color="bg-green-600" href="/invoices"
+        <StatCard label="Fees Collected" value={fmtINR(collectedThisMonth)}
+          sub={`Outstanding: ${fmtINR(totalOutstanding)}`}
+          icon={Briefcase} color="bg-green-600" href="/invoices"
           trend={collectedLastMonth > 0 ? { pct: feesPct, label: "vs last month" } : undefined}
-          sub={collectedLastMonth === 0 ? "This month" : undefined}
         />
-        <StatCard label="Total Outstanding" value={fmtINR(totalOutstanding)} icon={Briefcase} color="bg-indigo-500" href="/invoices" />
-        <StatCard label="Overdue Items" value={overdueCount} sub={`${overdueComplianceCount} compliance · ${overdueEngagements} engagements`} icon={AlertTriangle} color="bg-red-500" href="/compliance" />
         <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" href="/leads" />
         <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
       </div>
-
       <TodaysFocus items={focusItems} />
     
       <ComplianceSection items={complianceItems ?? []} overdueCount={overdueComplianceCount} />
