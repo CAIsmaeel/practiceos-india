@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase, getCurrentUserId } from "@/lib/supabase";
-import { Users, Briefcase, AlertTriangle, MessageCircle, ChevronRight, Bell, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Users, Briefcase, MessageCircle, ChevronRight, Bell, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { format, addDays, isBefore, differenceInCalendarDays, differenceInDays, startOfDay, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 export const Route = createFileRoute("/")({
@@ -17,7 +18,6 @@ function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
   const goTo = () => { if (href) window.location.href = href; };
   const TrendIcon = trend ? (trend.pct > 0 ? TrendingUp : trend.pct < 0 ? TrendingDown : Minus) : null;
   const trendColor = trend ? (trend.pct > 0 ? "text-green-600" : trend.pct < 0 ? "text-red-500" : "text-muted-foreground") : "";
-
   return (
     <div
       role={href ? "link" : undefined}
@@ -33,9 +33,7 @@ function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
           {trend && TrendIcon && (
             <div className={`flex items-center gap-1 mt-1 ${trendColor}`}>
               <TrendIcon size={11} />
-              <span className="text-[11px] font-medium">
-                {trend.pct > 0 ? "+" : ""}{trend.pct}% {trend.label}
-              </span>
+              <span className="text-[11px] font-medium">{trend.pct > 0 ? "+" : ""}{trend.pct}% {trend.label}</span>
             </div>
           )}
           {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
@@ -182,7 +180,10 @@ function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount
   );
 }
 
+// ✅ FIXED: Show 3, Show More button
 function RegulatoryUpdates() {
+  const [showAll, setShowAll] = useState(false);
+
   const { data: updates, isLoading } = useQuery({
     queryKey: ["regulatory-updates-dashboard"],
     queryFn: async () => {
@@ -190,7 +191,7 @@ function RegulatoryUpdates() {
         .from("active_regulatory_events")
         .select("id, title, category, importance, action_required, deadline_date, published_at, url, source")
         .order("published_at", { ascending: false })
-        .limit(6);
+        .limit(20);
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -201,6 +202,8 @@ function RegulatoryUpdates() {
     "Direct Tax": "💰", "GST": "🧾", "Corporate Law": "🏢",
     "Audit & Accounting": "📊", "ICAI": "🎓", "Compliance": "📋", "General": "📰",
   };
+
+  const visible = showAll ? (updates ?? []) : (updates ?? []).slice(0, 3);
 
   return (
     <div className="bg-card border border-border rounded-lg shadow-sm">
@@ -216,7 +219,7 @@ function RegulatoryUpdates() {
       <div className="divide-y divide-border">
         {isLoading && <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading updates...</p>}
         {!isLoading && (updates ?? []).length === 0 && <p className="px-5 py-8 text-center text-sm text-muted-foreground">No regulatory updates yet.</p>}
-        {(updates ?? []).map((update: any) => {
+        {visible.map((update: any) => {
           const icon = categoryIcon[update.category] ?? "📰";
           const pubDate = update.published_at ? format(new Date(update.published_at), "dd MMM yyyy") : "—";
           const deadline = update.deadline_date ? format(new Date(update.deadline_date), "dd MMM yyyy") : null;
@@ -246,6 +249,17 @@ function RegulatoryUpdates() {
             </div>
           );
         })}
+        {/* ✅ Show More / Show Less button */}
+        {(updates ?? []).length > 3 && (
+          <div className="px-5 py-3">
+            <button
+              onClick={() => setShowAll(p => !p)}
+              className="text-sm text-primary hover:underline font-medium"
+            >
+              {showAll ? "Show Less ↑" : `Show ${(updates ?? []).length - 3} More ↓`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -260,7 +274,7 @@ function Dashboard() {
 
   const calcPct = (curr: number, prev: number) => {
     if (prev === 0 && curr === 0) return 0;
-    if (prev === 0) return 0; // avoid meaningless 100%
+    if (prev === 0) return 0;
     return Math.round(((curr - prev) / prev) * 100);
   };
 
@@ -323,8 +337,6 @@ function Dashboard() {
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
-
-  // Invoice query — includes payment_date for accurate trend
   const { data: invoices } = useQuery({
     queryKey: ["dashboard-invoices"],
     queryFn: async () => {
@@ -337,7 +349,6 @@ function Dashboard() {
     },
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
   });
-
 
   const { data: complianceItems } = useQuery({
     queryKey: ["dashboard-compliance"],
@@ -373,14 +384,12 @@ function Dashboard() {
   const activeCount = engagements?.filter(isActiveEng).length ?? 0;
   const overdueEngagements = engagements?.filter((e: any) => e.deadline && isBefore(new Date(e.deadline), now) && isActiveEng(e)).length ?? 0;
   const overdueComplianceCount = complianceItems?.filter((i: any) => i.isOverdue).length ?? 0;
-  const overdueCount = overdueEngagements + overdueComplianceCount;
 
   const totalOutstanding = (invoices ?? []).reduce((sum, inv) => {
     if ((inv.status ?? "").toLowerCase() === "paid") return sum;
     return sum + Number(inv.total_amount ?? inv.amount ?? 0);
   }, 0);
 
-  // Fees collected — use payment_date (accurate)
   const collectedThisMonth = (invoices ?? []).filter((inv: any) => {
     if ((inv.status ?? "").toLowerCase() !== "paid" || !inv.payment_date) return false;
     return inv.payment_date >= thisMonthStart && inv.payment_date <= thisMonthEnd;
@@ -393,25 +402,21 @@ function Dashboard() {
 
   const feesPct = calcPct(collectedThisMonth, collectedLastMonth);
   const clientsPct = calcPct(clientsThisMonth ?? 0, clientsLastMonth ?? 0);
+  const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
   const todaysFocus: FocusItem[] = [];
-
   (invoices ?? []).filter((inv: any) => {
     if (!inv.due_date || (inv.status ?? "").toLowerCase() === "paid") return false;
     return new Date(inv.due_date) < now;
   }).slice(0, 2).forEach((inv: any) => {
     const days = differenceInDays(now, new Date(inv.due_date));
-    const amt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(inv.total_amount ?? inv.amount ?? 0));
+    const amt = fmtINR(Number(inv.total_amount ?? inv.amount ?? 0));
     todaysFocus.push({
       id: `inv-${inv.id}`, priority: days > 30 ? "critical" : "attention", type: "invoice",
       clientName: inv.clients?.name ?? "—", description: `${amt} overdue by ${days} day${days !== 1 ? "s" : ""}`,
       detail: "Invoice", href: "/invoices", action: "Open Invoice", waPhone: inv.clients?.phone ?? "",
     });
   });
-
-
-  const focusItems = todaysFocus.slice(0, 6);
-  const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
   return (
     <div className="space-y-6">
@@ -420,7 +425,7 @@ function Dashboard() {
         <p className="text-muted-foreground text-sm">Overview of your practice — {format(now, "EEEE, dd MMM yyyy")}</p>
       </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={clients ?? 0} icon={Users} color="bg-primary" href="/clients"
           trend={clientsThisMonth !== undefined && clientsLastMonth !== undefined && clientsLastMonth > 0
             ? { pct: clientsPct, label: "vs last month" } : undefined}
@@ -434,12 +439,10 @@ function Dashboard() {
         <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" href="/leads" />
         <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
       </div>
-      <TodaysFocus items={focusItems} />
-    
+
+      <TodaysFocus items={todaysFocus.slice(0, 6)} />
       <ComplianceSection items={complianceItems ?? []} overdueCount={overdueComplianceCount} />
       <RegulatoryUpdates />
-
-
     </div>
   );
 }
