@@ -100,7 +100,7 @@ function calcLine(line: LineItem): LineItem {
 function getThemeStyles(theme: string): string {
   if (theme === "modern") {
     return `
-      body{font-family:'Segoe UI',Arial,sans-serif;padding:0;margin:0;color:#1a1a2e;background:#f8f9ff}
+      body{font-family:'Segoe UI',Arial,sans-serif;padding:0;margin:0;color:#1a1a2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#f8f9ff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .page{max-width:800px;margin:0 auto;background:white;min-height:100vh}
       .header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);color:white;padding:40px;display:flex;justify-content:space-between;align-items:flex-start}
       .firm-name{font-size:24px;font-weight:700;letter-spacing:1px}
@@ -124,7 +124,7 @@ function getThemeStyles(theme: string): string {
   }
   if (theme === "minimal") {
     return `
-      body{font-family:'Georgia',serif;padding:48px;max-width:760px;margin:0 auto;color:#2c2c2c;background:white}
+      body{font-family:'Georgia',serif;padding:48px;max-width:760px;margin:0 auto;color:#2c2c2c;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .header{border-bottom:1px solid #2c2c2c;padding-bottom:24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
       .firm-name{font-size:20px;font-weight:normal;letter-spacing:2px;text-transform:uppercase}
       .firm-details{font-size:11px;color:#666;margin-top:6px;line-height:1.8}
@@ -145,7 +145,7 @@ function getThemeStyles(theme: string): string {
   }
   // Classic (default)
   return `
-    body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}
+    body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}
     .firm-name{font-size:22px;font-weight:bold}
     .firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}
