@@ -2,15 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Invoice, type Client, type FirmSettings, getCurrentUserId } from "@/lib/supabase";
 import { useState, useMemo } from "react";
-import { Plus, X, CheckCircle2, Download, Pencil, MessageCircle, Trash2, Mail } from "lucide-react";
+import { Plus, X, CheckCircle2, Download, Pencil, MessageCircle, Trash2, Mail, Palette } from "lucide-react";
 import { format, isBefore, startOfDay, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/invoices")({
-  head: () => ({ meta: [{ title: "Invoices -” Firmora" }] }),
+  head: () => ({ meta: [{ title: "Invoices — Firmora" }] }),
   component: InvoicesPage,
 });
 
 const GST_RATES = [0, 5, 9, 12, 18];
+
+// ✅ Invoice Themes
+const INVOICE_THEMES = [
+  { id: "classic", label: "Classic" },
+  { id: "modern", label: "Modern" },
+  { id: "minimal", label: "Minimal" },
+];
 
 type LineItem = {
   description: string;
@@ -89,12 +96,197 @@ function calcLine(line: LineItem): LineItem {
   return { ...line, gst_amount: gst, total_amount: line.base_amount + gst };
 }
 
+// ✅ Theme CSS generator
+function getThemeStyles(theme: string): string {
+  if (theme === "modern") {
+    return `
+      body{font-family:'Segoe UI',Arial,sans-serif;padding:0;margin:0;color:#1a1a2e;background:#f8f9ff}
+      .page{max-width:800px;margin:0 auto;background:white;min-height:100vh}
+      .header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);color:white;padding:40px;display:flex;justify-content:space-between;align-items:flex-start}
+      .firm-name{font-size:24px;font-weight:700;letter-spacing:1px}
+      .firm-details{font-size:12px;opacity:0.8;margin-top:6px;line-height:1.7}
+      .firm-right{text-align:right;font-size:12px;opacity:0.85;line-height:1.7}
+      .invoice-label{background:#e94560;color:white;text-align:center;padding:12px;font-size:16px;font-weight:700;letter-spacing:4px}
+      .body-section{padding:32px 40px}
+      .meta-row{display:flex;justify-content:space-between;margin-bottom:24px;font-size:13px}
+      .bill-to{background:#f8f9ff;border-left:4px solid #e94560;padding:16px;margin-bottom:24px;font-size:13px}
+      .bill-to-title{font-weight:700;color:#e94560;margin-bottom:6px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      thead tr{background:#1a1a2e;color:white}
+      th{padding:12px 10px;text-align:left}
+      td{padding:11px 10px;border-bottom:1px solid #f0f0f0}
+      tbody tr:nth-child(even){background:#fafbff}
+      .text-right{text-align:right}
+      .text-center{text-align:center}
+      .grand-total{background:#e94560;color:white;font-weight:700;font-size:15px}
+      .grand-total td{padding:14px 10px}
+    `;
+  }
+  if (theme === "minimal") {
+    return `
+      body{font-family:'Georgia',serif;padding:48px;max-width:760px;margin:0 auto;color:#2c2c2c;background:white}
+      .header{border-bottom:1px solid #2c2c2c;padding-bottom:24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
+      .firm-name{font-size:20px;font-weight:normal;letter-spacing:2px;text-transform:uppercase}
+      .firm-details{font-size:11px;color:#666;margin-top:6px;line-height:1.8}
+      .firm-right{text-align:right;font-size:11px;color:#666;line-height:1.8}
+      .invoice-label{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#999;text-align:center;margin:24px 0 8px;border-top:1px solid #eee;border-bottom:1px solid #eee;padding:10px 0}
+      .meta-row{display:flex;justify-content:space-between;margin-bottom:24px;font-size:12px;color:#666}
+      .bill-to{margin-bottom:32px;font-size:13px}
+      .bill-to-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:6px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      thead tr{border-bottom:2px solid #2c2c2c}
+      th{padding:10px 6px;font-weight:normal;letter-spacing:1px;text-transform:uppercase;font-size:10px;color:#666;text-align:left}
+      td{padding:12px 6px;border-bottom:1px solid #f0f0f0;color:#2c2c2c}
+      .text-right{text-align:right}
+      .text-center{text-align:center}
+      .grand-total{font-size:13px;font-weight:bold;border-top:2px solid #2c2c2c;border-bottom:none}
+      .grand-total td{padding:14px 6px}
+    `;
+  }
+  // Classic (default)
+  return `
+    body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}
+    .header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}
+    .firm-name{font-size:22px;font-weight:bold}
+    .firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}
+    .firm-right{text-align:right;font-size:13px}
+    .invoice-label{font-size:20px;font-weight:bold;letter-spacing:3px;text-align:center;border-top:2px solid #111;border-bottom:2px solid #111;padding:8px 0;margin:16px 0}
+    .meta-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px}
+    .bill-to{background:#f8f8f8;padding:12px;border-radius:4px;margin-bottom:20px;font-size:13px}
+    .bill-to-title{font-weight:bold;margin-bottom:6px;font-size:14px}
+    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+    thead tr{background:#f3f4f6;border-bottom:2px solid #111}
+    th{padding:10px 8px;text-align:left}
+    td{padding:10px 8px;border-bottom:1px solid #eee}
+    .text-right{text-align:right}
+    .text-center{text-align:center}
+    .grand-total{font-weight:bold;border-top:2px solid #111;font-size:14px}
+    .grand-total td{padding:12px 8px}
+  `;
+}
+
+// ✅ Generate PDF HTML based on theme
+function generateInvoiceHTML(invoice: Invoice, firm: any, logoBase64: string, lineRows: string, total: number, invoiceDate: string, theme: string): string {
+  const firmName = firm?.firm_name ?? "Your Firm Name";
+  const gstin = firm?.gst_number ?? "-";
+  const pan = firm?.ca_reg_number ?? "-";
+  const address = firm?.address ?? "";
+  const phone = firm?.phone ?? "";
+  const email = firm?.email ?? "";
+  const css = getThemeStyles(theme);
+  const logoImg = logoBase64 ? `<img src="${logoBase64}" style="width:56px;height:56px;object-fit:contain;" alt="logo"/>` : "";
+  const clientName = (invoice.clients as any)?.name ?? "-";
+  const clientEmail = (invoice.clients as any)?.email ?? "";
+  const clientPhone = (invoice.clients as any)?.phone ?? "";
+
+  if (theme === "modern") {
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title><style>${css}</style></head><body>
+    <div class="page">
+      <div class="header">
+        <div style="display:flex;align-items:center;gap:14px">
+          ${logoImg}
+          <div>
+            <div class="firm-name">${firmName}</div>
+            <div class="firm-details">${address ? address.replace(/\n/g, "<br/>") : ""}${phone ? `<br/>${phone}` : ""}${email ? `<br/>${email}` : ""}</div>
+          </div>
+        </div>
+        <div class="firm-right">
+          <div>GSTIN: ${gstin}</div>
+          <div>PAN: ${pan}</div>
+        </div>
+      </div>
+      <div class="invoice-label">TAX INVOICE</div>
+      <div class="body-section">
+        <div class="meta-row">
+          <div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "-"}</div>
+          <div><strong>Date:</strong> ${invoiceDate}</div>
+        </div>
+        <div class="bill-to">
+          <div class="bill-to-title">Bill To</div>
+          <div style="font-weight:600;font-size:14px">${clientName}</div>
+          ${clientEmail ? `<div>${clientEmail}</div>` : ""}
+          ${clientPhone ? `<div>${clientPhone}</div>` : ""}
+        </div>
+        <table>
+          <thead><tr><th style="width:40%">Description</th><th class="text-right" style="width:15%">Amount</th><th class="text-center" style="width:10%">GST%</th><th class="text-right" style="width:15%">GST Amt</th><th class="text-right" style="width:20%">Total</th></tr></thead>
+          <tbody>${lineRows}</tbody>
+          <tfoot><tr class="grand-total"><td colspan="4" class="text-right">Grand Total</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
+  }
+
+  if (theme === "minimal") {
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title><style>${css}</style></head><body>
+    <div class="header">
+      <div>
+        ${logoImg}
+        <div class="firm-name">${firmName}</div>
+        <div class="firm-details">${address ? address.replace(/\n/g, "<br/>") : ""}${phone ? `<br/>${phone}` : ""}${email ? `<br/>${email}` : ""}</div>
+      </div>
+      <div class="firm-right">GSTIN: ${gstin}<br/>PAN: ${pan}</div>
+    </div>
+    <div class="invoice-label">Tax Invoice</div>
+    <div class="meta-row">
+      <div>Invoice No: ${invoice.invoice_number ?? "-"}</div>
+      <div>Date: ${invoiceDate}</div>
+    </div>
+    <div class="bill-to">
+      <div class="bill-to-title">Bill To</div>
+      <div style="font-size:15px">${clientName}</div>
+      ${clientEmail ? `<div>${clientEmail}</div>` : ""}
+      ${clientPhone ? `<div>${clientPhone}</div>` : ""}
+    </div>
+    <table>
+      <thead><tr><th style="width:40%">Description</th><th class="text-right">Amount</th><th class="text-center">GST%</th><th class="text-right">GST</th><th class="text-right">Total</th></tr></thead>
+      <tbody>${lineRows}</tbody>
+      <tfoot><tr class="grand-total"><td colspan="4" class="text-right">Total</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tfoot>
+    </table>
+    <script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
+  }
+
+  // Classic
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title><style>${css}</style></head><body>
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${logoImg}
+      <div>
+        <div class="firm-name">${firmName}</div>
+        <div class="firm-details">${address ? address.replace(/\n/g, "<br/>") : ""}${phone ? `<br/>Phone: ${phone}` : ""}${email ? `<br/>Email: ${email}` : ""}</div>
+      </div>
+    </div>
+    <div class="firm-right">
+      <div>GSTIN: ${gstin}</div>
+      <div>PAN/CA Reg: ${pan}</div>
+    </div>
+  </div>
+  <div class="invoice-label">TAX INVOICE</div>
+  <div class="meta-row">
+    <div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "-"}</div>
+    <div><strong>Date:</strong> ${invoiceDate}</div>
+  </div>
+  <div class="bill-to">
+    <div class="bill-to-title">Bill To</div>
+    <div>${clientName}</div>
+    <div>${clientEmail}</div>
+    <div>${clientPhone}</div>
+  </div>
+  <table>
+    <thead><tr><th style="width:40%">Description</th><th class="text-right" style="width:15%">Amount</th><th class="text-center" style="width:10%">GST%</th><th class="text-right" style="width:15%">GST Amt</th><th class="text-right" style="width:20%">Total</th></tr></thead>
+    <tbody>${lineRows}</tbody>
+    <tfoot><tr class="grand-total"><td colspan="4" class="text-right">Grand Total</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tfoot>
+  </table>
+  <script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
+}
+
 function InvoicesPage() {
   const qc = useQueryClient();
   const [showPaid, setShowPaid] = useState(false);
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; invoice?: Invoice | null } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [agingFilter, setAgingFilter] = useState<"all" | "30" | "60" | "90">("all");
+  const [selectedTheme, setSelectedTheme] = useState("classic");
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["invoices"],
@@ -187,7 +379,7 @@ function InvoicesPage() {
     const clientEmail = (inv.clients as any)?.email ?? "";
     if (!clientEmail) { alert("Client ka email nahi mila. Client details mein email add karein."); return; }
     const days = getOverdueDays(inv);
-    const subject = `Payment Reminder -” Invoice ${inv.invoice_number ?? ""} (${formatINR(Number(inv.total_amount ??inv.amount ?? 0))})`;
+    const subject = `Payment Reminder - Invoice ${inv.invoice_number ?? ""} (${formatINR(Number(inv.total_amount ?? inv.amount ?? 0))})`;
     const body = getWhatsAppMessage(inv, days, firmName);
     window.open(buildEmailUrl(emailProvider, emailCustomUrl, clientEmail, subject, body), "_blank");
   };
@@ -228,21 +420,16 @@ function InvoicesPage() {
       if (!printWindow) { alert("Please allow popups"); return; }
       printWindow.document.write(`<html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;font-size:18px;color:#666;">Loading invoice...</body></html>`);
       printWindow.document.close();
+
       const { data: { user: cu } } = await supabase.auth.getUser();
       const { data: sd } = await supabase.from("settings").select("*").eq("user_id", cu?.id ?? "").limit(1);
       const firm = sd?.[0] as any;
-      const firmNamePdf = firm?.firm_name ?? "Your Firm Name";
-      const gstin = firm?.gst_number ?? "-”";
-      const pan = firm?.ca_reg_number ?? "-”";
-      const address = firm?.address ?? "";
-      const phone = firm?.phone ?? "";
-      const email = firm?.email ?? "";
-      const logoUrl = firm?.logo_url ?? null;
-      const invoiceDate = invoice.created_at ? format(new Date(invoice.created_at), "dd MMM yyyy") : "-”";
+      const invoiceDate = invoice.created_at ? format(new Date(invoice.created_at), "dd MMM yyyy") : "-";
+
       let logoBase64 = "";
-      if (logoUrl) {
+      if (firm?.logo_url) {
         try {
-          const res = await fetch(logoUrl);
+          const res = await fetch(firm.logo_url);
           const blob = await res.blob();
           logoBase64 = await new Promise((resolve) => {
             const reader = new FileReader();
@@ -251,13 +438,16 @@ function InvoicesPage() {
           });
         } catch { logoBase64 = ""; }
       }
+
       const lineItems: LineItem[] = (invoice as any).line_items ?? [];
       const hasLines = lineItems.length > 0;
       const lineRows = hasLines
-        ? lineItems.map(li => `<tr><td class="text-left">${li.description}</td><td class="text-right">₹${li.base_amount.toLocaleString("en-IN")}</td><td class="text-center">${li.gst_rate}%</td><td class="text-right">₹${li.gst_amount.toLocaleString("en-IN")}</td><td class="text-right">₹${li.total_amount.toLocaleString("en-IN")}</td></tr>`).join("")
-        : `<tr><td class="text-left">${invoice.description ?? "Professional services"}</td><td class="text-right">₹${Number(invoice.base_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td><td class="text-center">${Number((invoice as any).gst_rate ?? 0)}%</td><td class="text-right">₹${Number(invoice.gst_amount ?? 0).toLocaleString("en-IN")}</td><td class="text-right">₹${Number(invoice.total_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td></tr>`;
+        ? lineItems.map(li => `<tr><td>${li.description}</td><td class="text-right">₹${li.base_amount.toLocaleString("en-IN")}</td><td class="text-center">${li.gst_rate}%</td><td class="text-right">₹${li.gst_amount.toLocaleString("en-IN")}</td><td class="text-right">₹${li.total_amount.toLocaleString("en-IN")}</td></tr>`).join("")
+        : `<tr><td>${invoice.description ?? "Professional services"}</td><td class="text-right">₹${Number(invoice.base_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td><td class="text-center">${Number((invoice as any).gst_rate ?? 0)}%</td><td class="text-right">₹${Number(invoice.gst_amount ?? 0).toLocaleString("en-IN")}</td><td class="text-right">₹${Number(invoice.total_amount ?? invoice.amount ?? 0).toLocaleString("en-IN")}</td></tr>`;
+
       const total = Number(invoice.total_amount ?? invoice.amount ?? 0);
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice ${invoice.invoice_number ?? ""}</title><style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#111}.header{display:flex;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px}.firm-name{font-size:22px;font-weight:bold}.firm-details{font-size:12px;color:#444;margin-top:4px;line-height:1.6}.invoice-label{font-size:20px;font-weight:bold;letter-spacing:3px;text-align:center;border-top:2px solid #111;border-bottom:2px solid #111;padding:8px 0;margin:16px 0}.meta-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px}.bill-to{background:#f8f8f8;padding:12px;border-radius:4px;margin-bottom:20px;font-size:13px}.bill-to-title{font-weight:bold;margin-bottom:6px;font-size:14px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}thead tr{background:#f3f4f6;border-bottom:2px solid #111}th{padding:10px 8px}td{padding:10px 8px;border-bottom:1px solid #eee}.text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}.grand-total{font-weight:bold;border-top:2px solid #111;font-size:14px}</style></head><body><div class="header"><div style="display:flex;align-items:center;gap:12px">${logoBase64 ? `<img src="${logoBase64}" style="width:60px;height:60px;object-fit:contain;" alt="logo"/>` : ""}<div><div class="firm-name">${firmNamePdf}</div><div class="firm-details">${address ? address.replace(/\n/g, "<br/>") : ""}${phone ? `<br/>Phone: ${phone}` : ""}${email ? `<br/>Email: ${email}` : ""}</div></div></div><div style="text-align:right;font-size:13px"><div>GSTIN: ${gstin}</div><div>PAN/CA Reg: ${pan}</div></div></div><div class="invoice-label">TAX INVOICE</div><div class="meta-row"><div><strong>Invoice No:</strong> ${invoice.invoice_number ?? "-”"}</div><div><strong>Date:</strong> ${invoiceDate}</div></div><div class="bill-to"><div class="bill-to-title">Bill To</div><div>${(invoice.clients as any)?.name ?? "-”"}</div><div>${(invoice.clients as any)?.email ?? ""}</div><div>${(invoice.clients as any)?.phone ?? ""}</div></div><table><thead><tr><th class="text-left" style="width:40%">Description</th><th class="text-right" style="width:15%">Amount</th><th class="text-center" style="width:10%">GST%</th><th class="text-right" style="width:15%">GST Amt</th><th class="text-right" style="width:20%">Total</th></tr></thead><tbody>${lineRows}</tbody><tfoot><tr class="grand-total"><td colspan="4" class="text-right">Grand Total</td><td class="text-right">₹${total.toLocaleString("en-IN")}</td></tr></tfoot></table><script>window.onload=function(){setTimeout(function(){window.print();},800);}</script></body></html>`;
+      const html = generateInvoiceHTML(invoice, firm, logoBase64, lineRows, total, invoiceDate, selectedTheme);
+
       printWindow.document.open();
       printWindow.document.write(html);
       printWindow.document.close();
@@ -277,8 +467,22 @@ function InvoicesPage() {
           <h1 className="text-2xl font-bold text-foreground">Invoices</h1>
           <p className="text-muted-foreground text-sm">Track invoices and payments</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => setShowPaid((p) => !p)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-sidebar text-primary-foreground border-sidebar": "bg-card text-foreground border-input hover:bg-muted"}`}>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* ✅ Theme Selector */}
+          <div className="flex items-center gap-2 border border-border rounded-md px-3 py-2 bg-card">
+            <Palette size={14} className="text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">PDF Theme:</span>
+            <select
+              value={selectedTheme}
+              onChange={(e) => setSelectedTheme(e.target.value)}
+              className="text-sm font-medium text-foreground bg-transparent border-none outline-none cursor-pointer"
+            >
+              {INVOICE_THEMES.map(t => (
+                <option key={t.id} value={t.id}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+          <button type="button" onClick={() => setShowPaid((p) => !p)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-sidebar text-primary-foreground border-sidebar" : "bg-card text-foreground border-input hover:bg-muted"}`}>
             Show Paid ({paidCount})
           </button>
           <button onClick={() => setModalState({ mode: "create" })} className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium">
@@ -344,15 +548,15 @@ function InvoicesPage() {
               const overdueDays = getOverdueDays(inv);
               const agingTag = getAgingTag(overdueDays);
               const lineItems: LineItem[] = (inv as any).line_items ?? [];
-              const servicesSummary = lineItems.length > 0 ? lineItems.map(l => l.description).filter(Boolean).join(", ") : (inv.description ?? "-”");
+              const servicesSummary = lineItems.length > 0 ? lineItems.map(l => l.description).filter(Boolean).join(", ") : (inv.description ?? "-");
               const hasClientEmail = !!(inv.clients as any)?.email;
               return (
                 <tr key={inv.id} className="hover:bg-muted">
-                  <td className="px-5 py-3 font-medium text-foreground">{inv.invoice_number ?? "-”"}</td>
-                  <td className="px-5 py-3 text-foreground">{(inv.clients as any)?.name ?? "-”"}</td>
+                  <td className="px-5 py-3 font-medium text-foreground">{inv.invoice_number ?? "-"}</td>
+                  <td className="px-5 py-3 text-foreground">{(inv.clients as any)?.name ?? "-"}</td>
                   <td className="px-5 py-3 text-muted-foreground text-xs max-w-[180px] truncate" title={servicesSummary}>{servicesSummary}</td>
                   <td className="px-5 py-3 font-medium text-foreground">{formatINR(total)}</td>
-                  <td className="px-5 py-3 text-foreground">{inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "-”"}</td>
+                  <td className="px-5 py-3 text-foreground">{inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "-"}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`px-2 py-1 rounded-md text-xs font-medium ${displayStatus === "Paid" ? "bg-green-100 text-green-800" : displayStatus === "Overdue" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{displayStatus}</span>
@@ -369,7 +573,7 @@ function InvoicesPage() {
                       </button>
                       {!isInvoicePaid(inv) && (
                         <>
-                          <button onClick={() => payMutation.mutate({ id: inv.id })} disabled={payMutation.isPending}className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50">
+                          <button onClick={() => payMutation.mutate({ id: inv.id })} disabled={payMutation.isPending} className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50">
                             <CheckCircle2 size={14} /> Paid
                           </button>
                           <button onClick={() => handleWhatsApp(inv)} className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium">
@@ -434,7 +638,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
   const updateLine = (i: number, field: keyof LineItem, value: string | number) => {
     setLines((prev) => {
       const updated = [...prev];
-      const line = { ...updated[i], [field]: typeof value === "string" && field !== "description" ? parseFloat(value)|| 0 : value };
+      const line = { ...updated[i], [field]: typeof value === "string" && field !== "description" ? parseFloat(value) || 0 : value };
       updated[i] = calcLine(line as LineItem);
       return updated;
     });
@@ -454,7 +658,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ client_id: clientId, line_items: lines, description: lines.map(l => l.description).filter(Boolean).join(", "), base_amount: totals.base, gst_amount: totals.gst, total_amount: totals.total, amount: totals.total, due_date:dueDate || null, notes: notes || null, status: mode === "edit" ? initialInvoice?.status ?? "Pending" : "Pending" });
+    onSubmit({ client_id: clientId, line_items: lines, description: lines.map(l => l.description).filter(Boolean).join(", "), base_amount: totals.base, gst_amount: totals.gst, total_amount: totals.total, amount: totals.total, due_date: dueDate || null, notes: notes || null, status: mode === "edit" ? initialInvoice?.status ?? "Pending" : "Pending" });
   };
 
   return (
@@ -481,7 +685,7 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
 
           {clientId && complianceItems && complianceItems.length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs font-semibold text-blue-700 mb-2">âš¡ Quick Add -” Pending Compliance</p>
+              <p className="text-xs font-semibold text-blue-700 mb-2">⚡ Quick Add — Pending Compliance</p>
               <div className="flex flex-wrap gap-2">
                 {complianceItems.map((item: any) => (
                   <button key={item.id} type="button" onClick={() => addComplianceLine(item.compliance_type)} className="text-xs bg-white border border-blue-300 text-blue-700 px-2 py-1 rounded hover:bg-blue-100">
