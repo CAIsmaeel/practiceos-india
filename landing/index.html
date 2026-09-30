@@ -295,7 +295,7 @@
     <button class="chat-close" onclick="toggleChat()">×</button>
   </div>
   <div class="chat-messages" id="chatMessages">
-    <div class="chat-msg bot">Hello! 🙏 Ask me anything about GST, ITR, company registration, or our services!</div>
+    <div class="chat-msg bot">Namaste! 🙏 Ask me anything about GST, ITR, company registration, or our services!</div>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chatInput" placeholder="Ask about GST, ITR, audit..." onkeydown="if(event.key==='Enter') sendChat()"/>
@@ -316,8 +316,6 @@
 <script>
   const SUPABASE_URL = "https://xjcknltsldywczvqmzwp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2tubHRzbGR5d2N6dnFtendwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTM3ODksImV4cCI6MjA5ODAyOTc4OX0.qAijhwhTg1-OD0avyMgh59r_ai3OC5T47R6C7HQi8mY";
-  const GROQ_API_KEY = "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";
-
   const SERVICE_ICONS = { "GST":"-🧾","Income":"📄","Tax Audit":"🔍","Statutory":"🔍","Company":"🏢","LLP":"🏢","Bookkeeping":"📊","Accounting":"📊","TDS":"💳","Payroll":"💰","PF":"💰","Udyam":"📋","MSME":"📋","FEMA":"🌐","Virtual":"🤝","Business":"🤝","Trust":"🏛️","NGO":"🏛️" };
   function getIcon(s){ for(const [k,v] of Object.entries(SERVICE_ICONS)){ if(s.includes(k)) return v; } return "✅"; }
 
@@ -496,40 +494,48 @@
     btn.disabled = false; btn.textContent = 'Book Consultation →';
   }
 
+  // ✅ FAQ Bot — No Groq, No API limits
   let chatOpen = false;
-  let chatHistory = [];
   let chatMsgCount = 0;
   let leadCaptureMode = false;
   let capturedQuery = '';
+  let lcStep = 0;
+  let lcName = '';
+  let faqData = [];
 
-  // ✅ Rate limiting — 20 messages per day per browser
-  const RATE_LIMIT = 20;
-  const RATE_KEY = 'chat_usage';
-
-  function getRateData() {
+  // Load FAQ data
+  async function loadFAQ() {
     try {
-      const raw = localStorage.getItem(RATE_KEY);
-      if (!raw) return { count: 0, date: new Date().toDateString() };
-      return JSON.parse(raw);
-    } catch(e) { return { count: 0, date: new Date().toDateString() }; }
+      const res = await fetch('./faq.json');
+      faqData = await res.json();
+    } catch(e) {
+      console.error('FAQ load error', e);
+      faqData = [];
+    }
   }
 
-  function incrementRate() {
-    try {
-      const data = getRateData();
-      const today = new Date().toDateString();
-      const count = data.date === today ? data.count + 1 : 1;
-      localStorage.setItem(RATE_KEY, JSON.stringify({ count, date: today }));
-      return count;
-    } catch(e) { return 0; }
-  }
+  // ✅ Smart keyword matching
+  function findAnswer(userMsg) {
+    const msg = userMsg.toLowerCase().trim();
+    let bestMatch = null;
+    let bestScore = 0;
 
-  function isRateLimited() {
-    try {
-      const data = getRateData();
-      const today = new Date().toDateString();
-      return data.date === today && data.count >= RATE_LIMIT;
-    } catch(e) { return false; }
+    for (const faq of faqData) {
+      let score = 0;
+      for (const keyword of faq.keywords) {
+        if (msg.includes(keyword.toLowerCase())) {
+          // Longer keyword match = higher score
+          score += keyword.split(' ').length * 2;
+        }
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = faq;
+      }
+    }
+
+    // Minimum score threshold
+    return bestScore >= 2 ? bestMatch : null;
   }
 
   function toggleChat() {
@@ -538,71 +544,16 @@
     if (chatOpen) document.getElementById('chatInput').focus();
   }
 
-  function stripMarkdown(text) {
-    return text
-      .replace(/\*\*(.+?)\*\*/g, '$1')
-      .replace(/\*(.+?)\*/g, '$1')
-      .replace(/^#{1,6}\s+/gm, '')
-      .replace(/^[-*]\s+/gm, '• ')
-      .replace(/\|/g, '')
-      .trim();
-  }
-
   function addMsg(text, type) {
     const div = document.createElement('div');
     div.className = `chat-msg ${type}`;
-    div.textContent = type === 'bot' ? stripMarkdown(text) : text;
+    div.textContent = text;
     const msgs = document.getElementById('chatMessages');
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
     return div;
   }
 
-  // ✅ Save conversation to query_log (Support Agent inbox)
-  let queryLogId = null;
-
-  async function saveQueryLog(name, phone, messages) {
-    try {
-      const payload = {
-        user_id: caUserId || null,
-        client_name: name,
-        client_phone: phone || null,
-        source: 'Website Chatbot',
-        messages: messages,
-        status: 'open',
-      };
-
-      if (queryLogId) {
-        // Update existing
-        await fetch(`${SUPABASE_URL}/rest/v1/query_log?id=eq.${queryLogId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal',
-          },
-          body: JSON.stringify({ messages: messages }),
-        });
-      } else {
-        // Create new
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/query_log`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        queryLogId = data?.[0]?.id ?? null;
-      }
-    } catch(e) { console.error('Query log error', e); }
-  }
-
-  // ✅ Save lead when contact captured
   async function saveChatLead(name, phone, query) {
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
@@ -614,8 +565,7 @@
           'Prefer': 'return=minimal',
         },
         body: JSON.stringify({
-          name: name,
-          phone: phone,
+          name, phone,
           source: 'AI Chatbot',
           requirement: 'General Enquiry',
           notes: `Chat query: ${query}`,
@@ -626,26 +576,15 @@
     } catch(e) { console.error('Lead save error', e); }
   }
 
-  // Lead capture flow state
-  let lcStep = 0; // 0=not started, 1=asked name, 2=asked phone
-  let lcName = '';
-
   async function sendChat() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     if (!text) return;
-
-    // ✅ Rate limit check
-    if (isRateLimited()) {
-      addMsg('You have reached today\'s chat limit. Please WhatsApp us directly for more help! 👇', 'bot');
-      return;
-    }
-    incrementRate();
-
     input.value = '';
     addMsg(text, 'user');
+    chatMsgCount++;
 
-    // ✅ Lead capture mode
+    // Lead capture mode
     if (leadCaptureMode) {
       if (lcStep === 1) {
         lcName = text;
@@ -660,66 +599,68 @@
           return;
         }
         await saveChatLead(lcName, phone, capturedQuery);
-        // Update query_log with captured phone
-        if (queryLogId) {
-          await fetch(`${SUPABASE_URL}/rest/v1/query_log?id=eq.${queryLogId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ client_name: lcName, client_phone: phone }),
-          });
-        }
-        addMsg(`Thank you, ${lcName}! 🎉 Our CA will contact you on ${text} shortly. You can also WhatsApp us directly using the button below.`, 'bot');
+        addMsg(`Thank you, ${lcName}! 🎉 Our CA will contact you on WhatsApp shortly. You can also reach us directly using the button below.`, 'bot');
         leadCaptureMode = false;
         lcStep = 0;
         return;
       }
     }
 
-    // Normal AI chat
-    chatMsgCount++;
-    if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'system', content: `You are a helpful assistant for ${firmData?.firm_name || 'CA Firm'}, a Chartered Accountancy firm. Help with GST, ITR, audits, company registration, TDS, accounting. Be concise and professional. Keep responses under 80 words.` });
-    }
-    chatHistory.push({ role: 'user', content: text });
-    const loading = addMsg('Typing...', 'bot');
+    // ✅ FAQ matching
+    const match = findAnswer(text);
 
-    try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'openai/gpt-oss-20b', messages: chatHistory, max_tokens: 500, temperature: 0.7 }),
-      });
-      const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content ?? "I'm having trouble. Please contact us directly.";
-      loading.remove();
-      addMsg(reply, 'bot');
-      chatHistory.push({ role: 'assistant', content: reply });
+    if (match) {
+      // Found answer
+      setTimeout(() => {
+        addMsg(match.answer, 'bot');
 
-      // ✅ Save to query_log after every message
-      const allMsgs = chatHistory.filter(m => m.role !== 'system').map(m => ({
-        role: m.role === 'user' ? 'user' : 'bot',
-        text: m.content,
-      }));
-      await saveQueryLog(lcName || 'Website Visitor', null, allMsgs);
+        // After 4 answered questions, offer callback
+        if (chatMsgCount === 4) {
+          setTimeout(() => {
+            addMsg('I can see you have multiple queries! Would you like our CA to personally call you and discuss everything? Just share your name — takes 30 seconds! 😊', 'bot');
+            capturedQuery = text;
+            leadCaptureMode = true;
+            lcStep = 1;
+          }, 1000);
+        }
+      }, 500);
+    } else {
+      // No match — escalate to WhatsApp
+      capturedQuery = text;
+      const wa = firmData?.whatsapp_number || '';
+      const waNum = wa.replace(/\D/g,'').replace(/^(?!91)/, '91');
+      const waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi, I have a query: ${text}`)}`;
 
-      // ✅ After 3 messages — ask for contact details
-      if (chatMsgCount === 3) {
-        capturedQuery = chatHistory.filter(m => m.role === 'user').map(m => m.content).join(' | ');
+      setTimeout(() => {
+        addMsg(`That's a specific question that needs our CA's personal attention. Would you like to connect on WhatsApp for a quick answer?`, 'bot');
+
+        // Add WhatsApp button dynamically
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg bot';
+        msgDiv.style.padding = '8px';
+        const btn = document.createElement('a');
+        btn.href = waUrl;
+        btn.target = '_blank';
+        btn.className = 'btn-wa-small';
+        btn.innerHTML = '📱 Chat on WhatsApp';
+        btn.style.display = 'flex';
+        btn.style.marginTop = '4px';
+        msgDiv.appendChild(btn);
+        const msgs = document.getElementById('chatMessages');
+        msgs.appendChild(msgDiv);
+        msgs.scrollTop = msgs.scrollHeight;
+
+        // Also offer callback
         setTimeout(() => {
-          addMsg('I can see you have some questions! Would you like our CA to personally call you back? Just share your name and I will arrange it. 😊', 'bot');
+          addMsg('Or share your name and we will have our CA call you back!', 'bot');
           leadCaptureMode = true;
           lcStep = 1;
-        }, 800);
-      }
-    } catch(e) {
-      loading.remove();
-      const waNum = firmData?.whatsapp_number || '';
-      const wa = waNum.replace(/\D/g,'');
-      const waFull = wa.startsWith('91') ? wa : '91'+wa;
-      addMsg(`Our AI assistant is busy right now. Please WhatsApp us directly at ${firmData?.phone || 'our number'} — we typically respond within a few hours! 😊`, 'bot');
+        }, 1500);
+      }, 500);
     }
   }
 
+    loadFAQ();
   init();
 </script>
 </body>

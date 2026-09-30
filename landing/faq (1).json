@@ -1,0 +1,302 @@
+[
+  {
+    "id": 1,
+    "keywords": ["gst registration", "gst register", "gst kaise", "gst lena", "gst number", "gstin"],
+    "answer": "GST registration ke liye yeh documents chahiye: PAN card, Aadhaar card, bank statement ya cancelled cheque, business address proof (electricity bill/rent agreement), aur passport size photo. Process 7-10 working days mein complete hoti hai. Registration completely online hoti hai — aapko office aane ki zaroorat nahi. Hum aapke liye poora process handle karte hain."
+  },
+  {
+    "id": 2,
+    "keywords": ["gst return", "gstr", "gstr1", "gstr3b", "gstr 1", "gstr 3b", "monthly return", "quarterly return", "gst filing"],
+    "answer": "GST return filing mein mainly GSTR-1 (sales details) aur GSTR-3B (tax payment) file karne padte hain. Monthly filers ke liye GSTR-1 har mahine 11 tarikh tak aur GSTR-3B 20 tarikh tak file hoti hai. Quarterly filers ke liye deadlines alag hain. Hum aapki sab returns samay par file karte hain taki koi late fee na lage."
+  },
+  {
+    "id": 3,
+    "keywords": ["gst annual return", "gstr9", "gstr 9", "annual gst", "yearly gst"],
+    "answer": "GSTR-9 annual return har saal December 31 tak file karni hoti hai. Isme poore saal ki GST details summarize hoti hain. Agar turnover 5 crore se zyada hai toh GSTR-9C (reconciliation statement) bhi file karni padti hai. Hum yeh dono aapke liye handle karte hain."
+  },
+  {
+    "id": 4,
+    "keywords": ["gst notice", "gst demand", "gst scrutiny", "gst department", "gst problem", "gst issue"],
+    "answer": "GST notice ya demand order mili hai toh ghabrane ki zaroorat nahi. Hum notice ka jawab taiyar karte hain, department ke samne aapko represent karte hain, aur demand ko legally challenge karte hain agar galat hai. Notice milte hi humse contact karein — jitna jaldi utna behtar."
+  },
+  {
+    "id": 5,
+    "keywords": ["gst refund", "refund gst", "itc refund", "input tax credit"],
+    "answer": "GST refund exports pe, inverted duty structure pe, ya excess ITC pe milta hai. Refund application RFD-01 form se file hoti hai. Process mein 30-60 din lagte hain. Hum aapki refund application se lekar disbursement tak poora process handle karte hain."
+  },
+  {
+    "id": 6,
+    "keywords": ["gst cancel", "gst cancellation", "gst surrender", "band karna gst", "gst close"],
+    "answer": "GST registration cancel karne ke liye REG-16 form file karna padta hai. Agar business band ho gaya hai ya turnover limit se neeche aa gayi hai toh cancellation apply kar sakte hain. Cancellation ke baad final return GSTR-10 bhi file karni padti hai. Hum yeh process aapke liye handle karte hain."
+  },
+  {
+    "id": 7,
+    "keywords": ["itr", "income tax return", "itr file", "itr kaise", "tax return", "income tax filing", "itr bharna"],
+    "answer": "ITR filing ke liye Form 16 (salaried ke liye), bank statements, investment proofs (80C, 80D etc.), aur capital gains statements chahiye. Last date July 31 hoti hai (agar audit nahi hai). Business walo ke liye October 31 tak. Hum sab ITR types file karte hain — salaried, business, professional, capital gains, foreign income sab."
+  },
+  {
+    "id": 8,
+    "keywords": ["itr salaried", "salary itr", "form 16", "job wala itr", "employee itr"],
+    "answer": "Salaried individual ke liye ITR-1 ya ITR-2 file hoti hai. Documents chahiye: Form 16 (employer se milta hai), bank statement, investment proofs (PPF, LIC, ELSS etc.), home loan certificate agar hai. Process simple hai aur usually 1-2 din mein complete ho jaati hai. Hamari fees salaried ITR ke liye bahut affordable hai."
+  },
+  {
+    "id": 9,
+    "keywords": ["business itr", "firm itr", "proprietorship itr", "business tax return", "self employed itr"],
+    "answer": "Business ya professional ke liye ITR-3 ya ITR-4 file hoti hai. Agar turnover 1 crore (business) ya 50 lakh (professional) se zyada hai toh tax audit bhi compulsory hai. Documents mein books of accounts, bank statements, GST returns, aur expense details chahiye."
+  },
+  {
+    "id": 10,
+    "keywords": ["income tax notice", "it notice", "scrutiny notice", "143 notice", "148 notice", "tax demand", "income tax demand"],
+    "answer": "Income tax notice mili hai? Ghabrana mat. Section 143(1) notice common hai — usually koi processing issue hoti hai. Section 143(2) matlab scrutiny — isme hum aapka response taiyar karte hain. Section 148 matlab reassessment — isme legal strategy banani padti hai. Notice milte hi humse contact karein, samay bahut important hai."
+  },
+  {
+    "id": 11,
+    "keywords": ["tax planning", "tax save", "tax bachao", "tax saving", "80c", "deduction", "tax kam karna"],
+    "answer": "Tax bachane ke liye Section 80C mein 1.5 lakh tak investment kar sakte hain (PPF, ELSS, LIC, EPF). Section 80D mein health insurance premium. Home loan interest Section 24 mein. HRA exemption, LTA, aur standard deduction bhi milte hain. Hum aapke liye tax planning karke maximum legal savings nikaalte hain."
+  },
+  {
+    "id": 12,
+    "keywords": ["advance tax", "advance tax payment", "quarterly tax", "self assessment tax"],
+    "answer": "Agar tax liability 10,000 se zyada hai toh advance tax quarterly bharna padta hai: June 30 (15%), September 30 (45%), December 31 (75%), March 31 (100%). Late payment pe interest lagta hai. Hum aapka advance tax calculate karke remind karte hain taki koi penal interest na de."
+  },
+  {
+    "id": 13,
+    "keywords": ["capital gains", "share sell", "property sell", "mutual fund sell", "stcg", "ltcg", "property tax"],
+    "answer": "Property ya shares beche hain? Capital gains tax calculate karna padta hai. Short-term (STCG) aur long-term (LTCG) rates alag hain. Property ke liye Section 54 aur 54F mein exemption mil sakti hai agar reinvest karein. Shares ke liye LTCG 1 lakh se zyada par 10% tax. Hum sahi calculation aur tax planning karte hain."
+  },
+  {
+    "id": 14,
+    "keywords": ["tds", "tds deduction", "tds return", "26q", "24q", "tds filing", "tds kya hai"],
+    "answer": "TDS (Tax Deducted at Source) salary, rent, professional fees, contractor payments par katna padta hai. Quarterly returns 26Q (non-salary) aur 24Q (salary) file karne padte hain. TDS challan 7 tarikh tak bharna hota hai. Hum aapka TDS calculation, challan payment, aur quarterly returns sab handle karte hain."
+  },
+  {
+    "id": 15,
+    "keywords": ["form 16", "form 16a", "tds certificate", "employee certificate"],
+    "answer": "Form 16 employer employee ko deta hai — isme salary aur TDS ki details hoti hain. Form 16A vendor/professional ko deta hai. Form 16 June 15 tak issue karna mandatory hai. Hum aapke employees aur vendors ke liye Form 16/16A generate karte hain TRACES portal se."
+  },
+  {
+    "id": 16,
+    "keywords": ["company registration", "pvt ltd", "private limited", "company banana", "incorporate", "new company"],
+    "answer": "Private Limited Company registration ke liye: DSC (Digital Signature Certificate), DIN (Director Identification Number), name approval, MOA aur AOA drafting, aur ROC filing chahiye. Process 10-15 working days mein complete hoti hai. Documents mein directors ke PAN, Aadhaar, address proof, aur registered office address chahiye. Sab online hota hai."
+  },
+  {
+    "id": 17,
+    "keywords": ["llp registration", "llp banana", "limited liability partnership", "llp kya hai"],
+    "answer": "LLP (Limited Liability Partnership) professionals aur small businesses ke liye ideal hai. Registration cost Private Limited se kam hai aur compliance bhi simpler hai. Documents mein partners ke PAN, Aadhaar, address proof chahiye. Process 7-10 din mein complete hoti hai. Annual filings Form 11 aur Form 8 file karne padte hain."
+  },
+  {
+    "id": 18,
+    "keywords": ["opc", "one person company", "single person company", "ek aadmi company"],
+    "answer": "OPC (One Person Company) ek akele entrepreneur ke liye best option hai. Isme sirf ek director aur ek shareholder hota hai (same person). Limited liability milti hai. Annual compliance Private Limited jaisi hai. Agar turnover 2 crore ya paid-up capital 50 lakh cross kare toh Private Limited mein convert karna padta hai."
+  },
+  {
+    "id": 19,
+    "keywords": ["proprietorship", "sole proprietor", "proprietorship registration", "akela kaam", "individual business"],
+    "answer": "Proprietorship mein alag registration nahi hoti — aap apne PAN pe business chala sakte hain. GST registration, MSME (Udyam), aur shop & establishment registration le sakte hain. Simple structure hai lekin personal liability unlimited hoti hai. Small businesses ke liye starting point ke taur par perfect hai."
+  },
+  {
+    "id": 20,
+    "keywords": ["roc filing", "annual return", "mca filing", "aoc4", "mgt7", "company compliance", "roc compliance"],
+    "answer": "Private Limited Company ke liye ROC annual filings compulsory hain: AOC-4 (financial statements, September 30 tak) aur MGT-7 (annual return, November 29 tak). Director KYC (DIR-3 KYC) bhi har saal September 30 tak karna padta hai. Late filing pe hefty penalties lagte hain. Hum yeh sab deadlines track karke time pe file karte hain."
+  },
+  {
+    "id": 21,
+    "keywords": ["statutory audit", "company audit", "audit compulsory", "audit kab chahiye", "companies act audit"],
+    "answer": "Private Limited Company aur LLP ke liye statutory audit compulsory hai — chahe koi bhi turnover ho. Audit mein financial statements ki verification hoti hai. Auditor ki appointment Annual General Meeting mein hoti hai. Audit report September 30 tak taiyar karni padti hai AOC-4 filing ke liye."
+  },
+  {
+    "id": 22,
+    "keywords": ["tax audit", "44ab", "tax audit limit", "tax audit turnover", "ca audit"],
+    "answer": "Tax audit Section 44AB ke under compulsory hai agar: business turnover 1 crore se zyada hai (ya 10 crore agar 95% digital transactions hain), profession receipts 50 lakh se zyada hain, ya presumptive scheme mein income less declare ki hai. Tax audit report (3CD) October 31 tak file karni padti hai."
+  },
+  {
+    "id": 23,
+    "keywords": ["internal audit", "internal control", "internal audit kya", "risk audit"],
+    "answer": "Internal audit aapke business ke internal controls aur processes ko check karta hai. Yeh statutory audit se alag hai — yeh optional hota hai lekin larger companies ke liye mandatory hai. Hum aapke business ki efficiency, risk management, aur compliance gaps identify karte hain aur improvement suggestions dete hain."
+  },
+  {
+    "id": 24,
+    "keywords": ["bookkeeping", "accounting", "tally", "accounts maintain", "books of accounts", "monthly accounting", "khata"],
+    "answer": "Bookkeeping mein rozana ke transactions record karne padte hain — sales, purchases, expenses, bank entries. Hum Tally, Zoho Books, ya aapki preferred software mein monthly bookkeeping karte hain. Har mahine P&L aur Balance Sheet dete hain taki aapko business ki sahi picture milti rahe."
+  },
+  {
+    "id": 25,
+    "keywords": ["mis report", "management report", "financial report", "business report", "monthly report"],
+    "answer": "MIS reports se aapko business performance ka clear picture milta hai — revenue trends, expense analysis, profitability, cash flow. Hum har mahine customized MIS reports banate hain jo aapke business decisions mein help karti hain. Excel ya PDF format mein deliver karte hain."
+  },
+  {
+    "id": 26,
+    "keywords": ["payroll", "salary processing", "employee salary", "payroll management", "salary slip"],
+    "answer": "Payroll processing mein monthly salary calculation, TDS on salary, PF/ESI deduction, payslip generation, aur Form 16 shaamil hai. Hum aapke sab employees ka payroll manage karte hain — joining se lekar full & final settlement tak. 100% statutory compliance ensure karte hain."
+  },
+  {
+    "id": 27,
+    "keywords": ["pf", "epf", "provident fund", "pf registration", "pf return", "pf contribution"],
+    "answer": "PF registration compulsory hai agar 20 ya zyada employees hain. Employee contribution 12% basic salary, employer bhi 12% contribute karta hai. Monthly ECR return file karni padti hai. Hum PF registration, monthly filings, aur employee PF account management karte hain."
+  },
+  {
+    "id": 28,
+    "keywords": ["esi", "esic", "employee state insurance", "esi registration", "esi return"],
+    "answer": "ESI registration compulsory hai agar 10 ya zyada employees hain aur salary 21,000 se kam hai. Employee 0.75% contribute karta hai, employer 3.25%. Monthly contribution aur half-yearly returns file karne padte hain. Hum ESI registration se lekar monthly compliance tak sab handle karte hain."
+  },
+  {
+    "id": 29,
+    "keywords": ["professional tax", "pt", "professional tax registration", "pt return"],
+    "answer": "Professional Tax state-wise hota hai — Maharashtra, Karnataka, Gujarat jaise states mein applicable hai. Employer employees se PT deduct karta hai. Maharashtra mein salary 10,000 se zyada hai toh PT applicable hai. Hum PT registration aur monthly/quarterly returns file karte hain."
+  },
+  {
+    "id": 30,
+    "keywords": ["msme", "udyam", "msme registration", "udyam registration", "small business registration", "udyog aadhar"],
+    "answer": "Udyam registration (MSME) ke fayde: priority sector lending, collateral-free loans, government scheme benefits, tender preference, aur late payment protection. Registration bilkul free hai — sirf Aadhaar aur PAN chahiye. Online process 1 din mein complete ho jaati hai. Hum yeh registration karwate hain."
+  },
+  {
+    "id": 31,
+    "keywords": ["import export", "iec", "iec code", "import code", "export code", "dgft"],
+    "answer": "Import Export Code (IEC) DGFT se milta hai aur international trade ke liye compulsory hai. Fees sirf 500 rupaye hai. Documents mein PAN, bank certificate, aur address proof chahiye. Process 2-3 working days mein complete hoti hai. IEC ek baar milta hai, lifetime valid rehta hai."
+  },
+  {
+    "id": 32,
+    "keywords": ["fssai", "food license", "food business", "restaurant license", "food registration"],
+    "answer": "FSSAI registration food business ke liye compulsory hai — restaurant, bakery, catering, food manufacturing sab ke liye. Turnover 12 lakh se kam hai toh basic registration (free), zyada hai toh state/central license. Hum aapke business ke liye sahi category identify karke application karte hain."
+  },
+  {
+    "id": 33,
+    "keywords": ["trademark", "brand register", "logo register", "brand protect", "trademark registration"],
+    "answer": "Trademark registration se aapka brand legally protected ho jaata hai. Process 18-24 months mein complete hoti hai lekin TM symbol use karna registration ke baad turant shuru kar sakte hain. Class identify karna zaroori hai — kaunse products/services ke liye register karna hai. Hum trademark filing karte hain."
+  },
+  {
+    "id": 34,
+    "keywords": ["virtual cfo", "cfo service", "cfo kya", "financial advisor", "business advisor"],
+    "answer": "Virtual CFO service startup aur growing businesses ke liye ideal hai. Isme financial planning, budgeting, cash flow management, investor reporting, MIS, aur strategic advice milti hai — full-time CFO ki cost ke bina. Hum aapke business ke financial co-pilot ban jaate hain."
+  },
+  {
+    "id": 35,
+    "keywords": ["project report", "bank loan report", "cma data", "loan project report", "business plan report"],
+    "answer": "Bank loan ke liye project report aur CMA (Credit Monitoring Arrangement) data chahiye. Isme 3-5 saal ka projected P&L, Balance Sheet, Cash Flow, aur loan repayment capacity dikhani padti hai. Hum bankers ki language mein yeh reports banate hain jo loan approval ke chances improve karti hain."
+  },
+  {
+    "id": 36,
+    "keywords": ["nri taxation", "nri tax", "nri itr", "foreign income", "nri india tax", "overseas income"],
+    "answer": "NRI ke liye tax liability India-sourced income par hoti hai — rent, capital gains, fixed deposits. FEMA compliance bhi zaroori hai. DTAA (Double Taxation Avoidance Agreement) ka fayda le sakte hain. Hum NRI clients ke liye ITR filing, FEMA compliance, aur India-based asset management karte hain."
+  },
+  {
+    "id": 37,
+    "keywords": ["fema", "foreign remittance", "15ca 15cb", "foreign payment", "rbi compliance", "foreign investment"],
+    "answer": "Koi bhi foreign payment karne se pehle Form 15CA/15CB zaroorat hoti hai (CA ke sign chahiye). FEMA compliance foreign investments, foreign loans, aur overseas payments ke liye zaroori hai. RBI reporting bhi karna padta hai certain transactions ke liye. Hum yeh compliance handle karte hain."
+  },
+  {
+    "id": 38,
+    "keywords": ["business valuation", "company valuation", "shares valuation", "valuation certificate"],
+    "answer": "Business valuation ki zaroorat hoti hai funding raise karne, shares transfer, merger/acquisition, aur tax purposes ke liye. Hum DCF (Discounted Cash Flow), NAV, aur comparable company methods use karte hain. SEBI registered valuer se certificate bhi arrange karte hain."
+  },
+  {
+    "id": 39,
+    "keywords": ["trust", "ngo", "society", "section 8", "nonprofit", "charitable", "ngo registration"],
+    "answer": "Trust, Society ya Section 8 Company register karwa sakte hain. Donations attract karne ke liye 12A aur 80G registration zaroori hai. FCRA registration foreign donations ke liye chahiye. Hum registration se lekar annual compliance — audit, ITR, aur CSR reporting tak sab handle karte hain."
+  },
+  {
+    "id": 40,
+    "keywords": ["startup", "startup india", "startup registration", "new business", "startup tax benefit"],
+    "answer": "DPIIT recognized startup ko 3 saal income tax exemption (Section 80IAC), angel tax exemption, aur fast-track patent processing milti hai. Recognition ke liye DPIIT portal pe apply karna padta hai. Hum startup registration, tax benefits claim karna, aur investor documentation karte hain."
+  },
+  {
+    "id": 41,
+    "keywords": ["fees", "charges", "cost", "kitna lagega", "rate", "price", "pricing", "kitne paise", "how much"],
+    "answer": "Hamari fees service type aur complexity pe depend karti hai. Basic ITR filing Rs 500 se shuru hoti hai, GST monthly compliance Rs 1,500-3,000/month, company registration package Rs 8,000-15,000. Exact quote ke liye apni requirement batayein — hum transparent pricing dete hain, koi hidden charges nahi hote."
+  },
+  {
+    "id": 42,
+    "keywords": ["documents", "kya chahiye", "kya documents", "paperwork", "documents required", "kya documents laane hain"],
+    "answer": "Har service ke liye alag documents chahiye. Basic documents jo mostly kaam aate hain: PAN card, Aadhaar card, bank statement, aur address proof. Specific service ke documents ke liye WhatsApp karein — hum aapko exact checklist bhejenge taki koi bhi document miss na ho."
+  },
+  {
+    "id": 43,
+    "keywords": ["kitna time", "time kitna lagta", "kitne din", "how long", "process time", "duration"],
+    "answer": "Time service pe depend karta hai: GST registration 7-10 din, Company registration 10-15 din, ITR filing 1-2 din, TDS return 1 din. Document milne ke baad hum minimum time mein kaam complete karte hain. Urgent kaam ke liye bhi arrange kar sakte hain — batayein kya hai zaroorat."
+  },
+  {
+    "id": 44,
+    "keywords": ["online", "remote", "ghar se", "visit karna padega", "physically aana", "office aana"],
+    "answer": "Bilkul nahi aana padta office. Hum 100% remotely kaam karte hain. Documents WhatsApp ya email pe bhej sakte hain. Communication WhatsApp par hoti hai. Signatures aur documents ki zaroorat padti hai toh courier ya digital signature use hoti hai. Pan-India clients ko serve karte hain."
+  },
+  {
+    "id": 45,
+    "keywords": ["late fee", "penalty", "fine", "maafi", "penalty waiver", "late filing"],
+    "answer": "Late filing se penalties lagte hain: GST return late fee Rs 50/day (max Rs 5,000), ITR late filing fee Rs 5,000 (Rs 1,000 agar income 5L se kam). Kuch cases mein waiver mil sakta hai. Isliye hum timely reminders dete hain. Agar already late ho gaya hai toh bhi hum minimum penalty ke saath file karte hain."
+  },
+  {
+    "id": 46,
+    "keywords": ["whatsapp", "contact", "call", "reach", "baat karna", "milna", "appointment"],
+    "answer": "Humse seedha WhatsApp par baat kar sakte hain — yahi hamaari primary communication hai. No formal appointments needed for routine queries. WhatsApp number: jo upar diya hua hai. Mon-Sat, 10 AM – 7 PM available hain. Urgent matters ke liye bhi respond karte hain."
+  },
+  {
+    "id": 47,
+    "keywords": ["experience", "kitne saal", "qualified", "ca qualified", "expertise", "background"],
+    "answer": "Hum qualified Chartered Accountants hain ICAI se registered. Humein individual taxation, business compliance, GST, audit, aur corporate law mein expertise hai. 200+ clients ka experience hai across different industries. Apna CA registration number verify karna ho toh zaroor batayein."
+  },
+  {
+    "id": 48,
+    "keywords": ["confidential", "data safe", "privacy", "secure", "data protect", "information safe"],
+    "answer": "Aapka financial data 100% confidential rakha jaata hai. Hum ICAI ke professional ethics ke under kaam karte hain jisme client confidentiality mandatory hai. Koi bhi information third party ko share nahi ki jaati. Digital data encrypted systems mein store hota hai."
+  },
+  {
+    "id": 49,
+    "keywords": ["dsc", "digital signature", "digital sign", "e sign", "emsigner"],
+    "answer": "DSC (Digital Signature Certificate) company filings, GST, income tax, aur MCA ke liye chahiye. Class 3 DSC sabse common hai. Validity 1 ya 2 saal ki hoti hai. Documents mein PAN, Aadhaar, aur photo chahiye. Process 1-2 din mein complete hoti hai. Hum aapke liye DSC apply karwa sakte hain."
+  },
+  {
+    "id": 50,
+    "keywords": ["gst rate", "tax rate", "kaunsa rate", "gst percentage", "gst kitna percent"],
+    "answer": "GST rates alag alag items pe alag hain: 0% (essential goods — milk, eggs, vegetables), 5% (packaged food, transport), 12% (processed food, business class travel), 18% (most services, electronics), 28% (luxury goods, automobiles). Specific product/service ka rate jaanna hai toh details bhejein."
+  },
+  {
+    "id": 51,
+    "keywords": ["threshold limit", "gst kab chahiye", "gst exemption", "gst limit", "kitne se gst"],
+    "answer": "GST registration compulsory hai agar: annual turnover 20 lakh se zyada hai (services), 40 lakh se zyada hai (goods), ya inter-state supply kar rahe hain (any amount). Northeast states mein limit 10 lakh hai. E-commerce seller ke liye turnover limit nahi — registration mandatory hai."
+  },
+  {
+    "id": 52,
+    "keywords": ["presumptive taxation", "44ad", "44ada", "simple tax", "no audit scheme"],
+    "answer": "Presumptive taxation scheme (Section 44AD/44ADA) mein actual expenses maintain karne ki zaroorat nahi. Business ke liye 8% (cash) ya 6% (digital) turnover income maani jaati hai. Professionals ke liye 50% receipts income hai. Audit compulsory nahi hota. Small businesses ke liye yeh scheme bahut convenient hai."
+  },
+  {
+    "id": 53,
+    "keywords": ["home loan", "house loan tax", "section 24", "80c home loan", "loan interest deduction"],
+    "answer": "Home loan ke tax benefits: Principal repayment Rs 1.5 lakh Section 80C mein deduction, Interest payment Rs 2 lakh Section 24 mein deduction (self-occupied property). Second property ka interest fully deductible hai. Hum ITR mein yeh benefits properly claim karte hain taki maximum refund mile."
+  },
+  {
+    "id": 54,
+    "keywords": ["hra", "house rent allowance", "rent deduction", "rent receipt", "hra exemption"],
+    "answer": "HRA exemption ke liye rent receipts chahiye aur landlord ka PAN (agar rent 1 lakh per year se zyada hai). Calculation: Actual HRA received, Rent paid minus 10% salary, ya 40%/50% salary (metro/non-metro) — teeno mein se jo minimum ho woh exempt. Form 12BB employer ko submit karna padta hai."
+  },
+  {
+    "id": 55,
+    "keywords": ["80c investment", "tax saving investment", "elss", "ppf", "nsc", "tax save kaise"],
+    "answer": "Section 80C mein 1.5 lakh tak deduction: PPF (7.1% guaranteed return), ELSS mutual funds (market linked, 3 year lock-in), NPS (extra 50k under 80CCD), LIC premium, home loan principal, children tuition fees. Best option depend karta hai aapki risk appetite aur liquidity need pe. Planning ke liye baat karein."
+  },
+  {
+    "id": 56,
+    "keywords": ["new tax regime", "old tax regime", "which regime", "new vs old", "tax regime choice"],
+    "answer": "New regime mein lower slab rates hain lekin deductions (80C, HRA, etc.) available nahi. Old regime mein higher rates lekin sari deductions milti hain. Generally: agar 80C + HRA + home loan fully utilize karte hain toh old regime better; otherwise new regime. Hum aapke specific numbers dekhke best option batate hain."
+  },
+  {
+    "id": 57,
+    "keywords": ["pan", "pan card", "pan apply", "pan kaise banaye", "pan correction"],
+    "answer": "PAN card ke liye NSDL ya UTIITSL portal pe apply kar sakte hain. Documents mein Aadhaar, photo, aur address proof chahiye. E-PAN instantly milta hai, physical PAN 15-20 din mein aata hai. Fees Rs 107 (domestic) ya Rs 1,017 (foreign address). PAN mein correction bhi online hoti hai."
+  },
+  {
+    "id": 58,
+    "keywords": ["tan", "tan number", "tds number", "deductor registration", "tan apply"],
+    "answer": "TAN (Tax Deduction Account Number) compulsory hai agar aap TDS deduct karte hain — employees ki salary se ya vendor payments se. NSDL pe Form 49B fill karke apply hota hai. Fees Rs 77 hai. TAN 10-15 din mein milta hai. TAN nahi hone par penalty lagti hai."
+  },
+  {
+    "id": 59,
+    "keywords": ["accounting software", "tally", "zoho books", "quickbooks", "software", "billing software"],
+    "answer": "Hum Tally, Zoho Books, QuickBooks aur Excel-based accounting karte hain — jo aapko comfortable lage. Cloud-based accounting se aap real-time business data dekh sakte hain kabhi bhi. Software setup aur training bhi provide karte hain. Recommend karte hain small business ke liye Zoho Books (affordable aur GST-compliant)."
+  },
+  {
+    "id": 60,
+    "keywords": ["director kyc", "dir 3 kyc", "director compliance", "din", "din kyc"],
+    "answer": "Director KYC (DIR-3 KYC) har saal September 30 tak compulsory hai sabhi directors ke liye. Isme mobile number aur email OTP verification hoti hai. Miss karne par DIN deactivate ho jaata hai aur Rs 5,000 penalty lagti hai. Hum aapko September mein remind karte hain aur filing karte hain."
+  }
+]
