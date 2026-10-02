@@ -51,7 +51,20 @@ type FocusItem = {
   href: string; action: string; waPhone?: string;
 };
 
+type FocusGroup = {
+  type: FocusItem["type"];
+  priority: "critical" | "attention";
+  label: string;
+  icon: string;
+  items: FocusItem[];
+  href: string;
+  action: string;
+  totalAmount?: string;
+};
+
 function TodaysFocus({ items }: { items: FocusItem[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   if (items.length === 0) return (
     <div className="bg-card border border-border rounded-lg shadow-sm">
       <div className="px-5 py-4 border-b border-border">
@@ -61,61 +74,131 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
     </div>
   );
 
-  const critical = items.filter(i => i.priority === "critical");
-  const attention = items.filter(i => i.priority === "attention");
+  // Group items by type
+  const groupMap: Record<string, FocusGroup> = {};
+  items.forEach(item => {
+    const key = item.type;
+    if (!groupMap[key]) {
+      const meta: Record<string, { label: string; icon: string; href: string; action: string }> = {
+        dsc:        { label: "DSC Expiry",          icon: "🔐", href: "/clients",     action: "View Clients" },
+        invoice:    { label: "Overdue Invoices",     icon: "💰", href: "/invoices",    action: "View Invoices" },
+        document:   { label: "Documents Pending",    icon: "📄", href: "/engagements", action: "View Engagements" },
+        engagement: { label: "Deadline Missed",      icon: "⏰", href: "/engagements", action: "View Engagements" },
+        compliance: { label: "Compliance Overdue",   icon: "⚠️", href: "/compliance",  action: "View Compliance" },
+        lead:       { label: "Hot Leads",            icon: "🔥", href: "/leads",       action: "View Leads" },
+        task:       { label: "Tasks Due",            icon: "✅", href: "/tasks",       action: "View Tasks" },
+      };
+      groupMap[key] = {
+        type: key as FocusItem["type"],
+        priority: item.priority,
+        label: meta[key]?.label ?? key,
+        icon: meta[key]?.icon ?? "📌",
+        href: meta[key]?.href ?? "/",
+        action: meta[key]?.action ?? "View",
+        items: [],
+      };
+    }
+    // Escalate to critical if any item is critical
+    if (item.priority === "critical") groupMap[key].priority = "critical";
+    groupMap[key].items.push(item);
+  });
 
-  const handleWA = (item: FocusItem) => {
-    const phone = (item.waPhone ?? "").replace(/\D/g, "");
-    window.open(phone ? `https://wa.me/91${phone}` : `https://wa.me/`, "_blank");
+  const groups = Object.values(groupMap).sort((a, b) => {
+    if (a.priority === "critical" && b.priority !== "critical") return -1;
+    if (a.priority !== "critical" && b.priority === "critical") return 1;
+    return 0;
+  });
+
+  const critical = groups.filter(g => g.priority === "critical");
+  const attention = groups.filter(g => g.priority === "attention");
+  const totalGroups = groups.length;
+
+  const handleWA = (phone: string) => {
+    const p = phone.replace(/\D/g, "");
+    window.open(p ? `https://wa.me/91${p}` : `https://wa.me/`, "_blank");
   };
 
-  const typeColors: Record<string, string> = {
-    compliance: "bg-red-100 text-red-700",
-    invoice: "bg-orange-100 text-orange-700",
-    document: "bg-amber-100 text-amber-700",
-    lead: "bg-purple-100 text-purple-700",
-    task: "bg-blue-100 text-blue-700",
-    dsc: "bg-rose-100 text-rose-700",
-    engagement: "bg-indigo-100 text-indigo-700",
-  };
-  const typeLabels: Record<string, string> = {
-    compliance: "Compliance", invoice: "Invoice", document: "Documents",
-    lead: "Lead", task: "Task", dsc: "DSC", engagement: "Engagement",
-  };
+  const renderGroup = (group: FocusGroup) => {
+    const isOpen = expanded === group.type;
+    const count = group.items.length;
+    const previewNames = group.items.slice(0, 3).map(i => i.clientName).join(", ");
+    const extra = count > 3 ? ` +${count - 3} more` : "";
+    const borderColor = group.priority === "critical" ? "border-red-500 bg-red-50/40" : "border-amber-400 bg-amber-50/30";
 
-  const renderItem = (item: FocusItem) => (
-    <div key={item.id} className={`flex items-center justify-between py-3 px-4 gap-3 ${item.priority === "critical" ? "border-l-4 border-red-500 bg-red-50/40" : "border-l-4 border-amber-400 bg-amber-50/30"}`}>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-medium text-foreground text-sm">{item.clientName}</p>
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${typeColors[item.type]}`}>{typeLabels[item.type]}</span>
+    return (
+      <div key={group.type} className={`border-l-4 ${borderColor}`}>
+        {/* Group Header */}
+        <div
+          className="flex items-center justify-between py-3 px-4 gap-3 cursor-pointer hover:bg-black/5"
+          onClick={() => setExpanded(isOpen ? null : group.type)}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-base">{group.icon}</span>
+              <p className="font-semibold text-foreground text-sm">
+                {count} client{count > 1 ? "s" : ""} — {group.label}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate pl-6">
+              {previewNames}{extra}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={group.href}
+              onClick={e => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs bg-card border border-border text-foreground px-2.5 py-1 rounded-md font-medium hover:bg-muted"
+            >
+              {group.action} <ChevronRight size={12} />
+            </a>
+            <span className="text-muted-foreground text-xs">{isOpen ? "▲" : "▼"}</span>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {item.waPhone && (
-          <button onClick={() => handleWA(item)} className="inline-flex items-center gap-1 text-xs text-green-700 border border-green-200 px-2.5 py-1 rounded-md font-medium hover:bg-green-100">
-            <MessageCircle size={12} /> Chase
-          </button>
+
+        {/* Expanded individual items */}
+        {isOpen && (
+          <div className="border-t border-border/50 divide-y divide-border/40">
+            {group.items.map(item => (
+              <div key={item.id} className="flex items-center justify-between py-2.5 px-6 gap-3 bg-background/40">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{item.clientName}</p>
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                </div>
+                {item.waPhone && (
+                  <button
+                    onClick={() => handleWA(item.waPhone!)}
+                    className="inline-flex items-center gap-1 text-xs text-green-700 border border-green-200 px-2 py-1 rounded-md font-medium hover:bg-green-100 shrink-0"
+                  >
+                    <MessageCircle size={11} /> Chase
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         )}
-        <a href={item.href} className="inline-flex items-center gap-1 text-xs bg-card border border-border text-foreground px-2.5 py-1 rounded-md font-medium hover:bg-muted">
-          {item.action} <ChevronRight size={12} />
-        </a>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="bg-card border border-border rounded-lg shadow-sm">
       <div className="px-5 py-4 border-b border-border">
         <h2 className="font-semibold text-foreground">Today's Focus</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">{items.length} item{items.length > 1 ? "s" : ""} need your attention</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{totalGroups} area{totalGroups > 1 ? "s" : ""} need your attention</p>
       </div>
       <div className="divide-y divide-border">
-        {critical.length > 0 && <div className="px-4 py-2 bg-red-50/30"><p className="text-xs font-semibold text-red-600 uppercase tracking-wider">🔴 Critical</p></div>}
-        {critical.map(renderItem)}
-        {attention.length > 0 && <div className="px-4 py-2 bg-amber-50/30"><p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">🟠 Needs Attention</p></div>}
-        {attention.map(renderItem)}
+        {critical.length > 0 && (
+          <div className="px-4 py-2 bg-red-50/30">
+            <p className="text-xs font-semibold text-red-600 uppercase tracking-wider">🔴 Critical</p>
+          </div>
+        )}
+        {critical.map(renderGroup)}
+        {attention.length > 0 && (
+          <div className="px-4 py-2 bg-amber-50/30">
+            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">🟠 Needs Attention</p>
+          </div>
+        )}
+        {attention.map(renderGroup)}
       </div>
     </div>
   );
