@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Sidebar } from "../components/Sidebar";
+import { Onboarding, useOnboarding } from "../components/Onboarding";
 
 function NotFoundComponent() {
   return (
@@ -48,8 +49,7 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
             Try again
           </button>
-          <a href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">
+          <a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">
             Go home
           </a>
         </div>
@@ -77,13 +77,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
+      <head><HeadContent /></head>
+      <body>{children}<Scripts /></body>
     </html>
   );
 }
@@ -94,6 +89,7 @@ function AppLayout() {
   const [checking, setChecking] = useState(true);
   const pathname = router.state.location.pathname;
   const isLoginPage = pathname === "/login";
+  const { show: showOnboarding, complete: completeOnboarding } = useOnboarding();
 
   useEffect(() => {
     if (isLoginPage) { setChecking(false); return; }
@@ -123,15 +119,11 @@ function AppLayout() {
   const firmName = settings?.firm_name || "CA Practice Manager";
   const logoUrl = (settings as any)?.logo_url ?? null;
 
-  // ✅ Dynamic favicon — logo set hone par browser tab mein dikhega
+  // Dynamic favicon
   useEffect(() => {
     if (!logoUrl) return;
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
-      document.head.appendChild(link);
-    }
+    if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
     link.href = logoUrl;
     link.type = "image/png";
   }, [logoUrl]);
@@ -161,6 +153,9 @@ function AppLayout() {
         <Outlet />
       </main>
       <Toaster richColors position="top-right" />
+
+      {/* ✅ Onboarding tour — shows only on first login */}
+      {showOnboarding && <Onboarding onComplete={completeOnboarding} />}
     </div>
   );
 }
