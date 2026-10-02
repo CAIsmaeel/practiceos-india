@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
 import { Upload, X, Globe, Copy, Check, Plus } from "lucide-react";
-import { ENGAGEMENT_TYPES, getTemplate } from "@/lib/checklistTemplates";
+import { ENGAGEMENT_TYPES, getTemplate, getAllTemplate } from "@/lib/checklistTemplates";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Firmora" }] }),
@@ -118,7 +118,7 @@ function SettingsPage() {
     if (data && data.length > 0) {
       setTemplateDocs(data as TemplateDoc[]);
     } else {
-      const defaults = getTemplate(serviceType);
+      const defaults = getAllTemplate(serviceType);
       setTemplateDocs(defaults.map((t, i) => ({ doc_name: t.name, requirement: t.requirement, sort_order: i })));
     }
   };

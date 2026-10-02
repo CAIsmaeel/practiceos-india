@@ -416,3 +416,8 @@ export function getTemplate(
     return Boolean(conditions[cond as keyof EngagementConditions]);
   });
 }
+
+// For Settings page — show ALL docs regardless of conditions
+export function getAllTemplate(type: string): ChecklistTemplateItem[] {
+  return CHECKLIST_TEMPLATES[type] ?? [];
+}
