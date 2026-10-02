@@ -1,11 +1,7 @@
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-  HeadContent,
-  Scripts,
+  Outlet, Link, createRootRouteWithContext,
+  useRouter, HeadContent, Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Sidebar } from "../components/Sidebar";
-import { Onboarding, useOnboarding } from "../components/Onboarding";
+import { TourProvider, TourCard } from "../components/Onboarding";
 
 function NotFoundComponent() {
   return (
@@ -23,9 +19,7 @@ function NotFoundComponent() {
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist.</p>
         <div className="mt-6">
-          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-            Go home
-          </Link>
+          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Go home</Link>
         </div>
       </div>
     </div>
@@ -35,23 +29,15 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error as Error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
-
+  useEffect(() => { reportLovableError(error as Error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
         <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try refreshing or go home.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button onClick={() => { router.invalidate(); reset(); }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-            Try again
-          </button>
-          <a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">
-            Go home
-          </a>
+          <button onClick={() => { router.invalidate(); reset(); }} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Try again</button>
+          <a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">Go home</a>
         </div>
       </div>
     </div>
@@ -89,7 +75,6 @@ function AppLayout() {
   const [checking, setChecking] = useState(true);
   const pathname = router.state.location.pathname;
   const isLoginPage = pathname === "/login";
-  const { show: showOnboarding, complete: completeOnboarding } = useOnboarding();
 
   useEffect(() => {
     if (isLoginPage) { setChecking(false); return; }
@@ -119,7 +104,6 @@ function AppLayout() {
   const firmName = settings?.firm_name || "CA Practice Manager";
   const logoUrl = (settings as any)?.logo_url ?? null;
 
-  // Dynamic favicon
   useEffect(() => {
     if (!logoUrl) return;
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
@@ -141,22 +125,23 @@ function AppLayout() {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-background md:pl-64">
-      <Sidebar
-        firmName={firmName}
-        onLogout={async () => {
-          await supabase.auth.signOut();
-          router.navigate({ to: "/login" });
-        }}
-      />
-      <main className="p-4 md:p-8">
-        <Outlet />
-      </main>
-      <Toaster richColors position="top-right" />
-
-      {/* ✅ Onboarding tour — shows only on first login */}
-      {showOnboarding && <Onboarding onComplete={completeOnboarding} />}
-    </div>
+    <TourProvider>
+      <div className="min-h-screen bg-background md:pl-64">
+        <Sidebar
+          firmName={firmName}
+          onLogout={async () => {
+            await supabase.auth.signOut();
+            router.navigate({ to: "/login" });
+          }}
+        />
+        <main className="p-4 md:p-8">
+          <Outlet />
+        </main>
+        <Toaster richColors position="top-right" />
+        {/* ✅ Floating tour card */}
+        <TourCard />
+      </div>
+    </TourProvider>
   );
 }
 

@@ -1,9 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, ShieldCheck, Calculator, LogOut, Bot } from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, Briefcase, FileText, ListChecks, Receipt, Menu, X, Settings, ShieldCheck, Calculator, LogOut, Bot, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+
+// The onboarding module is optional in this app. Fall back to a no-op tour
+// so the sidebar still compiles when the onboarding feature is not present.
+type TourHook = () => { restart: () => void; isActive: boolean };
+const useTour: TourHook = () => ({ restart: () => {}, isActive: false });
 
 const navItems = [
   { to: "/",             label: "Dashboard",      icon: LayoutDashboard },
@@ -57,6 +62,7 @@ function FirmIconSmall({ logoUrl, firmName }: { logoUrl?: string | null; firmNam
 export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmName?: string; onLogout?: () => void; }) {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: s => s.location.pathname });
+  const { restart, isActive } = useTour();
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],
@@ -118,6 +124,13 @@ export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmNa
             const active = pathname.startsWith(item.to);
             return <NavLink key={item.to} to={item.to} label={item.label} icon={item.icon} active={active} onClick={() => setOpen(false)} />;
           })}
+          <button
+            onClick={restart}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
+          >
+            <HelpCircle size={17} strokeWidth={2} />
+            {isActive ? "Restart Tour" : "Take a Tour"}
+          </button>
           {onLogout && (
             <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive-foreground transition-colors">
               <LogOut size={17} strokeWidth={2} />

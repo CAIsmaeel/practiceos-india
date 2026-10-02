@@ -1,195 +1,266 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, ChevronRight, X, Building2, Users, ShieldCheck, Briefcase, Receipt, Sparkles, Globe, ClipboardList } from "lucide-react";
+// src/components/Onboarding.tsx
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { ChevronRight, X, HelpCircle } from "lucide-react";
 
-type Step = {
+// ─── Tour Steps ───────────────────────────────────────────────────────────────
+export type TourStep = {
   id: number;
-  icon: React.ReactNode;
+  path: string;
   title: string;
   description: string;
-  action: string;
-  href: string;
-  tip: string;
+  trigger: "manual" | "settings_saved" | "client_saved" | "engagement_saved" | "invoice_saved";
 };
 
-const STEPS: Step[] = [
+const TOUR_STEPS: TourStep[] = [
   {
     id: 1,
-    icon: <Building2 size={32} className="text-primary" />,
-    title: "Set up your firm",
-    description: "Add your firm name, GSTIN, PAN, bank details and logo. These appear on every invoice you send to clients.",
-    action: "Go to Settings",
-    href: "/settings",
-    tip: "Upload your logo — it appears on your invoices, login page and client-facing website.",
+    path: "/settings",
+    title: "Step 1 — Set up your firm",
+    description: "Fill in your firm name, GSTIN, PAN, address and bank details. Upload your logo too. Hit Save Settings when done.",
+    trigger: "settings_saved",
   },
   {
     id: 2,
-    icon: <Globe size={32} className="text-primary" />,
-    title: "Your client-facing website is ready",
-    description: "Firmora gives you a free professional website to share with clients. Add your services, WhatsApp number and tagline in Settings → Website. Share the link on your visiting card, Instagram or WhatsApp.",
-    action: "Set Up Website",
-    href: "/settings",
-    tip: "Your website link is: ca-firmora.vercel.app?ca=YOUR_ID — copy it from Settings.",
+    path: "/settings",
+    title: "Step 2 — Set up your client website",
+    description: "Go to the Website tab. Add your WhatsApp number, tagline and services. Share the link on your visiting card and Instagram. Hit Save Settings when done.",
+    trigger: "settings_saved",
   },
   {
     id: 3,
-    icon: <ClipboardList size={32} className="text-primary" />,
-    title: "Customise your document checklists",
-    description: "Every engagement type — ITR Filing, GST Return, Statutory Audit — has a pre-built document checklist. Go to Settings → Checklist Templates to edit what documents you request from clients, and add your own service types.",
-    action: "Edit Checklists",
-    href: "/settings",
-    tip: "You can also add custom service types like FSSAI Compliance or RERA Filing.",
+    path: "/settings",
+    title: "Step 3 — Customise your checklists",
+    description: "Go to the Checklist Templates tab. Edit the documents you request from clients for each service type. Add your own service types like FSSAI or RERA. Hit Save Template when done.",
+    trigger: "manual",
   },
   {
     id: 4,
-    icon: <Users size={32} className="text-primary" />,
-    title: "Add your first client",
-    description: "Add a client and tick the services they need — GST, TDS, ITR, PF, Advance Tax. Compliance deadlines are created automatically. You can also import all clients at once from Excel.",
-    action: "Add Client",
-    href: "/clients",
-    tip: "Tick 'ITR Filing Applicable', 'GST Registered' etc. and the right deadlines appear in Compliance automatically.",
+    path: "/clients",
+    title: "Step 4 — Add your first client",
+    description: "Click Add Client. Fill in the details and tick the services they need — GST, ITR, TDS, PF. Compliance deadlines will be created automatically when you save.",
+    trigger: "client_saved",
   },
   {
     id: 5,
-    icon: <ShieldCheck size={32} className="text-primary" />,
-    title: "Review compliance deadlines",
-    description: "Once clients are added, their compliance calendar is ready. View upcoming and overdue deadlines, mark items as filed, and export a pending list to Excel.",
-    action: "View Compliance",
-    href: "/compliance",
-    tip: "Dashboard shows Today's Focus every morning — DSC expiry, overdue invoices and missed deadlines.",
+    path: "/compliance",
+    title: "Step 5 — Review compliance deadlines",
+    description: "Your client's compliance calendar is ready. View upcoming and overdue deadlines here. Mark items as filed once done. Click Got it when you're ready.",
+    trigger: "manual",
   },
   {
     id: 6,
-    icon: <Briefcase size={32} className="text-primary" />,
-    title: "Create an engagement",
-    description: "Track any piece of work — ITR filing, GST audit, company incorporation. A document checklist is auto-created. Tick conditions like 'Has Capital Gains' or 'Has Employees' to include the right documents automatically.",
-    action: "Add Engagement",
-    href: "/engagements",
-    tip: "Assign a Maker and Checker for quality control. The Checker approves before work is marked complete.",
+    path: "/engagements",
+    title: "Step 6 — Create your first engagement",
+    description: "Click Add Engagement. Select the client and service type. Tick conditions like Has Capital Gains or Has Employees — the right documents will auto-include in the checklist.",
+    trigger: "engagement_saved",
   },
   {
     id: 7,
-    icon: <Receipt size={32} className="text-primary" />,
-    title: "Send your first invoice",
-    description: "Create a professional invoice with multiple line items and GST. Download as a PDF in Classic, Modern or Minimal theme and send it directly to the client.",
-    action: "Create Invoice",
-    href: "/invoices",
-    tip: "Use Fee Estimator to price any CA service confidently based on entity type, turnover and complexity.",
+    path: "/invoices",
+    title: "Step 7 — Send your first invoice",
+    description: "Click Add Invoice. Select the client, add line items and GST. Download as PDF and send. Outstanding invoices appear on your dashboard automatically.",
+    trigger: "invoice_saved",
   },
   {
     id: 8,
-    icon: <Sparkles size={32} className="text-primary" />,
-    title: "You're all set!",
-    description: "Your practice is live on Firmora. Your dashboard shows what needs attention every day — DSC expiry, pending documents, overdue invoices, upcoming deadlines and new leads.",
-    action: "Go to Dashboard",
-    href: "/",
-    tip: "Share your website link with clients today to start receiving enquiries directly.",
+    path: "/",
+    title: "🎉 You're all set!",
+    description: "Your dashboard now shows what needs attention every day — DSC expiry, pending documents, overdue invoices and upcoming deadlines. Welcome to Firmora!",
+    trigger: "manual",
   },
 ];
 
-export function Onboarding({ onComplete }: { onComplete: () => void }) {
-  const [step, setStep] = useState(0);
-  const navigate = useNavigate();
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+const STORAGE_KEY = "firmora_tour_step"; // current step (1-based), "done" if complete
 
-  const handleAction = () => {
-    if (isLast) {
-      onComplete();
+// ─── Context ──────────────────────────────────────────────────────────────────
+type TourContextType = {
+  currentStep: number | null; // null = tour done/not started
+  totalSteps: number;
+  isActive: boolean;
+  next: () => void;
+  skip: () => void;
+  restart: () => void;
+  triggerEvent: (event: TourStep["trigger"]) => void;
+};
+
+const TourContext = createContext<TourContextType | null>(null);
+
+export function useTour() {
+  const ctx = useContext(TourContext);
+  if (!ctx) throw new Error("useTour must be used inside TourProvider");
+  return ctx;
+}
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+export function TourProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+
+  const [currentStep, setCurrentStep] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved || saved === "done") return null;
+      const n = parseInt(saved, 10);
+      return isNaN(n) ? 1 : n;
+    } catch { return 1; }
+  });
+
+  const saveStep = (step: number | null) => {
+    try {
+      if (step === null) localStorage.setItem(STORAGE_KEY, "done");
+      else localStorage.setItem(STORAGE_KEY, String(step));
+    } catch {}
+  };
+
+  const goToStep = useCallback((step: number) => {
+    const s = TOUR_STEPS[step - 1];
+    if (!s) return;
+    setCurrentStep(step);
+    saveStep(step);
+    navigate({ to: s.path as any });
+  }, [navigate]);
+
+  const next = useCallback(() => {
+    if (currentStep === null) return;
+    const nextStep = currentStep + 1;
+    if (nextStep > TOUR_STEPS.length) {
+      setCurrentStep(null);
+      saveStep(null);
       navigate({ to: "/" });
     } else {
-      onComplete();
-      navigate({ to: current.href as any });
+      goToStep(nextStep);
     }
-  };
+  }, [currentStep, goToStep, navigate]);
 
-  const handleSkip = () => {
-    onComplete();
-  };
+  const skip = useCallback(() => {
+    setCurrentStep(null);
+    saveStep(null);
+  }, []);
 
-  const handleNext = () => {
-    if (step < STEPS.length - 1) setStep(s => s + 1);
-    else { onComplete(); navigate({ to: "/" }); }
-  };
+  const restart = useCallback(() => {
+    goToStep(1);
+  }, [goToStep]);
+
+  const triggerEvent = useCallback((event: TourStep["trigger"]) => {
+    if (currentStep === null || event === "manual") return;
+    const s = TOUR_STEPS[currentStep - 1];
+    if (s?.trigger === event) {
+      // Small delay so save toast shows first
+      setTimeout(() => {
+        const nextStep = currentStep + 1;
+        if (nextStep > TOUR_STEPS.length) {
+          setCurrentStep(null);
+          saveStep(null);
+          navigate({ to: "/" });
+        } else {
+          goToStep(nextStep);
+        }
+      }, 800);
+    }
+  }, [currentStep, goToStep, navigate]);
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            {STEPS.map((s, i) => (
-              <div
-                key={s.id}
-                className={`h-1.5 rounded-full transition-all ${
-                  i < step ? "w-6 bg-primary" :
-                  i === step ? "w-8 bg-primary" :
-                  "w-4 bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-          <button onClick={handleSkip} className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted">
-            <X size={18} />
-          </button>
-        </div>
+    <TourContext.Provider value={{
+      currentStep,
+      totalSteps: TOUR_STEPS.length,
+      isActive: currentStep !== null,
+      next,
+      skip,
+      restart,
+      triggerEvent,
+    }}>
+      {children}
+    </TourContext.Provider>
+  );
+}
 
-        {/* Content */}
-        <div className="px-6 py-8 space-y-6">
-          {/* Step indicator */}
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Step {step + 1} of {STEPS.length}
+// ─── Floating Tour Card ───────────────────────────────────────────────────────
+export function TourCard() {
+  const { currentStep, totalSteps, isActive, next, skip } = useTour();
+  const pathname = useRouterState({ select: s => s.location.pathname });
+  const [minimised, setMinimised] = useState(false);
+
+  if (!isActive || currentStep === null) return null;
+
+  const step = TOUR_STEPS[currentStep - 1];
+  if (!step) return null;
+
+  // Only show on the correct page
+  const onCorrectPage = pathname === step.path || (step.path !== "/" && pathname.startsWith(step.path));
+  if (!onCorrectPage) return null;
+
+  const isLast = currentStep === totalSteps;
+  const pct = Math.round((currentStep / totalSteps) * 100);
+
+  // Minimised pill
+  if (minimised) {
+    return (
+      <button
+        onClick={() => setMinimised(false)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-full shadow-xl text-sm font-semibold hover:bg-primary/90 transition-all"
+      >
+        <HelpCircle size={16} />
+        Tour — Step {currentStep}/{totalSteps}
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 md:left-64 z-50 p-4 pointer-events-none">
+      <div className="max-w-2xl mx-auto pointer-events-auto">
+        <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+          {/* Progress bar */}
+          <div className="h-1 bg-muted">
+            <div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
           </div>
 
-          {/* Icon + Title */}
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              {current.icon}
+          <div className="px-5 py-4">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  {currentStep} of {totalSteps}
+                </span>
+                <h3 className="text-sm font-bold text-foreground">{step.title}</h3>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => setMinimised(true)} className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title="Minimise">
+                  <span className="text-xs font-bold">—</span>
+                </button>
+                <button onClick={skip} className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" title="Skip tour">
+                  <X size={15} />
+                </button>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">{current.title}</h2>
-              <p className="text-muted-foreground text-sm mt-1 leading-relaxed">{current.description}</p>
-            </div>
-          </div>
 
-          {/* Tip */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-            <p className="text-xs text-primary font-medium">
-              💡 <span className="font-semibold">Pro tip:</span> {current.tip}
-            </p>
-          </div>
+            {/* Description */}
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{step.description}</p>
 
-          {/* Completed steps */}
-          {step > 0 && (
-            <div className="space-y-1.5">
-              {STEPS.slice(0, step).map(s => (
-                <div key={s.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 size={14} className="text-green-500 shrink-0" />
-                  <span>{s.title}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-3">
-          <button onClick={handleSkip} className="text-sm text-muted-foreground hover:text-foreground font-medium">
-            Skip tour
-          </button>
-          <div className="flex items-center gap-2">
-            {step > 0 && (
-              <button onClick={() => setStep(s => s - 1)} className="px-4 py-2 text-sm rounded-lg border border-input text-foreground hover:bg-muted font-medium">
-                Back
+            {/* Footer */}
+            <div className="flex items-center justify-between gap-3">
+              <button onClick={skip} className="text-xs text-muted-foreground hover:text-foreground font-medium">
+                Skip tour
               </button>
-            )}
-            <button onClick={handleNext} className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-muted text-foreground hover:bg-muted/80 font-medium border border-input">
-              Next <ChevronRight size={15} />
-            </button>
-            <button onClick={handleAction} className="inline-flex items-center gap-2 px-5 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-              {isLast ? "Get Started" : current.action}
-              <ChevronRight size={15} />
-            </button>
+              <div className="flex items-center gap-2">
+                {step.trigger === "manual" && (
+                  <button
+                    onClick={next}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                  >
+                    {isLast ? "Finish" : "Got it, Next"}
+                    <ChevronRight size={15} />
+                  </button>
+                )}
+                {step.trigger !== "manual" && (
+                  <span className="text-xs text-muted-foreground italic">
+                    {step.trigger === "settings_saved" && "⏳ Waiting for you to save settings..."}
+                    {step.trigger === "client_saved" && "⏳ Waiting for you to save a client..."}
+                    {step.trigger === "engagement_saved" && "⏳ Waiting for you to save an engagement..."}
+                    {step.trigger === "invoice_saved" && "⏳ Waiting for you to save an invoice..."}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -197,23 +268,16 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-// Hook to control onboarding
-export function useOnboarding() {
-  const key = "firmora_onboarded";
-  const [show, setShow] = useState(() => {
-    try { return !localStorage.getItem(key); }
-    catch { return false; }
-  });
-
-  const complete = () => {
-    try { localStorage.setItem(key, "true"); } catch {}
-    setShow(false);
-  };
-
-  const reset = () => {
-    try { localStorage.removeItem(key); } catch {}
-    setShow(true);
-  };
-
-  return { show, complete, reset };
+// ─── Restart Tour Button (for Sidebar) ───────────────────────────────────────
+export function RestartTourButton() {
+  const { restart, isActive } = useTour();
+  return (
+    <button
+      onClick={restart}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
+    >
+      <HelpCircle size={17} strokeWidth={2} />
+      {isActive ? "Restart Tour" : "Take a Tour"}
+    </button>
+  );
 }

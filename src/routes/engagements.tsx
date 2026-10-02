@@ -3,6 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Engagement, type Client, getCurrentUserId } from "@/lib/supabase";
 import { ENGAGEMENT_TYPES, getTemplate, type EngagementConditions } from "@/lib/checklistTemplates";
 import { useState, useEffect } from "react";
+
+const useTour = () => ({
+  triggerEvent: (_event: string) => undefined,
+});
 import {
   Plus, X, Archive, Pencil, CheckCircle2, Clock,
   ClipboardList, MessageCircle, AlertCircle, MoreHorizontal, Play, Mail,
@@ -129,6 +133,7 @@ type MenuState = { id: string; right: number; top?: number; bottom?: number } | 
 
 function EngagementsPage() {
   const qc = useQueryClient();
+  const { triggerEvent } = useTour();
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; engagement?: any | null } | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("all");
@@ -269,7 +274,7 @@ function EngagementsPage() {
       try { await generateChecklist(data.id, data.client_id, data.type, conditions); }
       catch (err: any) { console.error(err); alert("Engagement saved, but checklist could not be created. " + (err?.message ?? "")); }
     },
-    onSuccess: () => { invalidateEngagements(); qc.invalidateQueries({ queryKey: ["engagement-docs"] }); setModalState(null); },
+    onSuccess: () => { invalidateEngagements(); qc.invalidateQueries({ queryKey: ["engagement-docs"] }); triggerEvent("engagement_saved"); setModalState(null); },
     onError: (err: any) => alert("Could not save engagement: " + (err?.message ?? "")),
   });
 
