@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
-import { Upload, X, Globe, Copy, Check, Plus } from "lucide-react";
+import { Upload, X, Globe, Copy, Check, Plus, Trash2 } from "lucide-react";
 import { ENGAGEMENT_TYPES, getTemplate, getAllTemplate } from "@/lib/checklistTemplates";
 
 export const Route = createFileRoute("/settings")({
@@ -47,9 +47,7 @@ function SettingsPage() {
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.id) setCurrentUserId(data.user.id);
-    });
+    supabase.auth.getUser().then(({ data }) => { if (data?.user?.id) setCurrentUserId(data.user.id); });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user?.id) setCurrentUserId(session.user.id);
       else setCurrentUserId("");
@@ -74,6 +72,7 @@ function SettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
+  // Templates
   const [selectedServiceType, setSelectedServiceType] = useState<string>(ENGAGEMENT_TYPES[0]);
   const [templateDocs, setTemplateDocs] = useState<TemplateDoc[]>([]);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
@@ -81,6 +80,27 @@ function SettingsPage() {
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [newDocName, setNewDocName] = useState("");
   const [newDocReq, setNewDocReq] = useState<"mandatory" | "optional">("mandatory");
+
+  // ✅ Custom service types
+  const [customServiceTypes, setCustomServiceTypes] = useState<string[]>([]);
+  const [newServiceType, setNewServiceType] = useState("");
+
+  const allServiceTypes = [...ENGAGEMENT_TYPES, ...customServiceTypes.filter(t => !ENGAGEMENT_TYPES.includes(t))];
+
+  const addCustomServiceType = () => {
+    const name = newServiceType.trim();
+    if (!name) return;
+    if (allServiceTypes.includes(name)) { alert("Service type already exists."); return; }
+    setCustomServiceTypes(prev => [...prev, name]);
+    setSelectedServiceType(name);
+    setNewServiceType("");
+    setTemplateDocs([]);
+  };
+
+  const removeCustomServiceType = (type: string) => {
+    setCustomServiceTypes(prev => prev.filter(t => t !== type));
+    if (selectedServiceType === type) setSelectedServiceType(ENGAGEMENT_TYPES[0]);
+  };
 
   const { data: firmSettingsRow } = useQuery({
     queryKey: ["settings", currentUserId],
@@ -91,6 +111,20 @@ function SettingsPage() {
       return (data?.[0] ?? null) as FirmSettings | null;
     },
   });
+
+  // Load custom service types from DB (checklist_templates distinct service_type not in ENGAGEMENT_TYPES)
+  useEffect(() => {
+    if (!currentUserId) return;
+    supabase.from("checklist_templates")
+      .select("service_type")
+      .eq("user_id", currentUserId)
+      .then(({ data }) => {
+        if (!data) return;
+        const dbTypes = [...new Set(data.map((r: any) => r.service_type as string))];
+        const customFromDb = dbTypes.filter(t => !ENGAGEMENT_TYPES.includes(t));
+        if (customFromDb.length > 0) setCustomServiceTypes(customFromDb);
+      });
+  }, [currentUserId]);
 
   useEffect(() => {
     if (firmSettingsRow) {
@@ -103,8 +137,7 @@ function SettingsPage() {
         invoice_prefix: r.invoice_prefix ?? "INV", phone: r.phone ?? "",
         email: r.email ?? "", logo_url: r.logo_url ?? "",
         whatsapp_number: r.whatsapp_number ?? "", website_tagline: r.website_tagline ?? "",
-        email_provider: r.email_provider ?? "default",
-        email_custom_url: r.email_custom_url ?? "",
+        email_provider: r.email_provider ?? "default", email_custom_url: r.email_custom_url ?? "",
       });
       if (r.logo_url) setLogoPreview(r.logo_url);
       if (Array.isArray(r.website_services)) setSelectedServices(r.website_services);
@@ -148,14 +181,14 @@ function SettingsPage() {
   const addDoc = () => {
     const name = newDocName.trim();
     if (!name) return;
-    if (templateDocs.some((d) => d.doc_name.toLowerCase() === name.toLowerCase())) { alert("Already exists."); return; }
-    setTemplateDocs((prev) => [...prev, { doc_name: name, requirement: newDocReq, sort_order: prev.length }]);
+    if (templateDocs.some(d => d.doc_name.toLowerCase() === name.toLowerCase())) { alert("Already exists."); return; }
+    setTemplateDocs(prev => [...prev, { doc_name: name, requirement: newDocReq, sort_order: prev.length }]);
     setNewDocName("");
   };
 
-  const removeDoc = (i: number) => setTemplateDocs((prev) => prev.filter((_, idx) => idx !== i));
+  const removeDoc = (i: number) => setTemplateDocs(prev => prev.filter((_, idx) => idx !== i));
   const toggleDocReq = (i: number, req: "mandatory" | "optional") =>
-    setTemplateDocs((prev) => prev.map((d, idx) => idx === i ? { ...d, requirement: req } : d));
+    setTemplateDocs(prev => prev.map((d, idx) => idx === i ? { ...d, requirement: req } : d));
 
   const toggleService = (service: string) => setSelectedServices(prev => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
   const toggleClientType = (type: string) => setSelectedClientTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
@@ -218,13 +251,8 @@ function SettingsPage() {
         website_client_types: selectedClientTypes,
         user_id: currentUserId,
       };
-      if (existingId) {
-        const { error } = await supabase.from("settings").update(payload).eq("id", existingId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("settings").insert(payload);
-        if (error) throw error;
-      }
+      if (existingId) { const { error } = await supabase.from("settings").update(payload).eq("id", existingId); if (error) throw error; }
+      else { const { error } = await supabase.from("settings").insert(payload); if (error) throw error; }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
       queryClient.invalidateQueries({ queryKey: ["settings", currentUserId] });
@@ -235,7 +263,7 @@ function SettingsPage() {
   };
 
   const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
-  const websiteLink = currentUserId ? `https://practiceos-landing.vercel.app?ca=${currentUserId}` : "";
+  const websiteLink = currentUserId ? `https://ca-firmora.vercel.app?ca=${currentUserId}` : "";
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -245,7 +273,7 @@ function SettingsPage() {
       </div>
 
       <div className="flex gap-2 border-b border-border flex-wrap">
-        {(["firm", "website", "templates"] as const).map((tab) => (
+        {(["firm", "website", "templates"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             {tab === "firm" ? "🏢 Firm Details" : tab === "website" ? "🌐 Website Settings" : "📋 Checklist Templates"}
           </button>
@@ -278,58 +306,44 @@ function SettingsPage() {
             {/* Firm Details */}
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-5">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Firm Details</h2>
-              <div><label className="block text-sm font-medium text-foreground mb-1">Firm Name</label><input value={form.firm_name} onChange={(e) => setForm({...form, firm_name: e.target.value})} placeholder="CA Ismaeel & Co." className={inputClass} /></div>
+              <div><label className="block text-sm font-medium text-foreground mb-1">Firm Name</label><input value={form.firm_name} onChange={e => setForm({...form, firm_name: e.target.value})} placeholder="CA Ismaeel & Co." className={inputClass} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-foreground mb-1">GSTIN</label><input value={form.gst_number} onChange={(e) => setForm({...form, gst_number: e.target.value.toUpperCase()})} className={inputClass} /></div>
-                <div><label className="block text-sm font-medium text-foreground mb-1">PAN</label><input value={form.ca_reg_number} onChange={(e) => setForm({...form, ca_reg_number: e.target.value.toUpperCase()})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">GSTIN</label><input value={form.gst_number} onChange={e => setForm({...form, gst_number: e.target.value.toUpperCase()})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">PAN</label><input value={form.ca_reg_number} onChange={e => setForm({...form, ca_reg_number: e.target.value.toUpperCase()})} className={inputClass} /></div>
               </div>
-              <div><label className="block text-sm font-medium text-foreground mb-1">Address</label><textarea value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} rows={3} className={inputClass} /></div>
+              <div><label className="block text-sm font-medium text-foreground mb-1">Address</label><textarea value={form.address} onChange={e => setForm({...form, address: e.target.value})} rows={3} className={inputClass} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-foreground mb-1">State</label><input value={form.state} onChange={(e) => setForm({...form, state: e.target.value})} className={inputClass} /></div>
-                <div><label className="block text-sm font-medium text-foreground mb-1">Invoice Prefix</label><input value={form.invoice_prefix} onChange={(e) => setForm({...form, invoice_prefix: e.target.value.toUpperCase()})} placeholder="INV" className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">State</label><input value={form.state} onChange={e => setForm({...form, state: e.target.value})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">Invoice Prefix</label><input value={form.invoice_prefix} onChange={e => setForm({...form, invoice_prefix: e.target.value.toUpperCase()})} placeholder="INV" className={inputClass} /></div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-foreground mb-1">Phone</label><input value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} className={inputClass} /></div>
-                <div><label className="block text-sm font-medium text-foreground mb-1">Email</label><input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">Phone</label><input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">Email</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className={inputClass} /></div>
               </div>
 
               {/* Email Provider */}
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-3">
                 <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Email Provider for Reminders</p>
                 <div>
-                  <select value={form.email_provider} onChange={(e) => setForm({...form, email_provider: e.target.value})} className={`${inputClass} max-w-xs`}>
-                    {EMAIL_PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  <select value={form.email_provider} onChange={e => setForm({...form, email_provider: e.target.value})} className={`${inputClass} max-w-xs`}>
+                    {EMAIL_PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                   </select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Email reminders is provider mein khulenge · Firm email: <strong>{form.email || "—"}</strong>
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Email reminders is provider mein khulenge · Firm email: <strong>{form.email || "—"}</strong></p>
                 </div>
                 {form.email_provider === "custom" && (
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">Webmail Compose URL <span className="text-red-500">*</span></label>
-                    <input
-                      value={form.email_custom_url}
-                      onChange={(e) => setForm({...form, email_custom_url: e.target.value})}
-                      placeholder="https://webmail.yourdomain.com/compose"
-                      className={inputClass}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      App will append <code className="bg-muted px-1 rounded">?to=...&subject=...&body=...</code> to this URL.
-                    </p>
+                    <input value={form.email_custom_url} onChange={e => setForm({...form, email_custom_url: e.target.value})} placeholder="https://webmail.yourdomain.com/compose" className={inputClass} />
                   </div>
                 )}
-                {form.email_provider === "titan" && (
-                  <p className="text-xs text-amber-600">
-                    ⚠ Titan Mail ka standard compose URL available nahi hai. Email default mail client mein khulega. Agar custom Titan webmail URL ho toh "Custom" option use karein.
-                  </p>
-                )}
+                {form.email_provider === "titan" && <p className="text-xs text-amber-600">⚠ Titan Mail ka standard compose URL available nahi hai. "Custom" option use karein.</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-foreground mb-1">Bank Name</label><input value={form.bank_name} onChange={(e) => setForm({...form, bank_name: e.target.value})} className={inputClass} /></div>
-                <div><label className="block text-sm font-medium text-foreground mb-1">Bank Account No</label><input value={form.bank_account_no} onChange={(e) => setForm({...form, bank_account_no: e.target.value})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">Bank Name</label><input value={form.bank_name} onChange={e => setForm({...form, bank_name: e.target.value})} className={inputClass} /></div>
+                <div><label className="block text-sm font-medium text-foreground mb-1">Bank Account No</label><input value={form.bank_account_no} onChange={e => setForm({...form, bank_account_no: e.target.value})} className={inputClass} /></div>
               </div>
-              <div><label className="block text-sm font-medium text-foreground mb-1">Bank IFSC</label><input value={form.bank_ifsc} onChange={(e) => setForm({...form, bank_ifsc: e.target.value.toUpperCase()})} className={`${inputClass} max-w-xs`} /></div>
+              <div><label className="block text-sm font-medium text-foreground mb-1">Bank IFSC</label><input value={form.bank_ifsc} onChange={e => setForm({...form, bank_ifsc: e.target.value.toUpperCase()})} className={`${inputClass} max-w-xs`} /></div>
             </div>
           </>
         )}
@@ -354,13 +368,10 @@ function SettingsPage() {
                 <label className="block text-sm font-medium text-foreground mb-1">WhatsApp Number (for landing page)</label>
                 <div className="flex items-center">
                   <span className="border border-input border-r-0 rounded-l-md px-3 py-2 text-sm bg-muted text-muted-foreground">+91</span>
-                  <input value={form.whatsapp_number} onChange={(e) => setForm({...form, whatsapp_number: e.target.value})} placeholder="9920728172" className="w-full border border-input rounded-r-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <input value={form.whatsapp_number} onChange={e => setForm({...form, whatsapp_number: e.target.value})} placeholder="9920728172" className="w-full border border-input rounded-r-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Hero Tagline</label>
-                <input value={form.website_tagline} onChange={(e) => setForm({...form, website_tagline: e.target.value})} placeholder="Expert CA services for GST, ITR, Audit & Business Compliance" className={inputClass} />
-              </div>
+              <div><label className="block text-sm font-medium text-foreground mb-1">Hero Tagline</label><input value={form.website_tagline} onChange={e => setForm({...form, website_tagline: e.target.value})} placeholder="Expert CA services for GST, ITR, Audit & Business Compliance" className={inputClass} /></div>
             </div>
 
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
@@ -390,7 +401,7 @@ function SettingsPage() {
                           {selectedCount > 0 && <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-bold">{selectedCount}</span>}
                         </div>
                         <div className="flex items-center gap-2">
-                          {isExpanded && (<><button type="button" onClick={(e) => { e.stopPropagation(); selectAllInCategory(cat.services); }} className="text-xs text-primary hover:underline">All</button><button type="button" onClick={(e) => { e.stopPropagation(); clearAllInCategory(cat.services); }} className="text-xs text-muted-foreground hover:underline">None</button></>)}
+                          {isExpanded && (<><button type="button" onClick={e => { e.stopPropagation(); selectAllInCategory(cat.services); }} className="text-xs text-primary hover:underline">All</button><button type="button" onClick={e => { e.stopPropagation(); clearAllInCategory(cat.services); }} className="text-xs text-muted-foreground hover:underline">None</button></>)}
                           <span className="text-muted-foreground text-xs">{isExpanded ? "▲" : "▼"}</span>
                         </div>
                       </div>
@@ -419,18 +430,54 @@ function SettingsPage() {
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Checklist Templates</h2>
               <p className="text-xs text-muted-foreground mt-1">Customize documents for each service type. Custom template is used when creating new engagements.</p>
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <select value={selectedServiceType} onChange={(e) => setSelectedServiceType(e.target.value)} className="border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                {ENGAGEMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <span className="text-xs text-muted-foreground">{templateDocs.length} documents</span>
+
+            {/* Service type selector */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <select value={selectedServiceType} onChange={e => setSelectedServiceType(e.target.value)} className="border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <optgroup label="Standard Services">
+                    {ENGAGEMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </optgroup>
+                  {customServiceTypes.filter(t => !ENGAGEMENT_TYPES.includes(t)).length > 0 && (
+                    <optgroup label="⭐ Custom Services">
+                      {customServiceTypes.filter(t => !ENGAGEMENT_TYPES.includes(t)).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+                <span className="text-xs text-muted-foreground">{templateDocs.length} documents</span>
+                {customServiceTypes.includes(selectedServiceType) && (
+                  <button type="button" onClick={() => removeCustomServiceType(selectedServiceType)} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+                    <Trash2 size={12} /> Remove this type
+                  </button>
+                )}
+              </div>
+
+              {/* ✅ Add custom service type */}
+              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 flex-wrap">
+                <span className="text-xs font-semibold text-amber-700 shrink-0">+ New Service Type:</span>
+                <input
+                  value={newServiceType}
+                  onChange={e => setNewServiceType(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomServiceType(); } }}
+                  placeholder="e.g. FSSAI Compliance, RERA Filing, CSR Advisory..."
+                  className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+                <button type="button" onClick={addCustomServiceType} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-amber-600 text-white rounded-md hover:bg-amber-700 shrink-0">
+                  <Plus size={13} /> Add Type
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">CA apni zaroorat ke hisaab se koi bhi service type add kar sakta hai — FSSAI, RERA, CSR, kuch bhi.</p>
             </div>
+
+            {/* Docs list */}
             <div className="space-y-2">
               {templateDocs.length === 0 && <div className="text-center py-8 border border-dashed border-border rounded-lg"><p className="text-sm text-muted-foreground">No documents yet. Add below.</p></div>}
               {templateDocs.map((doc, i) => (
                 <div key={i} className="flex items-center gap-2 p-2.5 border border-border rounded-md bg-card hover:bg-muted/30">
                   <div className="flex gap-1 shrink-0">
-                    {(["mandatory", "optional"] as const).map((r) => (
+                    {(["mandatory", "optional"] as const).map(r => (
                       <button key={r} type="button" onClick={() => toggleDocReq(i, r)} className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${doc.requirement === r ? r === "mandatory" ? "bg-red-50 text-red-700 border-red-200" : "bg-slate-100 text-slate-600 border-slate-300" : "bg-card text-muted-foreground border-border hover:bg-muted"}`}>
                         {r === "mandatory" ? "M" : "O"}
                       </button>
@@ -441,15 +488,18 @@ function SettingsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Add doc */}
             <div className="flex items-center gap-2 pt-3 border-t border-border flex-wrap">
-              <select value={newDocReq} onChange={(e) => setNewDocReq(e.target.value as "mandatory" | "optional")} className="border border-input rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring shrink-0">
+              <select value={newDocReq} onChange={e => setNewDocReq(e.target.value as "mandatory" | "optional")} className="border border-input rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring shrink-0">
                 <option value="mandatory">Mandatory</option>
                 <option value="optional">Optional</option>
               </select>
-              <input value={newDocName} onChange={(e) => setNewDocName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }} placeholder="Document name… (Enter to add)" className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+              <input value={newDocName} onChange={e => setNewDocName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }} placeholder="Document name… (Enter to add)" className="flex-1 min-w-[200px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
               <button type="button" onClick={addDoc} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 shrink-0"><Plus size={13} /> Add</button>
             </div>
             <p className="text-xs text-muted-foreground"><strong>M</strong> = Mandatory · <strong>O</strong> = Optional</p>
+
             <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
               <div>
                 {templateError && <p className="text-sm text-red-600">{templateError}</p>}

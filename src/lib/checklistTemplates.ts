@@ -82,6 +82,9 @@ export const ENGAGEMENT_TYPES = [
   "Management Reporting / MIS",
   // Other
   "Other",
+  "Custom Service 1",
+  "Custom Service 2",
+  "Custom Service 3",
 ];
 
 export type EngagementConditions = {
