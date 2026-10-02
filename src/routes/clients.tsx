@@ -177,10 +177,33 @@ async function generateComplianceForClient(clientId: string, serviceFlags: Parti
   }
 
   if (rawFlags.itr_applicable) {
-    const itrDate = getNextFutureDateForPatterns(
-      [new Date(now.getFullYear(), 6, 31), new Date(now.getFullYear() + 1, 6, 31)],
-      now
-    ) ?? new Date(now.getFullYear(), 6, 31);
+    // ITR due date varies by client type
+    // We need client_type — passed via serviceFlags as extra field
+    const clientType = (serviceFlags as any)?.client_type ?? "";
+    const auditTypes = ["Private Limited", "Public Limited", "LLP", "Trust"];
+    const businessTypes = ["Proprietorship", "Partnership"];
+
+    let itrCandidates: Date[];
+    if (auditTypes.includes(clientType)) {
+      // Companies/LLP/Trust — audit cases — 21 Nov (extended this year), 31 Oct standard
+      itrCandidates = [
+        new Date(now.getFullYear(), 10, 21),  // 21 Nov current year
+        new Date(now.getFullYear() + 1, 9, 31), // 31 Oct next year
+      ];
+    } else if (businessTypes.includes(clientType)) {
+      // Proprietorship/Partnership — business income no audit — 31 Aug
+      itrCandidates = [
+        new Date(now.getFullYear(), 7, 31),   // 31 Aug current year
+        new Date(now.getFullYear() + 1, 7, 31),
+      ];
+    } else {
+      // Individual/HUF/Salaried — 31 July
+      itrCandidates = [
+        new Date(now.getFullYear(), 6, 31),   // 31 July current year
+        new Date(now.getFullYear() + 1, 6, 31),
+      ];
+    }
+    const itrDate = getNextFutureDateForPatterns(itrCandidates, now) ?? itrCandidates[0];
     pushIfMissing("ITR Filing", itrDate);
   }
 
@@ -229,7 +252,10 @@ function ClientsPage() {
     onSuccess: async (result: any) => {
       qc.invalidateQueries({ queryKey: ["clients"] });
       if (result?.id) {
-        await generateComplianceForClient(result.id, getServiceFlagsFromClient(result.payload));
+        await generateComplianceForClient(result.id, {
+          ...getServiceFlagsFromClient(result.payload),
+          client_type: result.payload?.client_type ?? "",
+        } as any);
       }
       setModalState(null);
     },
@@ -246,7 +272,10 @@ function ClientsPage() {
       const nextFlags = getServiceFlagsFromClient(variables.payload);
       const newFlags = getNewlyEnabledServices(modalState?.client ?? null, nextFlags);
       if (updatedClient?.id) {
-        await generateComplianceForClient(updatedClient.id, newFlags);
+        await generateComplianceForClient(updatedClient.id, {
+          ...newFlags,
+          client_type: variables.payload?.client_type ?? (modalState?.client as any)?.client_type ?? "",
+        } as any);
       }
       setModalState(null);
     },
