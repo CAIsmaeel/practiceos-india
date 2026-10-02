@@ -216,7 +216,7 @@ export function TourCard() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 md:left-64 z-50 p-4 pointer-events-none">
+    <div className="fixed bottom-4 left-0 right-0 md:left-64 z-50 px-4 pointer-events-none">
       <div className="max-w-2xl mx-auto pointer-events-auto">
         <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
           {/* Progress bar */}

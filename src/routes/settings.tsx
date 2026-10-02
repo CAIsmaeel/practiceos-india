@@ -256,6 +256,7 @@ function SettingsPage() {
       if (existingId) { const { error } = await supabase.from("settings").update(payload).eq("id", existingId); if (error) throw error; }
       else { const { error } = await supabase.from("settings").insert(payload); if (error) throw error; }
       setSaved(true);
+      triggerEvent("settings_saved");
       setTimeout(() => setSaved(false), 3000);
       queryClient.invalidateQueries({ queryKey: ["settings", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["firm-settings"] });
