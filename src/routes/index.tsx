@@ -16,6 +16,17 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
+// ─── Auto Score ───────────────────────────────────────────────────────────────
+function autoScore(lead: { requirement?: string | null; urgency?: string | null; source?: string | null; created_at?: string }): "Hot" | "Warm" | "Cold" {
+  const req = (lead.requirement ?? "").toLowerCase();
+  const urgentWords = ["urgent", "notice", "penalty", "demand", "raid", "survey", "immediate", "asap", "today"];
+  const hasUrgentWord = urgentWords.some(w => req.includes(w));
+  const ageDays = lead.created_at ? Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  if (lead.urgency === "High" || hasUrgentWord || lead.source === "WhatsApp") return "Hot";
+  if (ageDays > 7 || lead.urgency === "Low") return "Cold";
+  return "Warm";
+}
+
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
   label: string; value: number | string; icon: any; color: string;
@@ -269,7 +280,7 @@ function UpcomingDeadlines({ dscClients, engagements, invoices }: {
   return (
     <div className="bg-card border border-border rounded-lg shadow-sm">
       <div className="px-5 py-4 border-b border-border">
-        <h2 className="font-semibold text-foreground">Coming Up</h2>
+        <h2 className="font-semibold text-foreground">Upcoming</h2>
         <p className="text-xs text-muted-foreground mt-0.5">Next 30 days — plan ahead</p>
       </div>
       <div className="divide-y divide-border">
@@ -348,12 +359,17 @@ function RecentLeadsTable({ leads }: { leads: any[] }) {
                   <td className="px-4 py-3 text-muted-foreground text-xs max-w-[140px] truncate">{lead.requirement ?? "—"}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{lead.source ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      lead.qualification_score === "Hot" ? "bg-red-100 text-red-700" :
-                      lead.qualification_score === "Warm" ? "bg-orange-100 text-orange-700" :
-                      lead.qualification_score === "Cold" ? "bg-blue-100 text-blue-700" :
-                      "bg-muted text-muted-foreground"
-                    }`}>{lead.qualification_score ?? "—"}</span>
+                    {(() => {
+                      const score = lead.qualification_score ?? autoScore(lead);
+                      return (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          score === "Hot" ? "bg-red-100 text-red-700" :
+                          score === "Warm" ? "bg-orange-100 text-orange-700" :
+                          score === "Cold" ? "bg-blue-100 text-blue-700" :
+                          "bg-muted text-muted-foreground"
+                        }`}>{score}</span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{lead.status ?? "—"}</span>
