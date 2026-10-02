@@ -2,11 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, type Engagement, type Client, getCurrentUserId } from "@/lib/supabase";
 import { ENGAGEMENT_TYPES, getTemplate, type EngagementConditions } from "@/lib/checklistTemplates";
+import { useTour } from "@/components/Onboarding";
 import { useState, useEffect } from "react";
-
-const useTour = () => ({
-  triggerEvent: (_event: string) => undefined,
-});
 import {
   Plus, X, Archive, Pencil, CheckCircle2, Clock,
   ClipboardList, MessageCircle, AlertCircle, MoreHorizontal, Play, Mail,

@@ -4,11 +4,7 @@ import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
 import { Upload, X, Globe, Copy, Check, Plus, Trash2 } from "lucide-react";
 import { ENGAGEMENT_TYPES, getTemplate, getAllTemplate } from "@/lib/checklistTemplates";
-
-// The onboarding hook is exported from the `src/components/Onboarding.tsx` module.
-// This keeps the route compatible with the project alias resolution and avoids the
-// missing-module error reported by TypeScript.
-import { useTour } from "@/components/Onboarding.tsx";
+import { useTour } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Firmora" }] }),

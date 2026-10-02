@@ -4,19 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { Plus, X, MoreVertical } from "lucide-react";
 import { startOfDay } from "date-fns";
-
-const useTour = (() => {
-  const fallback = () => ({ triggerEvent: (_event: string, _payload?: Record<string, unknown>) => undefined });
-
-  if (typeof require !== "function") return fallback;
-
-  try {
-    const onboardingModule = require("@/components/Onboarding");
-    return onboardingModule?.useTour ?? fallback;
-  } catch {
-    return fallback;
-  }
-})();
+import { useTour } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/clients")({
   head: () => ({ meta: [{ title: "Clients — Firmora" }] }),
