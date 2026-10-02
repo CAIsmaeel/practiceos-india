@@ -9,6 +9,7 @@ export type TourStep = {
   path: string;
   title: string;
   description: string;
+  action: string;
   trigger: "manual" | "settings_saved" | "client_saved" | "engagement_saved" | "invoice_saved";
 };
 
@@ -18,6 +19,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/settings",
     title: "Step 1 — Set up your firm",
     description: "Fill in your firm name, GSTIN, PAN, address and bank details. Upload your logo too. Hit Save Settings when done.",
+    action: "Go to Settings",
     trigger: "settings_saved",
   },
   {
@@ -25,6 +27,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/settings",
     title: "Step 2 — Set up your client website",
     description: "Go to the Website tab. Add your WhatsApp number, tagline and services. Share the link on your visiting card and Instagram. Hit Save Settings when done.",
+    action: "Set Up Website",
     trigger: "settings_saved",
   },
   {
@@ -32,6 +35,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/settings",
     title: "Step 3 — Customise your checklists",
     description: "Go to the Checklist Templates tab. Edit the documents you request from clients for each service type. Add your own service types like FSSAI or RERA. Hit Save Template when done.",
+    action: "Edit Checklists",
     trigger: "manual",
   },
   {
@@ -39,6 +43,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/clients",
     title: "Step 4 — Add your first client",
     description: "Click Add Client. Fill in the details and tick the services they need — GST, ITR, TDS, PF. Compliance deadlines will be created automatically when you save.",
+    action: "Add Client",
     trigger: "client_saved",
   },
   {
@@ -46,6 +51,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/compliance",
     title: "Step 5 — Review compliance deadlines",
     description: "Your client's compliance calendar is ready. View upcoming and overdue deadlines here. Mark items as filed once done. Click Got it when you're ready.",
+    action: "View Compliance",
     trigger: "manual",
   },
   {
@@ -53,6 +59,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/engagements",
     title: "Step 6 — Create your first engagement",
     description: "Click Add Engagement. Select the client and service type. Tick conditions like Has Capital Gains or Has Employees — the right documents will auto-include in the checklist.",
+    action: "Add Engagement",
     trigger: "engagement_saved",
   },
   {
@@ -60,6 +67,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/invoices",
     title: "Step 7 — Send your first invoice",
     description: "Click Add Invoice. Select the client, add line items and GST. Download as PDF and send. Outstanding invoices appear on your dashboard automatically.",
+    action: "Create Invoice",
     trigger: "invoice_saved",
   },
   {
@@ -67,6 +75,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/",
     title: "🎉 You're all set!",
     description: "Your dashboard now shows what needs attention every day — DSC expiry, pending documents, overdue invoices and upcoming deadlines. Welcome to Firmora!",
+    action: "Go to Dashboard",
     trigger: "manual",
   },
 ];
@@ -99,9 +108,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState<number | null>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved || saved === "done") return null;
+      if (saved === "done") return null;      // Tour completed — hide
+      if (!saved) return 1;                   // New user — start from step 1
       const n = parseInt(saved, 10);
-      return isNaN(n) ? 1 : n;
+      return isNaN(n) ? 1 : n;               // Resume from saved step
     } catch { return 1; }
   });
 
@@ -178,6 +188,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 export function TourCard() {
   const { currentStep, totalSteps, isActive, next, skip } = useTour();
   const pathname = useRouterState({ select: s => s.location.pathname });
+  const navigate = useNavigate();
   const [minimised, setMinimised] = useState(false);
 
   if (!isActive || currentStep === null) return null;
@@ -185,9 +196,8 @@ export function TourCard() {
   const step = TOUR_STEPS[currentStep - 1];
   if (!step) return null;
 
-  // Only show on the correct page
+  // Check if user is on correct page
   const onCorrectPage = pathname === step.path || (step.path !== "/" && pathname.startsWith(step.path));
-  if (!onCorrectPage) return null;
 
   const isLast = currentStep === totalSteps;
   const pct = Math.round((currentStep / totalSteps) * 100);
@@ -242,7 +252,15 @@ export function TourCard() {
                 Skip tour
               </button>
               <div className="flex items-center gap-2">
-                {step.trigger === "manual" && (
+                {!onCorrectPage && (
+                  <button
+                    onClick={() => navigate({ to: step.path as any })}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                  >
+                    {step.action} <ChevronRight size={15} />
+                  </button>
+                )}
+                {onCorrectPage && step.trigger === "manual" && (
                   <button
                     onClick={next}
                     className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
@@ -251,12 +269,12 @@ export function TourCard() {
                     <ChevronRight size={15} />
                   </button>
                 )}
-                {step.trigger !== "manual" && (
+                {onCorrectPage && step.trigger !== "manual" && (
                   <span className="text-xs text-muted-foreground italic">
-                    {step.trigger === "settings_saved" && "⏳ Waiting for you to save settings..."}
-                    {step.trigger === "client_saved" && "⏳ Waiting for you to save a client..."}
-                    {step.trigger === "engagement_saved" && "⏳ Waiting for you to save an engagement..."}
-                    {step.trigger === "invoice_saved" && "⏳ Waiting for you to save an invoice..."}
+                    {step.trigger === "settings_saved" && "⏳ Save settings to continue..."}
+                    {step.trigger === "client_saved" && "⏳ Save a client to continue..."}
+                    {step.trigger === "engagement_saved" && "⏳ Save an engagement to continue..."}
+                    {step.trigger === "invoice_saved" && "⏳ Save an invoice to continue..."}
                   </span>
                 )}
               </div>
