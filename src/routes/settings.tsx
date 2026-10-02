@@ -4,6 +4,7 @@ import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
 import { Upload, X, Globe, Copy, Check, Plus, Trash2 } from "lucide-react";
 import { ENGAGEMENT_TYPES, getTemplate, getAllTemplate } from "@/lib/checklistTemplates";
+import { useTour } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Firmora" }] }),
@@ -41,6 +42,7 @@ type TemplateDoc = {
 
 function SettingsPage() {
   const queryClient = useQueryClient();
+  const { triggerEvent } = useTour();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates">("firm");
   const [copied, setCopied] = useState(false);

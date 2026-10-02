@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { Plus, X, MoreVertical } from "lucide-react";
 import { startOfDay } from "date-fns";
+import { useTour } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/clients")({
   head: () => ({ meta: [{ title: "Clients — Firmora" }] }),
@@ -214,6 +215,7 @@ async function generateComplianceForClient(clientId: string, serviceFlags: Parti
 
 function ClientsPage() {
   const qc = useQueryClient();
+  const { triggerEvent } = useTour();
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; client?: Client | null } | null>(null);
   const [filter, setFilter] = useState<FilterType>("active");
   const [importOpen, setImportOpen] = useState(false);
@@ -257,6 +259,7 @@ function ClientsPage() {
           client_type: result.payload?.client_type ?? "",
         } as any);
       }
+      triggerEvent("client_saved");
       setModalState(null);
     },
   });
