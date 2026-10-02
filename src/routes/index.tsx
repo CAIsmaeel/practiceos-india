@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase, getCurrentUserId } from "@/lib/supabase";
-import { Users, Briefcase, MessageCircle, ChevronRight, Bell, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Users, Briefcase, MessageCircle, ChevronRight, Bell, ExternalLink, TrendingUp, TrendingDown, Minus, ShieldAlert } from "lucide-react";
 import { format, addDays, isBefore, differenceInCalendarDays, differenceInDays, startOfDay, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 export const Route = createFileRoute("/")({
@@ -12,16 +12,14 @@ export const Route = createFileRoute("/")({
 
 function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
   label: string; value: number | string; icon: any; color: string;
-  sub?: string; href?: string;
-  trend?: { pct: number; label: string };
+  sub?: string; href?: string; trend?: { pct: number; label: string };
 }) {
   const goTo = () => { if (href) window.location.href = href; };
   const TrendIcon = trend ? (trend.pct > 0 ? TrendingUp : trend.pct < 0 ? TrendingDown : Minus) : null;
   const trendColor = trend ? (trend.pct > 0 ? "text-green-600" : trend.pct < 0 ? "text-red-500" : "text-muted-foreground") : "";
   return (
     <div
-      role={href ? "link" : undefined}
-      tabIndex={href ? 0 : undefined}
+      role={href ? "link" : undefined} tabIndex={href ? 0 : undefined}
       onClick={href ? goTo : undefined}
       onKeyDown={(e) => { if (href && e.key === "Enter") goTo(); }}
       className={`bg-card border border-border rounded-lg p-5 shadow-sm ${href ? "cursor-pointer hover:shadow-md hover:border-input transition-all" : ""}`}
@@ -48,7 +46,7 @@ function StatCard({ label, value, icon: Icon, color, sub, href, trend }: {
 
 type FocusItem = {
   id: string; priority: "critical" | "attention";
-  type: "compliance" | "invoice" | "document" | "lead" | "task";
+  type: "compliance" | "invoice" | "document" | "lead" | "task" | "dsc" | "engagement";
   clientName: string; description: string; detail: string;
   href: string; action: string; waPhone?: string;
 };
@@ -72,11 +70,17 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
   };
 
   const typeColors: Record<string, string> = {
-    compliance: "bg-red-100 text-red-700", invoice: "bg-orange-100 text-orange-700",
-    document: "bg-amber-100 text-amber-700", lead: "bg-purple-100 text-purple-700", task: "bg-blue-100 text-blue-700",
+    compliance: "bg-red-100 text-red-700",
+    invoice: "bg-orange-100 text-orange-700",
+    document: "bg-amber-100 text-amber-700",
+    lead: "bg-purple-100 text-purple-700",
+    task: "bg-blue-100 text-blue-700",
+    dsc: "bg-rose-100 text-rose-700",
+    engagement: "bg-indigo-100 text-indigo-700",
   };
   const typeLabels: Record<string, string> = {
-    compliance: "Compliance", invoice: "Invoice", document: "Documents", lead: "Lead", task: "Task",
+    compliance: "Compliance", invoice: "Invoice", document: "Documents",
+    lead: "Lead", task: "Task", dsc: "DSC", engagement: "Engagement",
   };
 
   const renderItem = (item: FocusItem) => (
@@ -91,7 +95,7 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
       <div className="flex items-center gap-2 shrink-0">
         {item.waPhone && (
           <button onClick={() => handleWA(item)} className="inline-flex items-center gap-1 text-xs text-green-700 border border-green-200 px-2.5 py-1 rounded-md font-medium hover:bg-green-100">
-            <MessageCircle size={12} /> WA
+            <MessageCircle size={12} /> Chase
           </button>
         )}
         <a href={item.href} className="inline-flex items-center gap-1 text-xs bg-card border border-border text-foreground px-2.5 py-1 rounded-md font-medium hover:bg-muted">
@@ -124,13 +128,11 @@ function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount
     if (!groups[key]) groups[key] = { items: [], earliest: item.dueDate, isOverdue: item.isOverdue };
     groups[key].items.push(item);
   });
-
   const groupList = Object.values(groups).sort((a, b) => {
     if (a.isOverdue && !b.isOverdue) return -1;
     if (!a.isOverdue && b.isOverdue) return 1;
     return a.earliest < b.earliest ? -1 : 1;
   });
-
   return (
     <div className="bg-card border border-border rounded-lg shadow-sm">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -180,31 +182,25 @@ function ComplianceSection({ items, overdueCount }: { items: any[]; overdueCount
   );
 }
 
-// ✅ FIXED: Show 3, Show More button
 function RegulatoryUpdates() {
   const [showAll, setShowAll] = useState(false);
-
   const { data: updates, isLoading } = useQuery({
     queryKey: ["regulatory-updates-dashboard"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("active_regulatory_events")
         .select("id, title, category, importance, action_required, deadline_date, published_at, url, source")
-        .order("published_at", { ascending: false })
-        .limit(20);
+        .order("published_at", { ascending: false }).limit(20);
       if (error) throw error;
       return (data ?? []) as any[];
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const categoryIcon: Record<string, string> = {
     "Direct Tax": "💰", "GST": "🧾", "Corporate Law": "🏢",
     "Audit & Accounting": "📊", "ICAI": "🎓", "Compliance": "📋", "General": "📰",
   };
-
   const visible = showAll ? (updates ?? []) : (updates ?? []).slice(0, 3);
-
   return (
     <div className="bg-card border border-border rounded-lg shadow-sm">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -249,13 +245,9 @@ function RegulatoryUpdates() {
             </div>
           );
         })}
-        {/* ✅ Show More / Show Less button */}
         {(updates ?? []).length > 3 && (
           <div className="px-5 py-3">
-            <button
-              onClick={() => setShowAll(p => !p)}
-              className="text-sm text-primary hover:underline font-medium"
-            >
+            <button onClick={() => setShowAll(p => !p)} className="text-sm text-primary hover:underline font-medium">
               {showAll ? "Show Less ↑" : `Show ${(updates ?? []).length - 3} More ↓`}
             </button>
           </div>
@@ -267,6 +259,8 @@ function RegulatoryUpdates() {
 
 function Dashboard() {
   const now = new Date();
+  const today = startOfDay(now);
+  const in7days = addDays(today, 7);
   const thisMonthStart = startOfMonth(now).toISOString();
   const thisMonthEnd = endOfMonth(now).toISOString();
   const lastMonthStart = startOfMonth(subMonths(now, 1)).toISOString();
@@ -343,8 +337,7 @@ function Dashboard() {
       const userId = await getCurrentUserId();
       const { data } = await supabase.from("invoices")
         .select("id, amount, total_amount, status, due_date, created_at, payment_date, clients(name, phone)")
-        .eq("user_id", userId ?? "")
-        .order("due_date", { ascending: true, nullsFirst: false });
+        .eq("user_id", userId ?? "").order("due_date", { ascending: true, nullsFirst: false });
       return (data ?? []) as any[];
     },
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
@@ -355,18 +348,18 @@ function Dashboard() {
     queryFn: async () => {
       try {
         const userId = await getCurrentUserId();
-        const today = format(startOfDay(new Date()), "yyyy-MM-dd");
-        const next7 = format(startOfDay(addDays(new Date(), 7)), "yyyy-MM-dd");
+        const todayStr = format(today, "yyyy-MM-dd");
+        const next7Str = format(in7days, "yyyy-MM-dd");
         const { data: overdueData } = await supabase.from("compliance_items")
           .select("id, compliance_type, due_date, status, client_id, clients!inner(name, status)")
           .eq("user_id", userId ?? "").eq("status", "pending")
           .neq("clients.status", "deleted").neq("clients.status", "archived")
-          .lt("due_date", today).order("due_date", { ascending: true }).limit(20);
+          .lt("due_date", todayStr).order("due_date", { ascending: true }).limit(20);
         const { data: upcomingData } = await supabase.from("compliance_items")
           .select("id, compliance_type, due_date, status, client_id, clients!inner(name, status)")
           .eq("user_id", userId ?? "").eq("status", "pending")
           .neq("clients.status", "deleted").neq("clients.status", "archived")
-          .gte("due_date", today).lte("due_date", next7).order("due_date", { ascending: true });
+          .gte("due_date", todayStr).lte("due_date", next7Str).order("due_date", { ascending: true });
         const mapItem = (item: any, isOverdue: boolean) => ({
           id: item.id, clientName: item.clients?.name ?? "—",
           complianceType: item.compliance_type ?? "—", dueDate: item.due_date, isOverdue,
@@ -375,6 +368,47 @@ function Dashboard() {
           ...(overdueData ?? []).map((i: any) => mapItem(i, true)),
           ...(upcomingData ?? []).map((i: any) => mapItem(i, false)),
         ];
+      } catch { return []; }
+    },
+    refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
+  });
+
+  // ✅ DSC expiry — expired or expiring in 7 days
+  const { data: dscClients } = useQuery({
+    queryKey: ["dashboard-dsc"],
+    queryFn: async () => {
+      try {
+        const userId = await getCurrentUserId();
+        const in7Str = format(in7days, "yyyy-MM-dd");
+        const { data } = await supabase.from("clients")
+          .select("id, name, phone, dsc_expiry_date")
+          .eq("user_id", userId ?? "")
+          .not("status", "in", '("deleted","archived")')
+          .not("dsc_expiry_date", "is", null)
+          .lte("dsc_expiry_date", in7Str)
+          .order("dsc_expiry_date", { ascending: true });
+        return (data ?? []) as any[];
+      } catch { return []; }
+    },
+    refetchInterval: 60000, staleTime: 0, refetchOnWindowFocus: true,
+  });
+
+  // ✅ Pending mandatory docs — engagements blocked
+  const { data: pendingDocs } = useQuery({
+    queryKey: ["dashboard-pending-docs-focus"],
+    queryFn: async () => {
+      try {
+        const userId = await getCurrentUserId();
+        const { data } = await supabase.from("engagement_documents")
+          .select("engagement_id, requirement, engagements!inner(id, title, status, client_id, clients!inner(name, phone, status))")
+          .eq("user_id", userId ?? "")
+          .eq("status", "pending")
+          .eq("requirement", "mandatory")
+          .neq("engagements.status", "completed")
+          .neq("engagements.status", "billed")
+          .neq("engagements.clients.status", "deleted")
+          .neq("engagements.clients.status", "archived");
+        return (data ?? []) as any[];
       } catch { return []; }
     },
     refetchInterval: 30000, staleTime: 0, refetchOnWindowFocus: true,
@@ -404,7 +438,33 @@ function Dashboard() {
   const clientsPct = calcPct(clientsThisMonth ?? 0, clientsLastMonth ?? 0);
   const fmtINR = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
+  // ✅ Build Today's Focus items
   const todaysFocus: FocusItem[] = [];
+
+  // 1. DSC expired or expiring in 7 days
+  (dscClients ?? []).slice(0, 3).forEach((client: any) => {
+    const expiry = new Date(client.dsc_expiry_date);
+    const daysLeft = differenceInCalendarDays(startOfDay(expiry), today);
+    const isExpired = daysLeft < 0;
+    const label = isExpired
+      ? `DSC expired ${Math.abs(daysLeft)} day${Math.abs(daysLeft) !== 1 ? "s" : ""} ago`
+      : daysLeft === 0
+        ? "DSC expires today"
+        : `DSC expiring in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`;
+    todaysFocus.push({
+      id: `dsc-${client.id}`,
+      priority: isExpired || daysLeft <= 2 ? "critical" : "attention",
+      type: "dsc",
+      clientName: client.name,
+      description: `${label} — renewal needed`,
+      detail: "DSC",
+      href: "/clients",
+      action: "View Client",
+      waPhone: client.phone ?? "",
+    });
+  });
+
+  // 2. Overdue invoices
   (invoices ?? []).filter((inv: any) => {
     if (!inv.due_date || (inv.status ?? "").toLowerCase() === "paid") return false;
     return new Date(inv.due_date) < now;
@@ -412,11 +472,68 @@ function Dashboard() {
     const days = differenceInDays(now, new Date(inv.due_date));
     const amt = fmtINR(Number(inv.total_amount ?? inv.amount ?? 0));
     todaysFocus.push({
-      id: `inv-${inv.id}`, priority: days > 30 ? "critical" : "attention", type: "invoice",
-      clientName: inv.clients?.name ?? "—", description: `${amt} overdue by ${days} day${days !== 1 ? "s" : ""}`,
-      detail: "Invoice", href: "/invoices", action: "Open Invoice", waPhone: inv.clients?.phone ?? "",
+      id: `inv-${inv.id}`,
+      priority: days > 30 ? "critical" : "attention",
+      type: "invoice",
+      clientName: inv.clients?.name ?? "—",
+      description: `${amt} overdue by ${days} day${days !== 1 ? "s" : ""}`,
+      detail: "Invoice",
+      href: "/invoices",
+      action: "Open Invoice",
+      waPhone: inv.clients?.phone ?? "",
     });
   });
+
+  // 3. Mandatory docs blocking engagements
+  const blockedEngMap: Record<string, { clientName: string; title: string; count: number; phone: string; engId: string }> = {};
+  (pendingDocs ?? []).forEach((doc: any) => {
+    const eng = doc.engagements;
+    const client = eng?.clients;
+    const key = eng?.id;
+    if (!key) return;
+    if (!blockedEngMap[key]) {
+      blockedEngMap[key] = {
+        clientName: client?.name ?? "—",
+        title: eng?.title ?? "Engagement",
+        count: 0,
+        phone: client?.phone ?? "",
+        engId: key,
+      };
+    }
+    blockedEngMap[key].count += 1;
+  });
+  Object.values(blockedEngMap).slice(0, 3).forEach((eng) => {
+    todaysFocus.push({
+      id: `doc-${eng.engId}`,
+      priority: "attention",
+      type: "document",
+      clientName: eng.clientName,
+      description: `${eng.count} mandatory doc${eng.count > 1 ? "s" : ""} pending — blocking "${eng.title}"`,
+      detail: "Documents",
+      href: "/engagements",
+      action: "View",
+      waPhone: eng.phone,
+    });
+  });
+
+  // 4. Overdue engagements deadline
+  (engagements ?? [])
+    .filter((e: any) => e.deadline && isBefore(new Date(e.deadline), now) && isActiveEng(e))
+    .slice(0, 2)
+    .forEach((e: any) => {
+      const daysOver = differenceInDays(now, new Date(e.deadline));
+      todaysFocus.push({
+        id: `eng-${e.id}`,
+        priority: daysOver > 7 ? "critical" : "attention",
+        type: "engagement",
+        clientName: e.clients?.name ?? "—",
+        description: `"${e.title}" deadline passed ${daysOver} day${daysOver !== 1 ? "s" : ""} ago`,
+        detail: "Engagement",
+        href: "/engagements",
+        action: "Review",
+        waPhone: e.clients?.phone ?? e.clients?.whatsapp_number ?? "",
+      });
+    });
 
   return (
     <div className="space-y-6">
@@ -437,10 +554,12 @@ function Dashboard() {
           trend={collectedLastMonth > 0 ? { pct: feesPct, label: "vs last month" } : undefined}
         />
         <StatCard label="Open Leads" value={openLeadsCount ?? 0} icon={Users} color="bg-purple-500" href="/leads" />
-        <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements" />
+        <StatCard label="Active Engagements" value={activeCount} icon={Briefcase} color="bg-indigo-500" href="/engagements"
+          sub={overdueEngagements > 0 ? `${overdueEngagements} deadline missed` : undefined}
+        />
       </div>
 
-      <TodaysFocus items={todaysFocus.slice(0, 6)} />
+      <TodaysFocus items={todaysFocus.slice(0, 7)} />
       <ComplianceSection items={complianceItems ?? []} overdueCount={overdueComplianceCount} />
       <RegulatoryUpdates />
     </div>
