@@ -5,23 +5,18 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-// The onboarding module is optional in this app. Fall back to a no-op tour
-// so the sidebar still compiles when the onboarding feature is not present.
-type TourHook = () => { restart: () => void; isActive: boolean };
-const useTour: TourHook = () => ({ restart: () => {}, isActive: false });
-
 const navItems = [
-  { to: "/",             label: "Dashboard",      icon: LayoutDashboard },
-  { to: "/clients",      label: "Clients",         icon: Users },
-  { to: "/leads",        label: "Leads",           icon: UserPlus },
-  { to: "/engagements",  label: "Engagements",     icon: Briefcase },
-  { to: "/staff",        label: "Staff",           icon: Users },
-  { to: "/compliance",   label: "Compliance",      icon: ShieldCheck },
-  { to: "/documents",    label: "Documents",       icon: FileText },
-  { to: "/fee-estimator",label: "Fee Estimator",   icon: Calculator },
-  { to: "/invoices",     label: "Invoices",        icon: Receipt },
-  { to: "/tasks",        label: "Tasks",           icon: ListChecks },
-  { to: "/support-agent",label: "AI Support Agent",icon: Bot },
+  { to: "/",             label: "Dashboard",       icon: LayoutDashboard },
+  { to: "/clients",      label: "Clients",          icon: Users },
+  { to: "/leads",        label: "Leads",            icon: UserPlus },
+  { to: "/engagements",  label: "Engagements",      icon: Briefcase },
+  { to: "/staff",        label: "Staff",            icon: Users },
+  { to: "/compliance",   label: "Compliance",       icon: ShieldCheck },
+  { to: "/documents",    label: "Documents",        icon: FileText },
+  { to: "/fee-estimator",label: "Fee Estimator",    icon: Calculator },
+  { to: "/invoices",     label: "Invoices",         icon: Receipt },
+  { to: "/tasks",        label: "Tasks",            icon: ListChecks },
+  { to: "/support-agent",label: "AI Support Agent", icon: Bot },
 ];
 
 const systemItems = [
@@ -62,7 +57,6 @@ function FirmIconSmall({ logoUrl, firmName }: { logoUrl?: string | null; firmNam
 export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmName?: string; onLogout?: () => void; }) {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: s => s.location.pathname });
-  const { restart, isActive } = useTour();
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],
@@ -77,6 +71,11 @@ export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmNa
 
   const displayFirmName = settings?.firm_name?.trim() || firmName || "CA Practice Manager";
   const logoUrl = settings?.logo_url ?? null;
+
+  const handleRestartTour = () => {
+    try { localStorage.removeItem("firmora_tour_step"); } catch {}
+    window.location.reload();
+  };
 
   return (
     <>
@@ -94,7 +93,6 @@ export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmNa
         </button>
       </div>
 
-      {/* Sidebar — fixed height on desktop so logout always visible */}
       <aside className={cn(
         "bg-sidebar text-sidebar-foreground w-full border-sidebar-border",
         "md:w-64 md:fixed md:top-0 md:left-0 md:h-screen md:flex md:flex-col md:border-r",
@@ -109,7 +107,7 @@ export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmNa
           </div>
         </div>
 
-        {/* Nav — scrollable, takes remaining space */}
+        {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-2 space-y-0.5 min-h-0">
           {navItems.map(item => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
@@ -117,20 +115,23 @@ export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmNa
           })}
         </nav>
 
-        {/* System + Logout — always visible at bottom */}
+        {/* System + Tour + Logout */}
         <div className="shrink-0 p-2 border-t border-sidebar-border space-y-0.5">
           <p className="px-3 pb-1 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">System</p>
           {systemItems.map(item => {
             const active = pathname.startsWith(item.to);
             return <NavLink key={item.to} to={item.to} label={item.label} icon={item.icon} active={active} onClick={() => setOpen(false)} />;
           })}
+
+          {/* ✅ Take a Tour — no context needed */}
           <button
-            onClick={restart}
+            onClick={handleRestartTour}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
           >
             <HelpCircle size={17} strokeWidth={2} />
-            {isActive ? "Restart Tour" : "Take a Tour"}
+            Take a Tour
           </button>
+
           {onLogout && (
             <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive-foreground transition-colors">
               <LogOut size={17} strokeWidth={2} />
