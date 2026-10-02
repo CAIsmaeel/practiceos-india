@@ -31,6 +31,7 @@ export type Client = {
   pf_applicable?: boolean | null;
   ptec_applicable?: boolean | null;
   advance_tax_applicable?: boolean | null;
+  itr_applicable?: boolean | null;
 };
 
 export type EngagementType = string;

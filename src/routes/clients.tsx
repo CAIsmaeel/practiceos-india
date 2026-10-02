@@ -19,6 +19,7 @@ type ServiceFlags = {
   pf_applicable: boolean;
   ptec_applicable: boolean;
   advance_tax_applicable: boolean;
+  itr_applicable: boolean;
 };
 
 const CLIENT_TYPES = [
@@ -33,6 +34,7 @@ const EMPTY_SERVICE_FLAGS: ServiceFlags = {
   pf_applicable: false,
   ptec_applicable: false,
   advance_tax_applicable: false,
+  itr_applicable: false,
 };
 
 function getServiceFlagsFromClient(client?: Partial<Client> | null): ServiceFlags {
@@ -43,6 +45,7 @@ function getServiceFlagsFromClient(client?: Partial<Client> | null): ServiceFlag
     pf_applicable: Boolean(client?.pf_applicable),
     ptec_applicable: Boolean(client?.ptec_applicable),
     advance_tax_applicable: Boolean(client?.advance_tax_applicable),
+    itr_applicable: Boolean((client as any)?.itr_applicable),
   };
 }
 
@@ -55,6 +58,7 @@ function getNewlyEnabledServices(previous: Partial<Client> | null | undefined, n
     pf_applicable: Boolean(next.pf_applicable && !prev.pf_applicable),
     ptec_applicable: Boolean(next.ptec_applicable && !prev.ptec_applicable),
     advance_tax_applicable: Boolean(next.advance_tax_applicable && !prev.advance_tax_applicable),
+    itr_applicable: Boolean(next.itr_applicable && !prev.itr_applicable),
   };
 }
 
@@ -170,6 +174,14 @@ async function generateComplianceForClient(clientId: string, serviceFlags: Parti
       { type: "Advance Tax Q4", date: getNextFutureDateForPatterns([new Date(now.getFullYear() + 1, 2, 15), new Date(now.getFullYear() + 2, 2, 15)], now) ?? new Date(now.getFullYear() + 1, 2, 15) },
     ];
     for (const q of quarterDates) pushIfMissing(q.type, q.date);
+  }
+
+  if (rawFlags.itr_applicable) {
+    const itrDate = getNextFutureDateForPatterns(
+      [new Date(now.getFullYear(), 6, 31), new Date(now.getFullYear() + 1, 6, 31)],
+      now
+    ) ?? new Date(now.getFullYear(), 6, 31);
+    pushIfMissing("ITR Filing", itrDate);
   }
 
   if (entries.length === 0) return;
@@ -361,21 +373,11 @@ function ClientsPage() {
           <p className="text-muted-foreground text-sm">Manage your client list</p>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/client-template.xlsx"
-            download
-            className="inline-flex items-center gap-2 bg-muted hover:bg-muted text-foreground px-4 py-2 rounded-md text-sm font-medium border border-input"
-          >
+          <a href="/client-template.xlsx" download className="inline-flex items-center gap-2 bg-muted hover:bg-muted text-foreground px-4 py-2 rounded-md text-sm font-medium border border-input">
             📥 Download Template
           </a>
           <button
-            onClick={() => {
-              setImportOpen(true);
-              setImportStep(1);
-              setImportRows([]);
-              setImportDone('');
-              setImportProgress('');
-            }}
+            onClick={() => { setImportOpen(true); setImportStep(1); setImportRows([]); setImportDone(''); setImportProgress(''); }}
             className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -385,10 +387,7 @@ function ClientsPage() {
             </svg>
             Import from Excel
           </button>
-          <button
-            onClick={() => setModalState({ mode: "create" })}
-            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
-          >
+          <button onClick={() => setModalState({ mode: "create" })} className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium">
             <Plus size={16} /> Add Client
           </button>
         </div>
@@ -396,15 +395,8 @@ function ClientsPage() {
 
       <div className="flex gap-2 flex-wrap">
         {filterButtons.map((btn) => (
-          <button
-            key={btn.value}
-            onClick={() => setFilter(btn.value)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
-              filter === btn.value
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-muted-foreground border-input hover:bg-muted"
-            }`}
-          >
+          <button key={btn.value} onClick={() => setFilter(btn.value)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${filter === btn.value ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-input hover:bg-muted"}`}>
             {btn.label}
           </button>
         ))}
@@ -414,28 +406,23 @@ function ClientsPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
             <tr>
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Firm Name</th>
-              <th className="px-5 py-3 font-medium">Type</th>
-              <th className="px-5 py-3 font-medium">PAN</th>
-              <th className="px-5 py-3 font-medium">DSC Expiry</th>
-              <th className="px-5 py-3 font-medium">Phone</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3">Name</th>
+              <th className="px-5 py-3">Firm Name</th>
+              <th className="px-5 py-3">Type</th>
+              <th className="px-5 py-3">PAN</th>
+              <th className="px-5 py-3">DSC Expiry</th>
+              <th className="px-5 py-3">Phone</th>
+              <th className="px-5 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {isLoading && (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>
-            )}
-            {!isLoading && clients?.length === 0 && (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No clients found.</td></tr>
-            )}
+            {isLoading && <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>}
+            {!isLoading && clients?.length === 0 && <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No clients found.</td></tr>}
             {clients?.map((c: any) => {
               const dscExpiry = c.dsc_expiry_date ? new Date(c.dsc_expiry_date) : null;
               const today = new Date();
               const daysLeft = dscExpiry ? Math.ceil((dscExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
               const dscColor = daysLeft === null ? "" : daysLeft <= 0 ? "text-red-600 font-semibold" : daysLeft <= 30 ? "text-amber-600 font-semibold" : "text-green-600";
-
               return (
                 <tr key={c.id} className="hover:bg-muted">
                   <td className="px-5 py-3 font-medium text-foreground">
@@ -445,32 +432,19 @@ function ClientsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3 text-foreground">{c.firm_name ?? "—"}</td>
-                  <td className="px-5 py-3">
-                    {c.client_type ? (
-                      <span className="bg-primary/5 text-primary text-xs px-2 py-0.5 rounded-full">{c.client_type}</span>
-                    ) : "—"}
-                  </td>
+                  <td className="px-5 py-3">{c.client_type ? <span className="bg-primary/5 text-primary text-xs px-2 py-0.5 rounded-full">{c.client_type}</span> : "—"}</td>
                   <td className="px-5 py-3 text-foreground font-mono text-xs">{c.pan_number ?? "—"}</td>
                   <td className={`px-5 py-3 text-xs ${dscColor}`}>
                     {dscExpiry ? (
                       <span title={c.dsc_location ?? ""}>
                         {dscExpiry.toLocaleDateString("en-IN")}
-                        {daysLeft !== null && daysLeft <= 30 && (
-                          <span className="ml-1">
-                            {daysLeft <= 0 ? "⚠️ Expired" : `⚠️ ${daysLeft}d left`}
-                          </span>
-                        )}
+                        {daysLeft !== null && daysLeft <= 30 && <span className="ml-1">{daysLeft <= 0 ? "⚠️ Expired" : `⚠️ ${daysLeft}d left`}</span>}
                       </span>
                     ) : "—"}
                   </td>
                   <td className="px-5 py-3 text-foreground">{c.phone ?? "—"}</td>
                   <td className="px-5 py-3">
-                    <RowMenu
-                      status={c.status}
-                      client={c}
-                      onAction={(action) => updateStatusMutation.mutate({ id: c.id, status: action })}
-                      onEdit={() => setModalState({ mode: "edit", client: c })}
-                    />
+                    <RowMenu status={c.status} client={c} onAction={(action) => updateStatusMutation.mutate({ id: c.id, status: action })} onEdit={() => setModalState({ mode: "edit", client: c })} />
                   </td>
                 </tr>
               );
@@ -485,15 +459,8 @@ function ClientsPage() {
           initialClient={modalState.client ?? undefined}
           onClose={() => setModalState(null)}
           onSubmit={(payload) => {
-            const cleaned = {
-            ...payload,
-            dsc_expiry_date: payload.dsc_expiry_date || null,
-            dsc_location: payload.dsc_location || null,
-            pan_number: payload.pan_number ? payload.pan_number.toUpperCase() : null,};
-            if (modalState.mode === "edit" && modalState.client?.id) {
-            updateMutation.mutate({ id: modalState.client.id, payload: cleaned });
-            return;
-            }
+            const cleaned = { ...payload, dsc_expiry_date: payload.dsc_expiry_date || null, dsc_location: payload.dsc_location || null, pan_number: payload.pan_number ? payload.pan_number.toUpperCase() : null };
+            if (modalState.mode === "edit" && modalState.client?.id) { updateMutation.mutate({ id: modalState.client.id, payload: cleaned }); return; }
             addMutation.mutate(cleaned);
           }}
           pending={addMutation.isPending || updateMutation.isPending}
@@ -505,19 +472,13 @@ function ClientsPage() {
           <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-card">
               <h2 className="font-semibold text-foreground">Import Clients from Excel</h2>
-              <button onClick={() => setImportOpen(false)} className="text-muted-foreground hover:text-muted-foreground">
-                <X size={18} />
-              </button>
+              <button onClick={() => setImportOpen(false)}><X size={18} /></button>
             </div>
             <div className="flex items-center gap-2 px-5 py-3 border-b border-border text-sm">
               {[1, 2, 3].map(s => (
                 <div key={s} className="flex items-center gap-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    importStep >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                  }`}>{s}</span>
-                  <span className={importStep >= s ? 'text-foreground' : 'text-muted-foreground'}>
-                    {s === 1 ? 'Upload' : s === 2 ? 'Preview' : 'Import'}
-                  </span>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${importStep >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>{s}</span>
+                  <span className={importStep >= s ? 'text-foreground' : 'text-muted-foreground'}>{s === 1 ? 'Upload' : s === 2 ? 'Preview' : 'Import'}</span>
                   {s < 3 && <span className="text-muted-foreground mx-2">→</span>}
                 </div>
               ))}
@@ -552,11 +513,7 @@ function ClientsPage() {
                   </div>
                   <div className="flex gap-3 pt-2">
                     <button onClick={() => setImportStep(1)} className="px-4 py-2 text-sm border border-input rounded-md text-foreground hover:bg-muted">← Back</button>
-                    <button
-                      onClick={handleImport}
-                      disabled={!importMapping.name}
-                      className="flex-1 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium disabled:opacity-50"
-                    >
+                    <button onClick={handleImport} disabled={!importMapping.name} className="flex-1 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium disabled:opacity-50">
                       Import {importRows.length} Clients →
                     </button>
                   </div>
@@ -574,9 +531,7 @@ function ClientsPage() {
                     <div>
                       <p className="text-3xl mb-3">🎉</p>
                       <p className="text-foreground font-medium">{importDone}</p>
-                      <button onClick={() => { setImportOpen(false); setImportStep(1); }} className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">
-                        Close & View Clients
-                      </button>
+                      <button onClick={() => { setImportOpen(false); setImportStep(1); }} className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">Close & View Clients</button>
                     </div>
                   )}
                 </div>
@@ -589,28 +544,17 @@ function ClientsPage() {
   );
 }
 
-function RowMenu({ status, client, onAction, onEdit }: {
-  status: string;
-  client: Client;
-  onAction: (s: string) => void;
-  onEdit: () => void;
-}) {
+function RowMenu({ status, client, onAction, onEdit }: { status: string; client: Client; onAction: (s: string) => void; onEdit: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((p) => !p)} className="p-1 rounded hover:bg-muted text-muted-foreground">
-        <MoreVertical size={16} />
-      </button>
+      <button onClick={() => setOpen((p) => !p)} className="p-1 rounded hover:bg-muted text-muted-foreground"><MoreVertical size={16} /></button>
       {open && (
         <div className="absolute right-0 mt-1 w-40 bg-card border border-border rounded-lg shadow-lg z-10 py-1">
           <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted">Edit</button>
@@ -625,11 +569,8 @@ function RowMenu({ status, client, onAction, onEdit }: {
 }
 
 function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
-  mode: "create" | "edit";
-  initialClient?: Client | null;
-  onClose: () => void;
-  onSubmit: (data: any) => void;
-  pending: boolean;
+  mode: "create" | "edit"; initialClient?: Client | null;
+  onClose: () => void; onSubmit: (data: any) => void; pending: boolean;
 }) {
   const [form, setForm] = useState({
     name: initialClient?.name ?? "",
@@ -647,6 +588,7 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
     pf_applicable: Boolean(initialClient?.pf_applicable),
     ptec_applicable: Boolean(initialClient?.ptec_applicable),
     advance_tax_applicable: Boolean(initialClient?.advance_tax_applicable),
+    itr_applicable: Boolean((initialClient as any)?.itr_applicable),
     dsc_expiry_date: (initialClient as any)?.dsc_expiry_date ?? "",
     dsc_location: (initialClient as any)?.dsc_location ?? "",
   });
@@ -661,30 +603,20 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
           <h2 className="font-semibold text-foreground">{mode === "edit" ? "Edit Client" : "Add Client"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
-        <form
-          onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, status: initialClient?.status ?? "active" }); }}
-          className="p-5 space-y-5"
-        >
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, status: initialClient?.status ?? "active" }); }} className="p-5 space-y-5">
+
           {/* Basic Info */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Basic Info</p>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Name *</label>
-                <input type="text" required value={form.name} onChange={(e) => set("name", e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Firm Name</label>
-                <input type="text" value={form.firm_name} onChange={(e) => set("firm_name", e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Email</label>
-                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Phone</label>
-                <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputClass} />
-              </div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Name *</label>
+                <input type="text" required value={form.name} onChange={(e) => set("name", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Firm Name</label>
+                <input type="text" value={form.firm_name} onChange={(e) => set("firm_name", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Email</label>
+                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Phone</label>
+                <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputClass} /></div>
             </div>
           </div>
 
@@ -692,21 +624,15 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Tax Details</p>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">PAN Number</label>
-                <input type="text" maxLength={10} value={form.pan_number} onChange={(e) => set("pan_number", e.target.value.toUpperCase())} placeholder="ABCDE1234F" className={`${inputClass} font-mono`} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">GST Number</label>
-                <input type="text" maxLength={15} value={form.gst_number} onChange={(e) => set("gst_number", e.target.value.toUpperCase())} placeholder="22ABCDE1234F1Z5" className={`${inputClass} font-mono`} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Client Type</label>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">PAN Number</label>
+                <input type="text" maxLength={10} value={form.pan_number} onChange={(e) => set("pan_number", e.target.value.toUpperCase())} placeholder="ABCDE1234F" className={`${inputClass} font-mono`} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">GST Number</label>
+                <input type="text" maxLength={15} value={form.gst_number} onChange={(e) => set("gst_number", e.target.value.toUpperCase())} placeholder="22ABCDE1234F1Z5" className={`${inputClass} font-mono`} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Client Type</label>
                 <select value={form.client_type} onChange={(e) => set("client_type", e.target.value)} className={inputClass}>
                   <option value="">Select type...</option>
                   {CLIENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
+                </select></div>
             </div>
           </div>
 
@@ -742,6 +668,10 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
                 <input type="checkbox" checked={form.advance_tax_applicable} onChange={(e) => set("advance_tax_applicable", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
                 Advance Tax Applicable
               </label>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={form.itr_applicable} onChange={(e) => set("itr_applicable", e.target.checked)} className="h-4 w-4 rounded border-input text-primary" />
+                ITR Filing Applicable
+              </label>
             </div>
           </div>
 
@@ -749,14 +679,10 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contact Details</p>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">WhatsApp Number</label>
-                <input type="text" value={form.whatsapp_number} onChange={(e) => set("whatsapp_number", e.target.value)} placeholder="Same as phone if blank" className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Notes</label>
-                <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} className={`${inputClass} resize-none`} />
-              </div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">WhatsApp Number</label>
+                <input type="text" value={form.whatsapp_number} onChange={(e) => set("whatsapp_number", e.target.value)} placeholder="Same as phone if blank" className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Notes</label>
+                <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} className={`${inputClass} resize-none`} /></div>
             </div>
           </div>
 
@@ -764,25 +690,10 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">🔐 DSC Details</p>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Expiry Date</label>
-                <input
-                  type="date"
-                  value={form.dsc_expiry_date}
-                  onChange={(e) => set("dsc_expiry_date", e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Physical Location</label>
-                <input
-                  type="text"
-                  value={form.dsc_location}
-                  onChange={(e) => set("dsc_location", e.target.value)}
-                  placeholder="e.g. Drawer 2, USB Box, Tray A Slot 3"
-                  className={inputClass}
-                />
-              </div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Expiry Date</label>
+                <input type="date" value={form.dsc_expiry_date} onChange={(e) => set("dsc_expiry_date", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Physical Location</label>
+                <input type="text" value={form.dsc_location} onChange={(e) => set("dsc_location", e.target.value)} placeholder="e.g. Drawer 2, USB Box, Tray A Slot 3" className={inputClass} /></div>
             </div>
           </div>
 
