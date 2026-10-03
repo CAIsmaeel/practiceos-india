@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { Plus, X, MoreVertical } from "lucide-react";
-import { startOfDay } from "date-fns";
+import { startOfDay, format } from "date-fns";
 import { useTour } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/clients")({
@@ -219,6 +219,7 @@ function ClientsPage() {
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; client?: Client | null } | null>(null);
   const [filter, setFilter] = useState<FilterType>("active");
   const [search, setSearch] = useState("");
+  const [pageTab, setPageTab] = useState<"clients" | "expiry">("clients");
   const [importOpen, setImportOpen] = useState(false);
   const [importStep, setImportStep] = useState<1 | 2 | 3>(1);
   const [importRows, setImportRows] = useState<any[]>([]);
@@ -239,6 +240,19 @@ function ClientsPage() {
       if (error) throw error;
       return (data ?? []) as Client[];
     },
+  });
+
+  // Expiry Tracker — all active clients with any expiry field
+  const { data: allActiveClients } = useQuery({
+    queryKey: ["clients-expiry"],
+    queryFn: async () => {
+      const userId = await getCurrentUserId();
+      const { data } = await supabase.from("clients")
+        .select("id, name, firm_name, phone, dsc_expiry_date, fssai_expiry, shop_estab_expiry, trade_license_expiry, insurance_renewal, iec_expiry, drug_license_expiry")
+        .eq("user_id", userId ?? "").eq("status", "active").order("name");
+      return (data ?? []) as any[];
+    },
+    enabled: pageTab === "expiry",
   });
 
   const filteredClients = (clients ?? []).filter(c => {
@@ -438,7 +452,21 @@ function ClientsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      {/* Page tabs */}
+      <div className="flex gap-1 border-b border-border">
+        <button onClick={() => setPageTab("clients")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${pageTab === "clients" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          👥 Client List
+        </button>
+        <button onClick={() => setPageTab("expiry")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${pageTab === "expiry" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          📋 Document Expiry Tracker
+        </button>
+      </div>
+
+      {pageTab === "expiry" && (
+        <ExpiryTracker clients={allActiveClients ?? []} />
+      )}
+
+      {pageTab === "clients" && <><div className="flex items-center gap-3 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           {filterButtons.map((btn) => (
             <button key={btn.value} onClick={() => setFilter(btn.value)}
@@ -532,6 +560,8 @@ function ClientsPage() {
           pending={addMutation.isPending || updateMutation.isPending}
         />
       )}
+
+      </> } {/* end pageTab === "clients" */}
 
       {importOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -634,6 +664,164 @@ function RowMenu({ status, client, onAction, onEdit }: { status: string; client:
   );
 }
 
+// ─── Expiry Tracker ──────────────────────────────────────────────────────────
+const EXPIRY_FIELDS = [
+  { key: "dsc_expiry_date",     label: "DSC",                  icon: "🔐" },
+  { key: "fssai_expiry",        label: "FSSAI License",         icon: "🍽️" },
+  { key: "shop_estab_expiry",   label: "Shop & Establishment",  icon: "🏪" },
+  { key: "trade_license_expiry",label: "Trade License",         icon: "📜" },
+  { key: "insurance_renewal",   label: "Insurance Policy",      icon: "🛡️" },
+  { key: "iec_expiry",          label: "IEC (Import Export)",   icon: "🌐" },
+  { key: "drug_license_expiry", label: "Drug License",          icon: "💊" },
+];
+
+function ExpiryTracker({ clients }: { clients: any[] }) {
+  const today = new Date();
+  const [filter, setFilter] = useState<"all" | "expired" | "30" | "90">("all");
+
+  // Flatten all expiry entries
+  const entries = clients.flatMap(c =>
+    EXPIRY_FIELDS.flatMap(f => {
+      const val = c[f.key];
+      if (!val) return [];
+      const expiry = new Date(val);
+      const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return [{ clientId: c.id, clientName: c.name, firmName: c.firm_name, phone: c.phone, field: f, expiry, daysLeft }];
+    })
+  ).sort((a, b) => a.daysLeft - b.daysLeft);
+
+  const filtered = entries.filter(e => {
+    if (filter === "expired") return e.daysLeft < 0;
+    if (filter === "30") return e.daysLeft >= 0 && e.daysLeft <= 30;
+    if (filter === "90") return e.daysLeft >= 0 && e.daysLeft <= 90;
+    return true;
+  });
+
+  const expiredCount = entries.filter(e => e.daysLeft < 0).length;
+  const due30Count = entries.filter(e => e.daysLeft >= 0 && e.daysLeft <= 30).length;
+  const due90Count = entries.filter(e => e.daysLeft >= 0 && e.daysLeft <= 90).length;
+
+  const getColor = (days: number) => {
+    if (days < 0) return "text-red-600 bg-red-50 border-red-200";
+    if (days <= 7) return "text-red-500 bg-red-50 border-red-200";
+    if (days <= 30) return "text-amber-600 bg-amber-50 border-amber-200";
+    if (days <= 90) return "text-yellow-600 bg-yellow-50 border-yellow-200";
+    return "text-green-600 bg-green-50 border-green-200";
+  };
+
+  const getLabel = (days: number) => {
+    if (days < 0) return `Expired ${Math.abs(days)}d ago`;
+    if (days === 0) return "Expires today!";
+    return `${days}d left`;
+  };
+
+  const sendWA = (e: typeof entries[0]) => {
+    const phone = e.phone?.replace(/\D/g, "") ?? "";
+    const msg = encodeURIComponent(`Dear ${e.clientName},\n\nYour ${e.field.label} is ${e.daysLeft < 0 ? `expired ${Math.abs(e.daysLeft)} days ago` : `expiring in ${e.daysLeft} days`} (${format(e.expiry, "dd MMM yyyy")}).\n\nPlease arrange for renewal at the earliest.\n\nThank you.`);
+    window.open(phone ? `https://wa.me/91${phone}?text=${msg}` : `https://wa.me/?text=${msg}`, "_blank");
+  };
+
+  if (clients.length === 0) {
+    return <div className="text-center py-16 text-muted-foreground text-sm">Loading...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-card border border-border rounded-lg p-4 shadow-sm cursor-pointer hover:bg-muted/40" onClick={() => setFilter("all")}>
+          <p className="text-xs text-muted-foreground font-medium">Total Tracked</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{entries.length}</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm cursor-pointer hover:bg-red-100" onClick={() => setFilter("expired")}>
+          <p className="text-xs text-red-700 font-medium">Expired</p>
+          <p className="text-2xl font-bold text-red-700 mt-1">{expiredCount}</p>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 shadow-sm cursor-pointer hover:bg-amber-100" onClick={() => setFilter("30")}>
+          <p className="text-xs text-amber-700 font-medium">Due in 30 days</p>
+          <p className="text-2xl font-bold text-amber-700 mt-1">{due30Count}</p>
+        </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-sm cursor-pointer hover:bg-yellow-100" onClick={() => setFilter("90")}>
+          <p className="text-xs text-yellow-700 font-medium">Due in 90 days</p>
+          <p className="text-2xl font-bold text-yellow-700 mt-1">{due90Count}</p>
+        </div>
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex gap-2 text-xs flex-wrap">
+        {[
+          { val: "all", label: "All" },
+          { val: "expired", label: "🔴 Expired" },
+          { val: "30", label: "🟠 Due in 30 days" },
+          { val: "90", label: "🟡 Due in 90 days" },
+        ].map(f => (
+          <button key={f.val} onClick={() => setFilter(f.val as any)}
+            className={`px-3 py-1 rounded-full font-medium border transition-all ${filter === f.val ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-input hover:bg-muted"}`}>
+            {f.label}
+          </button>
+        ))}
+        <span className="ml-2 text-muted-foreground self-center">{filtered.length} document{filtered.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      {/* Table */}
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-muted/60 text-muted-foreground text-left [&_th]:font-semibold [&_th]:uppercase [&_th]:text-xs [&_th]:tracking-wide">
+            <tr>
+              <th className="px-5 py-3">Client</th>
+              <th className="px-5 py-3">Document</th>
+              <th className="px-5 py-3">Expiry Date</th>
+              <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {filtered.length === 0 && (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-muted-foreground">
+                {filter === "expired" ? "No expired documents 🎉" : "No documents in this range."}
+              </td></tr>
+            )}
+            {filtered.map((e, i) => (
+              <tr key={i} className={`hover:bg-muted ${e.daysLeft < 0 ? "bg-red-50/30" : e.daysLeft <= 30 ? "bg-amber-50/20" : ""}`}>
+                <td className="px-5 py-3">
+                  <p className="font-medium text-foreground">{e.clientName}</p>
+                  {e.firmName && <p className="text-xs text-muted-foreground">{e.firmName}</p>}
+                </td>
+                <td className="px-5 py-3">
+                  <span className="inline-flex items-center gap-1.5 text-sm">
+                    <span>{e.field.icon}</span>
+                    <span>{e.field.label}</span>
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-foreground">{format(e.expiry, "dd MMM yyyy")}</td>
+                <td className="px-5 py-3">
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${getColor(e.daysLeft)}`}>
+                    {getLabel(e.daysLeft)}
+                  </span>
+                </td>
+                <td className="px-5 py-3">
+                  {e.phone && (
+                    <button onClick={() => sendWA(e)} className="inline-flex items-center gap-1 text-xs text-green-700 border border-green-200 px-2 py-1 rounded-md hover:bg-green-50 font-medium">
+                      💬 Remind on WA
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {entries.length === 0 && (
+        <div className="text-center py-12 border border-dashed border-border rounded-lg">
+          <p className="text-sm text-muted-foreground">No expiry dates tracked yet.</p>
+          <p className="text-xs text-muted-foreground mt-1">Edit a client and add DSC, FSSAI, Shop License dates to start tracking.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
   mode: "create" | "edit"; initialClient?: Client | null;
   onClose: () => void; onSubmit: (data: any) => void; pending: boolean;
@@ -655,8 +843,14 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
     ptec_applicable: Boolean(initialClient?.ptec_applicable),
     advance_tax_applicable: Boolean(initialClient?.advance_tax_applicable),
     itr_applicable: Boolean((initialClient as any)?.itr_applicable),
-    dsc_expiry_date: (initialClient as any)?.dsc_expiry_date ?? "",
-    dsc_location: (initialClient as any)?.dsc_location ?? "",
+    dsc_expiry_date:      (initialClient as any)?.dsc_expiry_date      ?? "",
+    dsc_location:         (initialClient as any)?.dsc_location          ?? "",
+    fssai_expiry:         (initialClient as any)?.fssai_expiry          ?? "",
+    shop_estab_expiry:    (initialClient as any)?.shop_estab_expiry     ?? "",
+    trade_license_expiry: (initialClient as any)?.trade_license_expiry  ?? "",
+    insurance_renewal:    (initialClient as any)?.insurance_renewal     ?? "",
+    iec_expiry:           (initialClient as any)?.iec_expiry            ?? "",
+    drug_license_expiry:  (initialClient as any)?.drug_license_expiry   ?? "",
   });
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }));
@@ -760,6 +954,25 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
                 <input type="date" value={form.dsc_expiry_date} onChange={(e) => set("dsc_expiry_date", e.target.value)} className={inputClass} /></div>
               <div><label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">DSC Physical Location</label>
                 <input type="text" value={form.dsc_location} onChange={(e) => set("dsc_location", e.target.value)} placeholder="e.g. Drawer 2, USB Box, Tray A Slot 3" className={inputClass} /></div>
+            </div>
+          </div>
+
+          {/* Document Expiry Tracker */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">📋 Document Expiry Tracker</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">🍽️ FSSAI License Expiry</label>
+                <input type="date" value={form.fssai_expiry} onChange={e => set("fssai_expiry", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">🏪 Shop & Establishment Expiry</label>
+                <input type="date" value={form.shop_estab_expiry} onChange={e => set("shop_estab_expiry", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">📜 Trade License Expiry</label>
+                <input type="date" value={form.trade_license_expiry} onChange={e => set("trade_license_expiry", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">🛡️ Insurance Policy Renewal</label>
+                <input type="date" value={form.insurance_renewal} onChange={e => set("insurance_renewal", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">🌐 IEC (Import Export Code) Expiry</label>
+                <input type="date" value={form.iec_expiry} onChange={e => set("iec_expiry", e.target.value)} className={inputClass} /></div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">💊 Drug License Expiry</label>
+                <input type="date" value={form.drug_license_expiry} onChange={e => set("drug_license_expiry", e.target.value)} className={inputClass} /></div>
             </div>
           </div>
 
