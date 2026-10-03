@@ -56,7 +56,9 @@ function getNextComplianceDateForType(complianceType: string, referenceDate: Dat
   const months7  = Array.from({length:12},(_,i)=>new Date(now.getFullYear(),now.getMonth()+i,7));
   const months15 = Array.from({length:12},(_,i)=>new Date(now.getFullYear(),now.getMonth()+i,15));
 
-  const pick = (dates: Date[]) => (getNextFutureDateForPatterns(dates, now) ?? dates[0]).toISOString().slice(0,10);
+  // Local date → "YYYY-MM-DD" (toISOString shifts IST midnight to previous day)
+  const toLocalISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const pick = (dates: Date[]) => toLocalISO(getNextFutureDateForPatterns(dates, now) ?? dates[0]);
 
   switch(type){
     case "GSTR-1": return pick(months11);
@@ -259,29 +261,11 @@ function CompliancePage() {
 
   const markFiledMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      const { data, error } = await supabase.from("compliance_items").update({ status: "filed", filed_date: new Date().toISOString() }).eq("id", id).select("id, client_id, compliance_type, due_date, user_id").single();
+      const { error } = await supabase.from("compliance_items").update({ status: "filed", filed_date: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
-      return data;
     },
-    onSuccess: async (updatedItem: any) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["compliance-items"] });
-      if (!updatedItem?.client_id || !updatedItem?.compliance_type) return;
-      const nextDueDate = getNextComplianceDateForType(updatedItem.compliance_type, new Date(updatedItem.due_date ?? new Date()));
-      if (!nextDueDate) return;
-      const { data: existing } = await supabase.from("compliance_items").select("id").eq("client_id", updatedItem.client_id).eq("compliance_type", updatedItem.compliance_type).eq("due_date", nextDueDate).limit(1);
-      if ((existing ?? []).length > 0) return;
-      const d = new Date(nextDueDate);
-      const fyStart = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
-      await supabase.from("compliance_items").insert({
-        client_id: updatedItem.client_id,
-        compliance_type: updatedItem.compliance_type,
-        compliance_name: updatedItem.compliance_type,
-        due_date: nextDueDate,
-        financial_year: `${fyStart}-${String(fyStart + 1).slice(-2)}`,
-        status: "pending",
-        filed_date: null,
-        user_id: updatedItem.user_id,
-      });
     },
   });
 
