@@ -23,6 +23,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportAgentRouteImport } from './routes/support-agent'
 import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as PublicComplianceRouteImport } from './routes/public/compliance'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,11 @@ const TasksRoute = TasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicComplianceRoute = PublicComplianceRouteImport.update({
+  id: '/public/compliance',
+  path: '/public/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRoute
   '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
+  '/public/compliance': typeof PublicComplianceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/staff': typeof StaffRoute
   '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
+  '/public/compliance': typeof PublicComplianceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRoute
   '/support-agent': typeof SupportAgentRoute
   '/tasks': typeof TasksRoute
+  '/public/compliance': typeof PublicComplianceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support-agent'
     | '/tasks'
+    | '/public/compliance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support-agent'
     | '/tasks'
+    | '/public/compliance'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support-agent'
     | '/tasks'
+    | '/public/compliance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   StaffRoute: typeof StaffRoute
   SupportAgentRoute: typeof SupportAgentRoute
   TasksRoute: typeof TasksRoute
+  PublicComplianceRoute: typeof PublicComplianceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public/compliance': {
+      id: '/public/compliance'
+      path: '/public/compliance'
+      fullPath: '/public/compliance'
+      preLoaderRoute: typeof PublicComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRoute: StaffRoute,
   SupportAgentRoute: SupportAgentRoute,
   TasksRoute: TasksRoute,
+  PublicComplianceRoute: PublicComplianceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

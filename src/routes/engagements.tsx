@@ -134,6 +134,7 @@ function EngagementsPage() {
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; engagement?: any | null } | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("all");
+  const [search, setSearch] = useState("");
   const [checklistFor, setChecklistFor] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuState>(null);
   const [rejectModal, setRejectModal] = useState<{ engId: string; engTitle: string; checkerName: string } | null>(null);
@@ -221,7 +222,17 @@ function EngagementsPage() {
     docs:   engagements?.filter(e => inTab(e, "docs")).length ?? 0,
     ready:  engagements?.filter(e => inTab(e, "ready")).length ?? 0,
   };
-  const filtered = engagements?.filter(e => inTab(e, activeTab));
+  const filtered = (engagements ?? []).filter(e => {
+    if (!inTab(e, activeTab)) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      e.title?.toLowerCase().includes(q) ||
+      e.type?.toLowerCase().includes(q) ||
+      e.clients?.name?.toLowerCase().includes(q) ||
+      e.assigned_to?.toLowerCase().includes(q)
+    );
+  });
   const invalidateEngagements = () => { qc.invalidateQueries({ queryKey: ["engagements"] }); qc.invalidateQueries({ queryKey: ["engagements-all"] }); };
 
   const quickUpdateStatus = async (id: string, status: string) => {
@@ -388,7 +399,17 @@ function EngagementsPage() {
           <h1 className="text-2xl font-bold text-foreground">Engagements</h1>
           <p className="text-muted-foreground text-sm">Track all client engagements</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search client, type, title..."
+              className="border border-input rounded-md pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background w-52"
+            />
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">🔍</span>
+            {search && <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs">✕</button>}
+          </div>
           <button onClick={() => setHideCompleted(v => !v)} className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border ${hideCompleted ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-input hover:bg-muted"}`}>Hide Completed</button>
           <button onClick={() => setModalState({ mode: "create" })} className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"><Plus size={16} /> Add Engagement</button>
         </div>

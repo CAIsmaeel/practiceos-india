@@ -199,6 +199,7 @@ function LeadsPage() {
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; lead?: Lead | null } | null>(null);
   const [convertLead, setConvertLead] = useState<Lead | null>(null);
   const [showClosed, setShowClosed] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: leads, isLoading } = useQuery({
     queryKey: ["leads"],
@@ -255,7 +256,17 @@ function LeadsPage() {
   };
 
   // Summary stats
-  const allLeads = leads ?? [];
+  const allLeads = (leads ?? []).filter(l => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      l.name?.toLowerCase().includes(q) ||
+      l.phone?.includes(q) ||
+      l.requirement?.toLowerCase().includes(q) ||
+      l.source?.toLowerCase().includes(q) ||
+      l.business_type?.toLowerCase().includes(q)
+    );
+  });
   const hotCount = allLeads.filter(l => (l.qualification_score ?? autoScore(l)) === "Hot" && !CLOSED_STATUSES.includes(l.status)).length;
   const proposalPending = allLeads.filter(l => l.status === "Proposal Sent").length;
   const closedLeads = allLeads.filter(l => CLOSED_STATUSES.includes(l.status));
@@ -268,12 +279,24 @@ function LeadsPage() {
           <h1 className="text-2xl font-bold text-foreground">Leads</h1>
           <p className="text-muted-foreground text-sm">Track and convert your sales pipeline</p>
         </div>
-        <button
-          onClick={() => setModalState({ mode: "create" })}
-          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
-        >
-          <Plus size={16} /> Add Lead
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search name, phone, service..."
+              className="border border-input rounded-md pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background w-52"
+            />
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">🔍</span>
+            {search && <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs">✕</button>}
+          </div>
+          <button
+            onClick={() => setModalState({ mode: "create" })}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+          >
+            <Plus size={16} /> Add Lead
+          </button>
+        </div>
       </div>
 
       {/* Quick stats */}
