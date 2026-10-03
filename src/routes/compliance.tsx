@@ -127,6 +127,7 @@ function CompliancePage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [confirmMarkAll, setConfirmMarkAll] = useState<{ group: (typeof grouped)[number] } | null>(null);
+  const [shareCopied, setShareCopied] = useState<{ name: string; url: string } | null>(null);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ["compliance-items"],
@@ -227,6 +228,14 @@ function CompliancePage() {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["compliance-items"] }); setOpen(false); },
+  });
+
+  const undoFiledMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.from("compliance_items").update({ status: "pending", filed_date: null }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["compliance-items"] }),
   });
 
   const markFiledMutation = useMutation({
@@ -391,12 +400,29 @@ function CompliancePage() {
                             <span className={`rounded-full px-2 py-0.5 text-xs ${item.status === "filed" ? "bg-green-100 text-green-700" : isPendingOverdue(item) ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
                               {getStatusLabel(item)}
                             </span>
-                            {item.status !== "filed" && (
+                            {item.status !== "filed" ? (
                               <button type="button" onClick={() => markFiledMutation.mutate({ id: item.id })}
-                                className="text-xs text-green-600 hover:underline">
-                                Mark Filed
+                                className="text-xs text-green-600 border border-green-200 px-2 py-0.5 rounded hover:bg-green-50 font-medium">
+                                ✓ Mark Filed
+                              </button>
+                            ) : (
+                              <button type="button" onClick={() => undoFiledMutation.mutate({ id: item.id })}
+                                className="text-xs text-muted-foreground border border-input px-2 py-0.5 rounded hover:bg-muted font-medium">
+                                ↩ Undo
                               </button>
                             )}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const userId = await getCurrentUserId();
+                                const url = `${window.location.origin}/public/compliance?id=${item.client_id}&ca=${userId}`;
+                                navigator.clipboard.writeText(url);
+                                setShareCopied({ name: item.clients?.name ?? "Client", url });
+                              }}
+                              className="text-xs text-blue-600 border border-blue-200 px-2 py-0.5 rounded hover:bg-blue-50 font-medium"
+                            >
+                              🔗 Share Calendar
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -416,6 +442,39 @@ function CompliancePage() {
           onSubmit={addMutation.mutate}
           pending={addMutation.isPending}
         />
+      )}
+
+      {/* ✅ Share Copied Popup */}
+      {shareCopied && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-foreground">🔗 Calendar Link Copied!</h2>
+              <button onClick={() => setShareCopied(null)}><X size={18} /></button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Compliance calendar link for <strong>{shareCopied.name}</strong> has been copied to clipboard.
+            </p>
+            <div className="bg-muted rounded-md px-3 py-2 text-xs font-mono text-muted-foreground break-all">{shareCopied.url}</div>
+            <p className="text-xs text-muted-foreground">Share this link with your client via:</p>
+            <div className="flex gap-2">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Dear ${shareCopied.name},\n\nHere is your compliance calendar link — you can view all your upcoming filing deadlines here:\n${shareCopied.url}\n\nFeel free to reach out for any queries.`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex-1 text-center px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+              >
+                💬 WhatsApp
+              </a>
+              <a
+                href={`mailto:?subject=Your Compliance Calendar&body=${encodeURIComponent(`Dear ${shareCopied.name},\n\nHere is your compliance calendar link:\n${shareCopied.url}\n\nYou can view all your upcoming filing deadlines here without logging in.\n\nFeel free to reach out for any queries.`)}`}
+                className="flex-1 text-center px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              >
+                ✉️ Email
+              </a>
+            </div>
+            <button onClick={() => setShareCopied(null)} className="w-full text-sm text-muted-foreground hover:text-foreground">Close</button>
+          </div>
+        </div>
       )}
 
       {/* ✅ Mark All Confirm Dialog */}

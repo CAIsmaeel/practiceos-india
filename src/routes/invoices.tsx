@@ -4,10 +4,7 @@ import { supabase, type Invoice, type Client, type FirmSettings, getCurrentUserI
 import { useState, useMemo } from "react";
 import { Plus, X, CheckCircle2, Download, Pencil, MessageCircle, Trash2, Mail, Palette } from "lucide-react";
 import { format, isBefore, startOfDay, differenceInDays } from "date-fns";
-
-function useTour() {
-  return { triggerEvent: (_event: string) => undefined };
-}
+import { useTour } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/invoices")({
   head: () => ({ meta: [{ title: "Invoices — Firmora" }] }),
@@ -249,6 +246,14 @@ function InvoicesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),
   });
 
+  const undoPayMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.from("invoices").update({ status: "Unpaid", payment_date: null }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),
+  });
+
   const handleDownload = async (invoice: Invoice) => {
     try {
       setDownloadingId(invoice.id);
@@ -379,6 +384,11 @@ function InvoicesPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <button type="button" onClick={() => setModalState({ mode: "edit", invoice: inv })} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium"><Pencil size={14} /> Edit</button>
                       <button onClick={() => handleDownload(inv)} disabled={downloadingId === inv.id} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium disabled:opacity-50"><Download size={14} /> {downloadingId === inv.id ? "..." : "PDF"}</button>
+                      {isInvoicePaid(inv) && (
+                        <button onClick={() => undoPayMutation.mutate({ id: inv.id })} disabled={undoPayMutation.isPending} className="inline-flex items-center gap-1 text-xs text-muted-foreground border border-input px-2 py-1 rounded-md hover:bg-muted font-medium disabled:opacity-50">
+                          ↩ Undo Payment
+                        </button>
+                      )}
                       {!isInvoicePaid(inv) && (
                         <>
                           <button onClick={() => payMutation.mutate({ id: inv.id })} disabled={payMutation.isPending} className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50"><CheckCircle2 size={14} /> Paid</button>

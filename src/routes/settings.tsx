@@ -44,7 +44,7 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const { triggerEvent } = useTour();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates">("firm");
+  const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates" | "email-templates">("firm");
   const [copied, setCopied] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -266,7 +266,7 @@ function SettingsPage() {
   };
 
   const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
-  const websiteLink = currentUserId ? `https://ca-firmora.vercel.app?ca=${currentUserId}` : "";
+  const websiteLink = currentUserId ? `https://practiceos-landing.vercel.app?ca=${currentUserId}` : "";
 
   return (
     <div className="space-y-6 max-w-3xl pb-48">
@@ -276,9 +276,14 @@ function SettingsPage() {
       </div>
 
       <div className="flex gap-2 border-b border-border flex-wrap">
-        {(["firm", "website", "templates"] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            {tab === "firm" ? "🏢 Firm Details" : tab === "website" ? "🌐 Website Settings" : "📋 Checklist Templates"}
+        {([
+          { key: "firm",            label: "🏢 Firm Details" },
+          { key: "website",         label: "🌐 Website Settings" },
+          { key: "templates",       label: "📋 Checklist Templates" },
+          { key: "email-templates", label: "✉️ Email Templates" },
+        ] as const).map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            {tab.label}
           </button>
         ))}
       </div>
@@ -516,7 +521,11 @@ function SettingsPage() {
           </div>
         )}
 
-        {activeTab !== "templates" && (
+        {activeTab === "email-templates" && (
+          <EmailTemplatesTab userId={currentUserId} emailProvider={form.email_provider} emailCustomUrl={form.email_custom_url} />
+        )}
+
+        {activeTab !== "templates" && activeTab !== "email-templates" && (
           <div className="flex justify-end pt-2 pb-16">
             <button type="submit" disabled={isSaving} className="px-6 py-2.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
               {isSaving ? "Saving..." : "Save Settings"}
@@ -526,6 +535,317 @@ function SettingsPage() {
         {error && <p className="text-sm text-red-600 text-right">{error}</p>}
         {saved && <p className="text-sm text-green-600 text-right">✅ Settings saved successfully.</p>}
       </form>
+    </div>
+  );
+}
+
+// ─── Email Templates Tab ──────────────────────────────────────────────────────
+const DEFAULT_TEMPLATES = [
+  {
+    name: "Welcome Email",
+    subject: "Welcome to {{firm_name}} — We're glad to have you!",
+    body: `Dear {{client_name}},
+
+Thank you for choosing {{firm_name}} for your CA services. We are delighted to have you on board.
+
+Our team will get in touch with you shortly to understand your requirements and set up your engagement.
+
+For any queries, feel free to reach out to us at any time.
+
+Warm regards,
+{{firm_name}}`,
+  },
+  {
+    name: "Document Request",
+    subject: "Documents Required — {{engagement_type}}",
+    body: `Dear {{client_name}},
+
+Hope you are doing well.
+
+To proceed with your {{engagement_type}}, we need the following documents at the earliest:
+
+1. [Document 1]
+2. [Document 2]
+3. [Document 3]
+
+Kindly share these at your earliest convenience so we can complete the work on time.
+
+If any document does not apply to you, please let us know.
+
+Thank you,
+{{firm_name}}`,
+  },
+  {
+    name: "Payment Reminder",
+    subject: "Friendly Reminder — Invoice {{invoice_number}} Due",
+    body: `Dear {{client_name}},
+
+This is a gentle reminder that Invoice {{invoice_number}} of {{amount}} is due on {{due_date}}.
+
+Kindly arrange the payment at your earliest convenience.
+
+For any queries regarding the invoice, please feel free to reach out.
+
+Thank you,
+{{firm_name}}`,
+  },
+  {
+    name: "Fee Proposal",
+    subject: "Fee Proposal — {{service_name}}",
+    body: `Dear {{client_name}},
+
+Thank you for reaching out to us.
+
+Based on your requirements, we are pleased to share the following fee proposal for {{service_name}}:
+
+Professional Fee: ₹[Amount] + GST
+
+Scope of Work:
+• [Scope point 1]
+• [Scope point 2]
+• [Scope point 3]
+
+The above fee is exclusive of government fees, filing charges and out-of-pocket expenses, if any.
+
+Please feel free to reach out for any clarifications. We look forward to serving you.
+
+Warm regards,
+{{firm_name}}`,
+  },
+  {
+    name: "Engagement Letter",
+    subject: "Engagement Letter — {{service_name}}",
+    body: `Dear {{client_name}},
+
+We are pleased to confirm our engagement for the following services:
+
+Service: {{service_name}}
+Period: [Financial Year / Period]
+Professional Fee: ₹[Amount] + GST as applicable
+
+Our Responsibilities:
+• [Responsibility 1]
+• [Responsibility 2]
+
+Client Responsibilities:
+• Provide accurate and complete information
+• Make available required documents in time
+
+Kindly sign and return a copy of this letter to confirm your acceptance.
+
+Thank you for placing your trust in us.
+
+Warm regards,
+{{firm_name}}`,
+  },
+  {
+    name: "Work Completed",
+    subject: "Work Completed — {{service_name}}",
+    body: `Dear {{client_name}},
+
+We are pleased to inform you that your {{service_name}} has been completed successfully.
+
+[Summary of work done — e.g., "Your GSTR-3B for the month of September 2026 has been filed. Acknowledgement is attached for your records."]
+
+Please feel free to reach out if you have any queries.
+
+Thank you for your trust in our services.
+
+Warm regards,
+{{firm_name}}`,
+  },
+  {
+    name: "ITR Filed Confirmation",
+    subject: "Your ITR has been filed — AY {{assessment_year}}",
+    body: `Dear {{client_name}},
+
+We are pleased to inform you that your Income Tax Return for AY {{assessment_year}} has been successfully filed.
+
+Acknowledgement Number: [Ack. No.]
+Date of Filing: [Date]
+Tax Payable / Refund: [Amount]
+
+The ITR-V acknowledgement is attached for your records. If applicable, please verify your return on the Income Tax portal using your Aadhaar OTP or EVC.
+
+For any queries, feel free to contact us.
+
+Thank you,
+{{firm_name}}`,
+  },
+];
+
+function EmailTemplatesTab({ userId, emailProvider, emailCustomUrl }: {
+  userId: string;
+  emailProvider: string;
+  emailCustomUrl: string;
+}) {
+  const qc = useQueryClient();
+  const [selected, setSelected] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", subject: "", body: "" });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSavedT] = useState(false);
+  const [previewClient, setPreviewClient] = useState("Rajesh Sharma");
+
+  const { data: customTemplates } = useQuery({
+    queryKey: ["email-templates", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await supabase.from("email_templates")
+        .select("id, name, subject, body, is_default")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const allTemplates = [
+    ...DEFAULT_TEMPLATES.map(t => ({ ...t, id: null, is_default: true })),
+    ...(customTemplates ?? []).filter((t: any) => !DEFAULT_TEMPLATES.find(d => d.name === t.name)),
+  ];
+
+  const replacePlaceholders = (text: string) =>
+    text
+      .replace(/{{client_name}}/g, previewClient)
+      .replace(/{{firm_name}}/g, "CA Ismaeel & Co.")
+      .replace(/{{service_name}}/g, "GST Return Filing")
+      .replace(/{{engagement_type}}/g, "GST Return")
+      .replace(/{{invoice_number}}/g, "INV-2026-001")
+      .replace(/{{amount}}/g, "₹5,000")
+      .replace(/{{due_date}}/g, "31 Oct 2026")
+      .replace(/{{assessment_year}}/g, "2026-27");
+
+  const openEmail = (t: any) => {
+    const subject = encodeURIComponent(replacePlaceholders(t.subject));
+    const body = encodeURIComponent(replacePlaceholders(t.body));
+    let url = "";
+    switch (emailProvider) {
+      case "gmail":   url = `https://mail.google.com/mail/?view=cm&su=${subject}&body=${body}`; break;
+      case "outlook": url = `https://outlook.live.com/mail/0/deeplink/compose?subject=${subject}&body=${body}`; break;
+      case "zoho":    url = `https://mail.zoho.in/zm/#compose?subject=${subject}&body=${body}`; break;
+      case "custom":  url = emailCustomUrl ? `${emailCustomUrl.replace(/\/$/, "")}?subject=${subject}&body=${body}` : `mailto:?subject=${subject}&body=${body}`; break;
+      default:        url = `mailto:?subject=${subject}&body=${body}`;
+    }
+    window.open(url, "_blank");
+  };
+
+  const saveCustomTemplate = async () => {
+    if (!editForm.name.trim()) return;
+    setSaving(true);
+    try {
+      const existing = (customTemplates ?? []).find((t: any) => t.name === editForm.name);
+      if (existing) {
+        await supabase.from("email_templates").update({ subject: editForm.subject, body: editForm.body }).eq("id", existing.id);
+      } else {
+        await supabase.from("email_templates").insert({ user_id: userId, name: editForm.name, subject: editForm.subject, body: editForm.body });
+      }
+      qc.invalidateQueries({ queryKey: ["email-templates", userId] });
+      setSavedT(true);
+      setTimeout(() => setSavedT(false), 2000);
+      setEditing(false);
+    } finally { setSaving(false); }
+  };
+
+  const deleteTemplate = async (id: string) => {
+    if (!confirm("Delete this template?")) return;
+    await supabase.from("email_templates").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["email-templates", userId] });
+    if (selected?.id === id) setSelected(null);
+  };
+
+  const startEdit = (t: any) => {
+    setEditForm({ name: t.name, subject: t.subject, body: t.body });
+    setEditing(true);
+    setSelected(t);
+  };
+
+  const startNew = () => {
+    setEditForm({ name: "", subject: "", body: "" });
+    setEditing(true);
+    setSelected(null);
+  };
+
+  const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background";
+
+  return (
+    <div className="space-y-4 pb-16">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Email Templates</h2>
+          <p className="text-xs text-muted-foreground mt-1">Click "Use Template" to open a pre-filled email draft. Edit and add your own templates.</p>
+        </div>
+        <button onClick={startNew} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 font-medium">
+          <Plus size={15} /> New Template
+        </button>
+      </div>
+
+      {/* Preview name */}
+      <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5">
+        <span className="text-xs text-blue-700 font-medium shrink-0">Preview client name:</span>
+        <input
+          value={previewClient}
+          onChange={e => setPreviewClient(e.target.value)}
+          className="flex-1 text-sm bg-transparent border-none outline-none text-blue-900"
+          placeholder="Rajesh Sharma"
+        />
+        <span className="text-xs text-blue-600">Placeholders will be replaced in preview</span>
+      </div>
+
+      {/* Edit form */}
+      {editing && (
+        <div className="bg-card border border-primary/30 rounded-lg p-4 space-y-3 shadow-sm">
+          <p className="text-sm font-semibold text-foreground">{editForm.name || "New Template"}</p>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Template Name</label>
+            <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} placeholder="e.g. GST Notice Reply" className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Subject</label>
+            <input value={editForm.subject} onChange={e => setEditForm({ ...editForm, subject: e.target.value })} className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Body</label>
+            <textarea value={editForm.body} onChange={e => setEditForm({ ...editForm, body: e.target.value })} rows={8} className={`${inputClass} font-mono text-xs`} />
+          </div>
+          <p className="text-xs text-muted-foreground">Placeholders: {"{{client_name}} {{firm_name}} {{service_name}} {{invoice_number}} {{amount}} {{due_date}}"}</p>
+          <div className="flex gap-2">
+            <button onClick={saveCustomTemplate} disabled={saving || !editForm.name.trim()} className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
+              {saving ? "Saving..." : "Save Template"}
+            </button>
+            {saved && <span className="text-sm text-green-600 self-center">✅ Saved!</span>}
+            <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Templates grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {allTemplates.map((t: any, i) => (
+          <div key={i} className={`bg-card border rounded-lg p-4 space-y-2 shadow-sm ${selected?.name === t.name ? "border-primary" : "border-border"}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{replacePlaceholders(t.subject)}</p>
+              </div>
+              {t.is_default && <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-medium shrink-0">Default</span>}
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-3 font-mono">{replacePlaceholders(t.body)}</p>
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => openEmail(t)} className="inline-flex items-center gap-1 text-xs bg-primary text-primary-foreground px-2.5 py-1.5 rounded-md hover:bg-primary/90 font-medium">
+                ✉️ Use Template
+              </button>
+              <button onClick={() => startEdit(t)} className="text-xs text-muted-foreground border border-input px-2.5 py-1.5 rounded-md hover:bg-muted font-medium">
+                Edit
+              </button>
+              {t.id && (
+                <button onClick={() => deleteTemplate(t.id)} className="text-xs text-red-500 border border-red-200 px-2.5 py-1.5 rounded-md hover:bg-red-50 font-medium">
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

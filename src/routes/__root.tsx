@@ -71,13 +71,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function AppLayout() {
   const router = useRouter();
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<any>(undefined); // undefined = not checked yet
   const [checking, setChecking] = useState(true);
   const pathname = router.state.location.pathname;
   const isLoginPage = pathname === "/login";
+  const isPublicPage = pathname.startsWith("/public");
 
   useEffect(() => {
-    if (isLoginPage) { setChecking(false); return; }
+    if (isLoginPage || isPublicPage) { setChecking(false); return; }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setChecking(false);
@@ -112,9 +113,10 @@ function AppLayout() {
     link.type = "image/png";
   }, [logoUrl]);
 
-  if (isLoginPage) return <Outlet />;
+  if (isLoginPage || isPublicPage) return <Outlet />;
 
-  if (checking) {
+  // Always show spinner until auth check completes
+  if (checking || session === undefined) {
     return (
       <div className="min-h-screen bg-sidebar flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-sidebar-primary border-t-transparent rounded-full animate-spin"></div>

@@ -219,6 +219,7 @@ function ClientsPage() {
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; client?: Client | null } | null>(null);
   const [filter, setFilter] = useState<FilterType>("active");
   const [search, setSearch] = useState("");
+  const [notesFor, setNotesFor] = useState<Client | null>(null);
   const [pageTab, setPageTab] = useState<"clients" | "expiry">(() =>
     typeof window !== "undefined" && window.location.hash === "#expiry" ? "expiry" : "clients"
   );
@@ -544,7 +545,12 @@ function ClientsPage() {
                   </td>
                   <td className="px-5 py-3 text-foreground">{c.phone ?? "—"}</td>
                   <td className="px-5 py-3">
-                    <RowMenu status={c.status} client={c} onAction={(action) => updateStatusMutation.mutate({ id: c.id, status: action })} onEdit={() => setModalState({ mode: "edit", client: c })} />
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setNotesFor(c)} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-input px-2 py-1 rounded-md hover:bg-muted font-medium">
+                        📝 Notes
+                      </button>
+                      <RowMenu status={c.status} client={c} onAction={(action) => updateStatusMutation.mutate({ id: c.id, status: action })} onEdit={() => setModalState({ mode: "edit", client: c })} />
+                    </div>
                   </td>
                 </tr>
               );
@@ -568,6 +574,8 @@ function ClientsPage() {
       )}
 
       </> } {/* end pageTab === "clients" */}
+
+      {notesFor && <ClientNotesModal client={notesFor} onClose={() => setNotesFor(null)} />}
 
       {importOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -702,6 +710,7 @@ const ALL_EXPIRY_FIELDS = [
 
 function ExpiryTracker({ clients }: { clients: any[] }) {
   const today = new Date();
+  const qc = useQueryClient();
 
   const { data: firmSettings } = useQuery({
     queryKey: ["firm-settings-expiry"],
@@ -739,6 +748,14 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
     { label: "🟡 Due in 90 days",  entries: due90Entries,    headerClass: "bg-yellow-50 border-yellow-200 text-yellow-700" },
     { label: "✅ All Good",         entries: okEntries,       headerClass: "bg-green-50 border-green-200 text-green-700" },
   ].filter(g => g.entries.length > 0);
+
+  const renewDoc = async (e: any) => {
+    const newDate = prompt(`Enter new expiry date for ${e.field.label} (${e.clientName}):\nFormat: YYYY-MM-DD`);
+    if (!newDate || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) { alert("Invalid date format. Use YYYY-MM-DD"); return; }
+    const { error } = await supabase.from("clients").update({ [e.field.key]: newDate }).eq("id", e.clientId);
+    if (error) { alert("Could not update: " + error.message); return; }
+    qc.invalidateQueries({ queryKey: ["clients-expiry"] });
+  };
 
   // e = flat entry with clientName, phone, email, field, expiry, daysLeft
   const buildMsg = (e: any) =>
@@ -821,6 +838,10 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
                   <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${getExpiryBadge(e.daysLeft)}`}>
                     {getExpiryLabel(e.daysLeft)}
                   </span>
+                  <button onClick={() => renewDoc(e)}
+                    className="text-xs text-purple-700 border border-purple-200 px-2 py-1 rounded-md hover:bg-purple-50 font-medium">
+                    🔄 Renewed
+                  </button>
                   {e.phone && (
                     <button onClick={() => sendWA(e, { field: e.field, expiry: e.expiry, daysLeft: e.daysLeft })}
                       className="text-xs text-green-700 border border-green-200 px-2 py-1 rounded-md hover:bg-green-50 font-medium">
@@ -839,6 +860,94 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── Client Notes Modal ───────────────────────────────────────────────────────
+function ClientNotesModal({ client, onClose }: { client: Client; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [newNote, setNewNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: notes, isLoading } = useQuery({
+    queryKey: ["client-notes", client.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("client_notes")
+        .select("id, note, created_at")
+        .eq("client_id", client.id)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const addNote = async () => {
+    const txt = newNote.trim();
+    if (!txt) return;
+    setSaving(true);
+    const userId = await getCurrentUserId();
+    await supabase.from("client_notes").insert({ user_id: userId, client_id: client.id, note: txt });
+    setNewNote("");
+    qc.invalidateQueries({ queryKey: ["client-notes", client.id] });
+    setSaving(false);
+  };
+
+  const deleteNote = async (id: string) => {
+    await supabase.from("client_notes").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["client-notes", client.id] });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div>
+            <h2 className="font-semibold text-foreground">📝 Internal Notes</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{client.name} — visible only to your team</p>
+          </div>
+          <button onClick={onClose}><X size={18} /></button>
+        </div>
+
+        {/* Notes list */}
+        <div className="flex-1 overflow-y-auto divide-y divide-border">
+          {isLoading && <p className="px-5 py-6 text-sm text-muted-foreground text-center">Loading...</p>}
+          {!isLoading && (notes ?? []).length === 0 && (
+            <p className="px-5 py-8 text-sm text-muted-foreground text-center">No notes yet. Add one below.</p>
+          )}
+          {(notes ?? []).map((n: any) => (
+            <div key={n.id} className="px-5 py-3 flex items-start gap-3 hover:bg-muted/30">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground leading-relaxed">{n.note}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {format(new Date(n.created_at), "dd MMM yyyy, h:mm a")}
+                </p>
+              </div>
+              <button onClick={() => deleteNote(n.id)} className="text-muted-foreground hover:text-red-500 shrink-0 mt-0.5">
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add note */}
+        <div className="px-5 py-4 border-t border-border space-y-2">
+          <textarea
+            value={newNote}
+            onChange={e => setNewNote(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) addNote(); }}
+            placeholder="Add a note... (Ctrl+Enter to save)"
+            rows={3}
+            className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background resize-none"
+          />
+          <button
+            onClick={addNote}
+            disabled={saving || !newNote.trim()}
+            className="w-full px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium"
+          >
+            {saving ? "Saving..." : "Add Note"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
