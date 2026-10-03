@@ -218,6 +218,7 @@ function ClientsPage() {
   const { triggerEvent } = useTour();
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; client?: Client | null } | null>(null);
   const [filter, setFilter] = useState<FilterType>("active");
+  const [search, setSearch] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [importStep, setImportStep] = useState<1 | 2 | 3>(1);
   const [importRows, setImportRows] = useState<any[]>([]);
@@ -238,6 +239,18 @@ function ClientsPage() {
       if (error) throw error;
       return (data ?? []) as Client[];
     },
+  });
+
+  const filteredClients = (clients ?? []).filter(c => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      c.name?.toLowerCase().includes(q) ||
+      (c as any).firm_name?.toLowerCase().includes(q) ||
+      (c as any).phone?.includes(q) ||
+      (c as any).pan?.toLowerCase().includes(q) ||
+      (c as any).email?.toLowerCase().includes(q)
+    );
   });
 
   const addMutation = useMutation({
@@ -425,13 +438,30 @@ function ClientsPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {filterButtons.map((btn) => (
-          <button key={btn.value} onClick={() => setFilter(btn.value)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${filter === btn.value ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-input hover:bg-muted"}`}>
-            {btn.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {filterButtons.map((btn) => (
+            <button key={btn.value} onClick={() => setFilter(btn.value)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${filter === btn.value ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-input hover:bg-muted"}`}>
+              {btn.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative flex-1 min-w-[220px] max-w-xs">
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, firm, phone, PAN..."
+            className="w-full border border-input rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+          />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">🔍</span>
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs">✕</button>
+          )}
+        </div>
+        {search && (
+          <span className="text-xs text-muted-foreground">{filteredClients.length} result{filteredClients.length !== 1 ? "s" : ""}</span>
+        )}
       </div>
 
       <div className="bg-card border border-border rounded-lg shadow-sm overflow-x-auto">
@@ -449,8 +479,12 @@ function ClientsPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading && <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">Loading...</td></tr>}
-            {!isLoading && clients?.length === 0 && <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">No clients found.</td></tr>}
-            {clients?.map((c: any) => {
+            {!isLoading && filteredClients.length === 0 && (
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
+                {search ? `No clients match "${search}"` : "No clients found."}
+              </td></tr>
+            )}
+            {filteredClients.map((c: any) => {
               const dscExpiry = c.dsc_expiry_date ? new Date(c.dsc_expiry_date) : null;
               const today = new Date();
               const daysLeft = dscExpiry ? Math.ceil((dscExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
