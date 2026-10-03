@@ -552,9 +552,63 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
   onUpdate: (id: string, status: DocStatus) => void; updating: boolean;
   onChase: () => void; onEmailChase: () => void; clientEmail: string;
 }) {
+  const qc = useQueryClient();
   const s = summarize(docs);
   const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
   const [showHistory, setShowHistory] = useState(false);
+  const [newDocName, setNewDocName] = useState("");
+  const [newDocReq, setNewDocReq] = useState<"mandatory" | "optional">("mandatory");
+  const [addingDoc, setAddingDoc] = useState(false);
+
+  const addDoc = async () => {
+    const name = newDocName.trim();
+    if (!name) return;
+    if (docs.some(d => d.doc_name.toLowerCase() === name.toLowerCase())) { alert("Already exists."); return; }
+    setAddingDoc(true);
+    try {
+      const userId = await getCurrentUserId();
+      await supabase.from("engagement_documents").insert({
+        user_id: userId,
+        engagement_id: engagement.id,
+        client_id: engagement.client_id,
+        doc_name: name,
+        requirement: newDocReq,
+        status: "pending",
+        sort_order: docs.length,
+      });
+      setNewDocName("");
+      qc.invalidateQueries({ queryKey: ["engagement-docs"] });
+    } catch (err: any) { alert("Could not add: " + err.message); }
+    finally { setAddingDoc(false); }
+  };
+
+  const removeDoc = async (id: string) => {
+    await supabase.from("engagement_documents").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["engagement-docs"] });
+  };
+
+  const downloadExcel = () => {
+    const clientName = engagement.clients?.name ?? "Client";
+    const title = engagement.title ?? engagement.type ?? "Checklist";
+    const rows = [
+      ["Document", "Requirement", "Status", "Client Comments"],
+      ...docs.map(d => [
+        d.doc_name,
+        d.requirement === "mandatory" ? "Mandatory" : "Optional",
+        d.status === "received" ? "Received" : d.status === "not_applicable" ? "N/A" : "Pending",
+        "",
+      ]),
+    ];
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${clientName}_${title}_Checklist.csv`.replace(/[^a-zA-Z0-9_\-.]/g, "_");
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const { data: history } = useQuery({
     queryKey: ["engagement-history", engagement.id],
@@ -594,16 +648,37 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
                 <p className={`text-sm ${d.status === "not_applicable" ? "text-muted-foreground line-through" : "text-foreground"}`}>{d.doc_name}</p>
                 <span className={`text-[10px] font-semibold uppercase tracking-wide ${d.requirement === "mandatory" ? "text-red-500" : "text-muted-foreground"}`}>{d.requirement}</span>
               </div>
-              <div className="flex gap-1 shrink-0">
+              <div className="flex gap-1 shrink-0 items-center">
                 {DOC_OPTIONS.map(opt => (
                   <button key={opt.value} disabled={updating} onClick={() => d.status !== opt.value && onUpdate(d.id, opt.value)}
                     className={`px-2 py-1 rounded-md text-xs font-medium border disabled:opacity-60 ${d.status === opt.value ? opt.activeClass : "bg-card text-muted-foreground border-border hover:bg-muted"}`}>
                     {opt.label}
                   </button>
                 ))}
+                <button onClick={() => removeDoc(d.id)} className="ml-1 text-muted-foreground hover:text-red-500 p-1 rounded">
+                  <X size={13} />
+                </button>
               </div>
             </div>
           ))}
+          {/* Add custom doc */}
+          <div className="px-5 py-3 flex items-center gap-2 flex-wrap bg-muted/20">
+            <select value={newDocReq} onChange={e => setNewDocReq(e.target.value as "mandatory" | "optional")} className="border border-input rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring shrink-0">
+              <option value="mandatory">Mandatory</option>
+              <option value="optional">Optional</option>
+            </select>
+            <input
+              value={newDocName}
+              onChange={e => setNewDocName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addDoc(); } }}
+              placeholder="Add document… (Enter to add)"
+              className="flex-1 min-w-[160px] border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button type="button" onClick={addDoc} disabled={addingDoc || !newDocName.trim()} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 shrink-0">
+              <Plus size={13} /> Add
+            </button>
+          </div>
+
           {history && history.length > 0 && (
             <div className="px-5 py-3">
               <button onClick={() => setShowHistory(v => !v)} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground uppercase tracking-wide">
@@ -634,6 +709,9 @@ function ChecklistModal({ engagement, docs, onClose, onUpdate, updating, onChase
             {engagement.last_reminder_date ? `Last reminder: ${format(new Date(engagement.last_reminder_date), "dd MMM yyyy")} · ${engagement.reminder_count ?? 0} sent` : "No reminder sent yet"}
           </p>
           <div className="flex gap-2 flex-wrap">
+            <button onClick={downloadExcel} className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">
+              📥 Download Excel
+            </button>
             {clientEmail && s.pendingCount > 0 && <button onClick={onEmailChase} className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted"><Mail size={14} /> Email</button>}
             <button onClick={onChase} disabled={s.pendingCount === 0} className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-green-600 text-primary-foreground hover:bg-green-700 disabled:opacity-50"><MessageCircle size={14} /> Chase on WhatsApp</button>
             <button onClick={onClose} className="px-3 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Close</button>

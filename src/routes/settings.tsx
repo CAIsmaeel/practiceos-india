@@ -269,7 +269,7 @@ function SettingsPage() {
   const websiteLink = currentUserId ? `https://ca-firmora.vercel.app?ca=${currentUserId}` : "";
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-3xl pb-36">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Firm Settings</h1>
         <p className="text-muted-foreground text-sm">Configure your firm details and website</p>
