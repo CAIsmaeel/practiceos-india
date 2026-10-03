@@ -89,7 +89,7 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
   );
 
   const META: Record<string, { label: string; icon: string; href: string; action: string }> = {
-    dsc:        { label: "DSC Expiry",        icon: "🔐", href: "/clients",     action: "View Clients" },
+    dsc:        { label: "DSC Expiry",        icon: "🔐", href: "/clients#expiry", action: "View Tracker" },
     invoice:    { label: "Overdue Invoices",   icon: "💰", href: "/invoices",    action: "View Invoices" },
     document:   { label: "Documents Pending",  icon: "📄", href: "/documents", action: "View Documents" },
     engagement: { label: "Deadline Missed",    icon: "⏰", href: "/engagements", action: "View Engagements" },
@@ -294,7 +294,7 @@ function UpcomingDeadlines({ dscClients, engagements, invoices }: {
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
             </div>
-            <div className="shrink-0 text-right">
+            <div className="shrink-0 flex items-center gap-2">
               <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                 item.urgency === "amber"
                   ? "bg-amber-100 text-amber-700"
@@ -302,6 +302,9 @@ function UpcomingDeadlines({ dscClients, engagements, invoices }: {
               }`}>
                 {item.daysLeft}d left
               </span>
+              <a href={item.href} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border px-2 py-1 rounded-md hover:bg-muted font-medium">
+                Open →
+              </a>
             </div>
           </div>
         ))}
@@ -723,8 +726,8 @@ function Dashboard() {
             ? `${f.label} expired ${Math.abs(days)}d ago`
             : days === 0 ? `${f.label} expires today!`
             : `${f.label} expires in ${days}d`,
-          href: "/clients",
-          action: "View",
+          href: "/clients#expiry",
+          action: "View Tracker",
           waPhone: c.phone ?? "",
         });
       }

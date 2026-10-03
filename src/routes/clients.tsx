@@ -219,7 +219,13 @@ function ClientsPage() {
   const [modalState, setModalState] = useState<{ mode: "create" | "edit"; client?: Client | null } | null>(null);
   const [filter, setFilter] = useState<FilterType>("active");
   const [search, setSearch] = useState("");
-  const [pageTab, setPageTab] = useState<"clients" | "expiry">("clients");
+  const [pageTab, setPageTab] = useState<"clients" | "expiry">(() =>
+    typeof window !== "undefined" && window.location.hash === "#expiry" ? "expiry" : "clients"
+  );
+
+  useEffect(() => {
+    if (window.location.hash === "#expiry") setPageTab("expiry");
+  }, []);
   const [importOpen, setImportOpen] = useState(false);
   const [importStep, setImportStep] = useState<1 | 2 | 3>(1);
   const [importRows, setImportRows] = useState<any[]>([]);
@@ -248,7 +254,7 @@ function ClientsPage() {
     queryFn: async () => {
       const userId = await getCurrentUserId();
       const { data } = await supabase.from("clients")
-        .select("id, name, firm_name, phone, dsc_expiry_date, fssai_expiry, shop_estab_expiry, trade_license_expiry, insurance_renewal, iec_expiry, drug_license_expiry")
+        .select("id, name, firm_name, phone, email, dsc_expiry_date, fssai_expiry, shop_estab_expiry, trade_license_expiry, insurance_renewal, iec_expiry, drug_license_expiry")
         .eq("user_id", userId ?? "").eq("status", "active").order("name");
       return (data ?? []) as any[];
     },
@@ -694,6 +700,17 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
   const [filter, setFilter] = useState<"all" | "expired" | "30" | "90">("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
+  const { data: firmSettings } = useQuery({
+    queryKey: ["firm-settings-expiry"],
+    queryFn: async () => {
+      const { data } = await supabase.from("settings").select("firm_name, email_provider, email_custom_url").limit(1).maybeSingle();
+      return data as { firm_name: string; email_provider: string; email_custom_url: string } | null;
+    },
+  });
+  const firmName = firmSettings?.firm_name ?? "CA Firm";
+  const emailProvider = firmSettings?.email_provider ?? "default";
+  const emailCustomUrl = firmSettings?.email_custom_url ?? "";
+
   // Group by client, attach their docs
   const grouped = clients.map(c => {
     const docs = EXPIRY_FIELDS.flatMap(f => {
@@ -728,10 +745,29 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
     return next;
   });
 
+  const buildMsg = (c: any, d: any) =>
+    `Dear ${c.name},\n\nYour ${d.field.label} is ${d.daysLeft < 0 ? `expired ${Math.abs(d.daysLeft)} days ago` : `expiring in ${d.daysLeft} days`} (${format(d.expiry, "dd MMM yyyy")}).\n\nPlease arrange for renewal at the earliest.\n\nThank you,\n${firmName}`;
+
   const sendWA = (c: any, d: any) => {
     const phone = c.phone?.replace(/\D/g, "") ?? "";
-    const msg = encodeURIComponent(`Dear ${c.name},\n\nYour ${d.field.label} is ${d.daysLeft < 0 ? `expired ${Math.abs(d.daysLeft)} days ago` : `expiring in ${d.daysLeft} days`} (${format(d.expiry, "dd MMM yyyy")}).\n\nPlease arrange for renewal at the earliest.\n\nThank you.`);
+    const msg = encodeURIComponent(buildMsg(c, d));
     window.open(phone ? `https://wa.me/91${phone}?text=${msg}` : `https://wa.me/?text=${msg}`, "_blank");
+  };
+
+  const sendEmail = (c: any, d: any) => {
+    if (!c.email) { alert("Client ka email nahi mila. Client details mein email add karein."); return; }
+    const subject = encodeURIComponent(`Document Renewal Reminder — ${d.field.label}`);
+    const body = encodeURIComponent(buildMsg(c, d));
+    const to = encodeURIComponent(c.email);
+    let url = "";
+    switch (emailProvider) {
+      case "gmail":   url = `https://mail.google.com/mail/?view=cm&to=${to}&su=${subject}&body=${body}`; break;
+      case "outlook": url = `https://outlook.live.com/mail/0/deeplink/compose?to=${to}&subject=${subject}&body=${body}`; break;
+      case "zoho":    url = `https://mail.zoho.in/zm/#compose?to=${to}&subject=${subject}&body=${body}`; break;
+      case "custom":  url = emailCustomUrl ? `${emailCustomUrl.replace(/\/$/, "")}?to=${to}&subject=${subject}&body=${body}` : `mailto:${c.email}?subject=${subject}&body=${body}`; break;
+      default:        url = `mailto:${c.email}?subject=${subject}&body=${body}`;
+    }
+    window.open(url, "_blank");
   };
 
   if (clients.length === 0) return <div className="text-center py-16 text-muted-foreground text-sm">Loading...</div>;
@@ -807,6 +843,12 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
                       💬 WA
                     </button>
                   )}
+                  {c.email && (
+                    <button onClick={e => { e.stopPropagation(); sendEmail(c, c.docs[0]); }}
+                      className="text-xs text-blue-700 border border-blue-200 px-2 py-1 rounded-md hover:bg-blue-50 font-medium">
+                      ✉️ Email
+                    </button>
+                  )}
                   <span className="text-muted-foreground text-xs w-3">{isOpen ? "▲" : "▼"}</span>
                 </div>
               </div>
@@ -832,7 +874,13 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
                           {c.phone && (
                             <button onClick={() => sendWA(c, d)}
                               className="text-xs text-green-700 border border-green-200 px-2 py-1 rounded-md hover:bg-green-50 font-medium">
-                              💬 Remind
+                              💬 WA
+                            </button>
+                          )}
+                          {c.email && (
+                            <button onClick={() => sendEmail(c, d)}
+                              className="text-xs text-blue-700 border border-blue-200 px-2 py-1 rounded-md hover:bg-blue-50 font-medium">
+                              ✉️ Email
                             </button>
                           )}
                         </div>
