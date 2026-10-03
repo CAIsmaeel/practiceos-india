@@ -89,7 +89,7 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
   );
 
   const META: Record<string, { label: string; icon: string; href: string; action: string }> = {
-    dsc:        { label: "DSC Expiry",        icon: "🔐", href: "/clients#expiry", action: "View Tracker" },
+    dsc:        { label: "Document Expiry",    icon: "📋", href: "/clients#expiry", action: "View Tracker" },
     invoice:    { label: "Overdue Invoices",   icon: "💰", href: "/invoices",    action: "View Invoices" },
     document:   { label: "Documents Pending",  icon: "📄", href: "/documents", action: "View Documents" },
     engagement: { label: "Deadline Missed",    icon: "⏰", href: "/engagements", action: "View Engagements" },
@@ -705,27 +705,39 @@ function Dashboard() {
 
   // 1b. Other document expiries ≤7 days
   const EXPIRY_FOCUS_FIELDS = [
+    { key: "dsc_expiry_date",      label: "DSC" },
     { key: "fssai_expiry",         label: "FSSAI License" },
     { key: "shop_estab_expiry",    label: "Shop & Establishment" },
     { key: "trade_license_expiry", label: "Trade License" },
     { key: "insurance_renewal",    label: "Insurance Policy" },
     { key: "iec_expiry",           label: "IEC" },
     { key: "drug_license_expiry",  label: "Drug License" },
+    { key: "other_doc_expiry",     label: "" }, // custom — name from other_doc_name
   ];
-  (expiryClients ?? []).forEach((c: any) => {
+  // Combine dscClients + expiryClients for focus
+  const allExpiryClients = [
+    ...(dscClients ?? []).map((c: any) => ({ ...c, _source: "dsc" })),
+    ...(expiryClients ?? []).map((c: any) => ({ ...c, _source: "other" })),
+  ];
+  const seenExpiry = new Set<string>();
+  allExpiryClients.forEach((c: any) => {
     EXPIRY_FOCUS_FIELDS.forEach(f => {
       if (!c[f.key]) return;
+      const key = `${c.id}-${f.key}`;
+      if (seenExpiry.has(key)) return;
+      seenExpiry.add(key);
       const days = differenceInCalendarDays(startOfDay(new Date(c[f.key])), today);
       if (days <= 7) {
+        const docLabel = f.key === "other_doc_expiry" ? (c.other_doc_name ?? "Document") : f.label;
         todaysFocus.push({
           id: `expiry-${c.id}-${f.key}`,
           priority: days < 0 ? "critical" : "attention",
           type: "dsc",
           clientName: c.name,
           description: days < 0
-            ? `${f.label} expired ${Math.abs(days)}d ago`
-            : days === 0 ? `${f.label} expires today!`
-            : `${f.label} expires in ${days}d`,
+            ? `${docLabel} expired ${Math.abs(days)}d ago — renew now`
+            : days === 0 ? `${docLabel} expires today!`
+            : `${docLabel} expires in ${days}d`,
           href: "/clients#expiry",
           action: "View Tracker",
           waPhone: c.phone ?? "",
