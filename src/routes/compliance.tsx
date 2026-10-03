@@ -126,6 +126,7 @@ function CompliancePage() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [confirmMarkAll, setConfirmMarkAll] = useState<{ group: (typeof grouped)[number] } | null>(null);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ["compliance-items"],
@@ -216,6 +217,7 @@ function CompliancePage() {
     const { error } = await supabase.from("compliance_items").update({ status: "filed", filed_date: new Date().toISOString() }).in("id", ids);
     if (error) throw error;
     qc.invalidateQueries({ queryKey: ["compliance-items"] });
+    setConfirmMarkAll(null);
   };
 
   const addMutation = useMutation({
@@ -367,7 +369,7 @@ function CompliancePage() {
                   </div>
 
                   <div className="mt-3 flex gap-2 border-t border-border pt-3">
-                    <button type="button" onClick={() => void markAllFiled(group)}
+                    <button type="button" onClick={() => setConfirmMarkAll({ group })}
                       className="rounded-md bg-green-500 px-3 py-1.5 text-xs text-white hover:bg-green-600">
                       ✓ Mark All Filed
                     </button>
@@ -414,6 +416,36 @@ function CompliancePage() {
           onSubmit={addMutation.mutate}
           pending={addMutation.isPending}
         />
+      )}
+
+      {/* ✅ Mark All Confirm Dialog */}
+      {confirmMarkAll && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="text-lg font-bold text-foreground">Mark All as Filed?</h2>
+            <p className="text-sm text-muted-foreground">
+              This will mark <strong>{confirmMarkAll.group.clients.filter((c: any) => c.status !== "filed").length} client{confirmMarkAll.group.clients.filter((c: any) => c.status !== "filed").length !== 1 ? "s" : ""}</strong> as filed for{" "}
+              <strong>{confirmMarkAll.group.compliance_name}</strong>.
+            </p>
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+              ⚠ This cannot be undone easily. Make sure all filings are actually complete.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setConfirmMarkAll(null)}
+                className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void markAllFiled(confirmMarkAll.group)}
+                className="px-4 py-2 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 font-medium"
+              >
+                Yes, Mark All Filed
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
