@@ -128,6 +128,7 @@ function CompliancePage() {
   const [downloading, setDownloading] = useState(false);
   const [confirmMarkAll, setConfirmMarkAll] = useState<{ group: (typeof grouped)[number] } | null>(null);
   const [shareCopied, setShareCopied] = useState<{ name: string; url: string } | null>(null);
+  const [complianceTab, setComplianceTab] = useState<"pending" | "filed">("pending");
 
   const { data: items, isLoading } = useQuery({
     queryKey: ["compliance-items"],
@@ -208,6 +209,24 @@ function CompliancePage() {
         if (!b.due_date) return -1;
         return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
       });
+  }, [items]);
+
+  // Filed groups
+  const filedGrouped = useMemo(() => {
+    if (!items) return [];
+    const map = new Map<string, { compliance_name: string; due_date: string; clients: any[] }>();
+    items.filter(i => i.status === "filed").forEach(item => {
+      const name = item.compliance_name ?? item.compliance_type ?? "—";
+      const due = item.due_date ?? "";
+      const key = `${name}_${due}`;
+      if (!map.has(key)) map.set(key, { compliance_name: name, due_date: due, clients: [] });
+      map.get(key)!.clients.push(item);
+    });
+    return Array.from(map.values()).sort((a, b) => {
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(b.due_date).getTime() - new Date(a.due_date).getTime(); // most recent first
+    });
   }, [items]);
 
   const toggleExpand = (key: string) => setExpanded(p => p === key ? null : key);
@@ -336,7 +355,64 @@ function CompliancePage() {
         </div>
       )}
 
-      {!isLoading && grouped.length > 0 && (
+      {/* Pending | Filed tabs */}
+      {!isLoading && (
+        <div className="flex gap-1 border-b border-border">
+          <button onClick={() => setComplianceTab("pending")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${complianceTab === "pending" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            📋 Pending / Overdue
+            {grouped.length > 0 && <span className="ml-2 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">{grouped.reduce((sum, g) => sum + g.clients.length, 0)}</span>}
+          </button>
+          <button onClick={() => setComplianceTab("filed")} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${complianceTab === "filed" ? "border-green-600 text-green-600" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            ✅ Filed
+            {filedGrouped.length > 0 && <span className="ml-2 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full">{filedGrouped.reduce((sum, g) => sum + g.clients.length, 0)}</span>}
+          </button>
+        </div>
+      )}
+
+      {/* Filed tab content */}
+      {!isLoading && complianceTab === "filed" && (
+        <div className="space-y-3">
+          {filedGrouped.length === 0 && <div className="text-center py-12 text-muted-foreground text-sm">No filed items yet.</div>}
+          {filedGrouped.map(group => {
+            const key = `filed_${group.compliance_name}_${group.due_date}`;
+            const isOpen = expanded === key;
+            return (
+              <div key={key} className="bg-card border border-green-200 rounded-lg shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-green-50/40" onClick={() => setExpanded(isOpen ? null : key)}>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">{group.compliance_name}</p>
+                    {group.due_date && <p className="text-xs text-muted-foreground mt-0.5">Due: {format(parseISO(group.due_date), "dd MMM yyyy")}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">{group.clients.length} filed</span>
+                    <span className="text-muted-foreground text-xs">{isOpen ? "▲" : "▼"}</span>
+                  </div>
+                </div>
+                {isOpen && (
+                  <div className="border-t border-border/40 divide-y divide-border/30">
+                    {group.clients.map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between px-5 py-2.5 bg-background/50">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{item.clients?.name ?? "—"}</p>
+                          {item.filed_date && <p className="text-xs text-muted-foreground">Filed: {format(parseISO(item.filed_date.split("T")[0]), "dd MMM yyyy")}</p>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Filed</span>
+                          <button type="button" onClick={() => undoFiledMutation.mutate({ id: item.id })} className="text-xs text-muted-foreground border border-input px-2 py-0.5 rounded hover:bg-muted font-medium">
+                            ↩ Undo
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!isLoading && complianceTab === "pending" && grouped.length > 0 && (
         <div className="space-y-5">
           {grouped.map((group, index) => {
             const key = `${group.compliance_name}_${group.due_date}`;

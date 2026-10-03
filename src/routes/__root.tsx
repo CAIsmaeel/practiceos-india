@@ -79,17 +79,23 @@ function AppLayout() {
 
   useEffect(() => {
     if (isLoginPage || isPublicPage) { setChecking(false); return; }
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+
+    // Check session immediately — no delay
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s ?? null);
       setChecking(false);
-      if (!session) router.navigate({ to: "/login" });
+      if (!s) router.navigate({ to: "/login" });
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session && router.state.location.pathname !== "/login") router.navigate({ to: "/login" });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s ?? null);
+      if (!s && !isLoginPage && !isPublicPage) {
+        setChecking(false);
+        router.navigate({ to: "/login" });
+      }
     });
     return () => subscription.unsubscribe();
-  }, [isLoginPage]);
+  }, [isLoginPage, isPublicPage]);
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],

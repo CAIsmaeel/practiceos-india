@@ -170,7 +170,10 @@ function InvoicesPage() {
   const visibleInvoices = useMemo(() => {
     if (!sorted) return [];
     return sorted.filter(inv => {
-      if (!showPaid && isInvoicePaid(inv)) return false;
+      // Show Paid mode: ONLY show paid invoices
+      if (showPaid) return isInvoicePaid(inv);
+      // Normal mode: hide paid, apply aging filter
+      if (isInvoicePaid(inv)) return false;
       if (agingFilter === "all") return true;
       const days = getOverdueDays(inv);
       if (days === null) return false;
@@ -300,8 +303,8 @@ function InvoicesPage() {
               {INVOICE_THEMES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </div>
-          <button type="button" onClick={() => setShowPaid(p => !p)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-sidebar text-primary-foreground border-sidebar" : "bg-card text-foreground border-input hover:bg-muted"}`}>
-            Show Paid ({paidCount})
+          <button type="button" onClick={() => setShowPaid(p => !p)} className={`inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium border ${showPaid ? "bg-green-600 text-white border-green-600" : "bg-card text-foreground border-input hover:bg-muted"}`}>
+            {showPaid ? `✅ Paid (${paidCount}) — Click to show unpaid` : `Show Paid (${paidCount})`}
           </button>
           <button onClick={() => setModalState({ mode: "create" })} className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium">
             <Plus size={16} /> Create Invoice
