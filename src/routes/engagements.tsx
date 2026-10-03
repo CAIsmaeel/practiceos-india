@@ -700,8 +700,9 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
         <form
           onSubmit={e => {
             e.preventDefault();
+            const { custom_type, ...rest } = form;
             onSubmit({
-              ...form,
+              ...rest,
               type: effectiveType,
               deadline: form.deadline || null,
               reviewed_by: form.reviewed_by || null,

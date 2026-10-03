@@ -84,10 +84,11 @@ const STORAGE_KEY = "firmora_tour_step"; // current step (1-based), "done" if co
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 type TourContextType = {
-  currentStep: number | null; // null = tour done/not started
+  currentStep: number | null;
   totalSteps: number;
   isActive: boolean;
   next: () => void;
+  prev: () => void;
   skip: () => void;
   restart: () => void;
   triggerEvent: (event: TourStep["trigger"]) => void;
@@ -142,6 +143,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStep, goToStep, navigate]);
 
+  const prev = useCallback(() => {
+    if (currentStep === null || currentStep <= 1) return;
+    goToStep(currentStep - 1);
+  }, [currentStep, goToStep]);
+
   const skip = useCallback(() => {
     setCurrentStep(null);
     saveStep(null);
@@ -175,6 +181,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       totalSteps: TOUR_STEPS.length,
       isActive: currentStep !== null,
       next,
+      prev,
       skip,
       restart,
       triggerEvent,
@@ -186,7 +193,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
 // ─── Floating Tour Card ───────────────────────────────────────────────────────
 export function TourCard() {
-  const { currentStep, totalSteps, isActive, next, skip } = useTour();
+  const { currentStep, totalSteps, isActive, next, prev, skip } = useTour();
   const pathname = useRouterState({ select: s => s.location.pathname });
   const navigate = useNavigate();
   const [minimised, setMinimised] = useState(false);
@@ -216,8 +223,8 @@ export function TourCard() {
   }
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 md:left-64 z-50 px-4 pointer-events-none">
-      <div className="max-w-2xl mx-auto pointer-events-auto">
+    <div className="fixed bottom-4 right-4 md:right-6 z-50 pointer-events-none w-full md:w-[420px] md:left-auto left-4">
+      <div className="pointer-events-auto">
         <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
           {/* Progress bar */}
           <div className="h-1 bg-muted">
@@ -252,6 +259,16 @@ export function TourCard() {
                 Skip tour
               </button>
               <div className="flex items-center gap-2">
+                {/* Back button — always show if not step 1 */}
+                {currentStep > 1 && (
+                  <button
+                    onClick={prev}
+                    className="px-3 py-2 text-sm rounded-lg border border-input text-foreground hover:bg-muted font-medium"
+                  >
+                    ← Back
+                  </button>
+                )}
+                {/* Navigate to correct page */}
                 {!onCorrectPage && (
                   <button
                     onClick={() => navigate({ to: step.path as any })}
@@ -260,6 +277,7 @@ export function TourCard() {
                     {step.action} <ChevronRight size={15} />
                   </button>
                 )}
+                {/* On correct page — manual trigger */}
                 {onCorrectPage && step.trigger === "manual" && (
                   <button
                     onClick={next}
@@ -269,6 +287,7 @@ export function TourCard() {
                     <ChevronRight size={15} />
                   </button>
                 )}
+                {/* On correct page — waiting for action */}
                 {onCorrectPage && step.trigger !== "manual" && (
                   <span className="text-xs text-muted-foreground italic">
                     {step.trigger === "settings_saved" && "⏳ Save settings to continue..."}
