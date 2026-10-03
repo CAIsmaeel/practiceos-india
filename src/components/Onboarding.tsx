@@ -50,31 +50,47 @@ const TOUR_STEPS: TourStep[] = [
     id: 5,
     path: "/compliance",
     title: "Step 5 — Review compliance deadlines",
-    description: "Your client's compliance calendar is ready. View upcoming and overdue deadlines here. Mark items as filed once done. Click Got it when you're ready.",
+    description: "Your client\'s compliance calendar is ready. View upcoming and overdue deadlines here. Mark items as filed once done. Click Got it when you\'re ready.",
     action: "View Compliance",
     trigger: "manual",
   },
   {
     id: 6,
+    path: "/staff",
+    title: "Step 6 — Add your team (Maker-Checker)",
+    description: "Add your staff members here. Every engagement has a Maker (who does the work) and a Checker (who reviews it). Only senior roles — Qualified CA, Manager, Partner — can be Checkers. This ensures quality control on every assignment.",
+    action: "Add Staff",
+    trigger: "manual",
+  },
+  {
+    id: 7,
     path: "/engagements",
-    title: "Step 6 — Create your first engagement",
-    description: "Click Add Engagement. Select the client and service type. Tick conditions like Has Capital Gains or Has Employees — the right documents will auto-include in the checklist.",
+    title: "Step 7 — Create your first engagement",
+    description: "Click Add Engagement. Select the client and service type. Assign a Maker and Checker from your staff. Tick conditions like Has Capital Gains or Has Employees — the right documents auto-include in the checklist.",
     action: "Add Engagement",
     trigger: "engagement_saved",
   },
   {
-    id: 7,
+    id: 8,
+    path: "/fee-estimator",
+    title: "Step 8 — Not sure what to charge?",
+    description: "Use the Fee Estimator to price any CA service confidently. Select the service, entity type and complexity — it gives you a market-based fee range. Never undercharge again.",
+    action: "Open Fee Estimator",
+    trigger: "manual",
+  },
+  {
+    id: 9,
     path: "/invoices",
-    title: "Step 7 — Send your first invoice",
-    description: "Click Add Invoice. Select the client, add line items and GST. Download as PDF and send. Outstanding invoices appear on your dashboard automatically.",
+    title: "Step 9 — Send your first invoice",
+    description: "Click Create Invoice. Select the client, add line items with GST. Download as PDF in Classic, Modern or Minimal theme. Outstanding invoices appear on your dashboard automatically.",
     action: "Create Invoice",
     trigger: "invoice_saved",
   },
   {
-    id: 8,
+    id: 10,
     path: "/",
-    title: "🎉 You're all set!",
-    description: "Your dashboard now shows what needs attention every day — DSC expiry, pending documents, overdue invoices and upcoming deadlines. Welcome to Firmora!",
+    title: "🎉 You\'re all set!",
+    description: "Your dashboard shows what needs attention every day — DSC expiry, pending documents, overdue invoices and upcoming deadlines. Welcome to Firmora!",
     action: "Go to Dashboard",
     trigger: "manual",
   },
@@ -96,10 +112,20 @@ type TourContextType = {
 
 const TourContext = createContext<TourContextType | null>(null);
 
+const NOOP_TOUR: TourContextType = {
+  currentStep: null,
+  totalSteps: 0,
+  isActive: false,
+  next: () => {},
+  prev: () => {},
+  skip: () => {},
+  restart: () => {},
+  triggerEvent: () => {},
+};
+
 export function useTour() {
   const ctx = useContext(TourContext);
-  if (!ctx) throw new Error("useTour must be used inside TourProvider");
-  return ctx;
+  return ctx ?? NOOP_TOUR; // Safe fallback — no throw
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -171,7 +197,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         } else {
           goToStep(nextStep);
         }
-      }, 800);
+      }, 1200);
     }
   }, [currentStep, goToStep, navigate]);
 
@@ -255,17 +281,20 @@ export function TourCard() {
 
             {/* Footer */}
             <div className="flex items-center justify-between gap-3">
-              <button onClick={skip} className="text-xs text-muted-foreground hover:text-foreground font-medium">
-                Skip tour
+              <button onClick={skip} className="text-xs text-muted-foreground hover:text-red-500 font-medium">
+                End tour
               </button>
               <div className="flex items-center gap-2">
-                {/* Back button — always show if not step 1 */}
+                {/* Back */}
                 {currentStep > 1 && (
-                  <button
-                    onClick={prev}
-                    className="px-3 py-2 text-sm rounded-lg border border-input text-foreground hover:bg-muted font-medium"
-                  >
+                  <button onClick={prev} className="px-3 py-2 text-sm rounded-lg border border-input text-foreground hover:bg-muted font-medium">
                     ← Back
+                  </button>
+                )}
+                {/* Skip this step */}
+                {!isLast && (
+                  <button onClick={next} className="px-3 py-2 text-sm rounded-lg border border-input text-muted-foreground hover:bg-muted font-medium">
+                    Skip step
                   </button>
                 )}
                 {/* Navigate to correct page */}
@@ -279,12 +308,8 @@ export function TourCard() {
                 )}
                 {/* On correct page — manual trigger */}
                 {onCorrectPage && step.trigger === "manual" && (
-                  <button
-                    onClick={next}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-                  >
-                    {isLast ? "Finish" : "Got it, Next"}
-                    <ChevronRight size={15} />
+                  <button onClick={next} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                    {isLast ? "Finish 🎉" : "Got it, Next"} <ChevronRight size={15} />
                   </button>
                 )}
                 {/* On correct page — waiting for action */}

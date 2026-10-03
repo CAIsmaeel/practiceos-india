@@ -269,7 +269,7 @@ function SettingsPage() {
   const websiteLink = currentUserId ? `https://ca-firmora.vercel.app?ca=${currentUserId}` : "";
 
   return (
-    <div className="space-y-6 max-w-3xl pb-36">
+    <div className="space-y-6 max-w-3xl pb-48">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Firm Settings</h1>
         <p className="text-muted-foreground text-sm">Configure your firm details and website</p>
@@ -512,11 +512,12 @@ function SettingsPage() {
                 {isSavingTemplate ? "Saving..." : "Save Template"}
               </button>
             </div>
+            <div className="pb-16" />
           </div>
         )}
 
         {activeTab !== "templates" && (
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-2 pb-16">
             <button type="submit" disabled={isSaving} className="px-6 py-2.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-medium">
               {isSaving ? "Saving..." : "Save Settings"}
             </button>
