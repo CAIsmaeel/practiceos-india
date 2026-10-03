@@ -91,7 +91,7 @@ function TodaysFocus({ items }: { items: FocusItem[] }) {
   const META: Record<string, { label: string; icon: string; href: string; action: string }> = {
     dsc:        { label: "DSC Expiry",        icon: "🔐", href: "/clients",     action: "View Clients" },
     invoice:    { label: "Overdue Invoices",   icon: "💰", href: "/invoices",    action: "View Invoices" },
-    document:   { label: "Documents Pending",  icon: "📄", href: "/engagements", action: "View Engagements" },
+    document:   { label: "Documents Pending",  icon: "📄", href: "/documents", action: "View Documents" },
     engagement: { label: "Deadline Missed",    icon: "⏰", href: "/engagements", action: "View Engagements" },
     compliance: { label: "Compliance Overdue", icon: "⚠️", href: "/compliance",  action: "View Compliance" },
     lead:       { label: "Hot Leads",          icon: "🔥", href: "/leads",       action: "View Leads" },
@@ -610,6 +610,31 @@ function Dashboard() {
     refetchInterval: 60000, staleTime: 0, refetchOnWindowFocus: true,
   });
 
+  // Expiry items due ≤7 days (non-DSC)
+  const { data: expiryClients } = useQuery({
+    queryKey: ["dashboard-expiry"],
+    queryFn: async () => {
+      try {
+        const userId = await getCurrentUserId();
+        const in7 = format(addDays(today, 7), "yyyy-MM-dd");
+        const { data } = await supabase.from("clients")
+          .select("id, name, phone, fssai_expiry, shop_estab_expiry, trade_license_expiry, insurance_renewal, iec_expiry, drug_license_expiry")
+          .eq("user_id", userId ?? "")
+          .not("status", "in", '("deleted","archived")')
+          .order("name");
+        // Filter in JS since multiple OR columns
+        return (data ?? []).filter((c: any) =>
+          ["fssai_expiry","shop_estab_expiry","trade_license_expiry","insurance_renewal","iec_expiry","drug_license_expiry"].some(k => {
+            if (!c[k]) return false;
+            const days = differenceInCalendarDays(startOfDay(new Date(c[k])), today);
+            return days <= 7;
+          })
+        ) as any[];
+      } catch { return []; }
+    },
+    refetchInterval: 60000, staleTime: 0, refetchOnWindowFocus: true,
+  });
+
   // Pending mandatory docs
   const { data: pendingDocs } = useQuery({
     queryKey: ["dashboard-pending-docs-focus"],
@@ -675,6 +700,37 @@ function Dashboard() {
     }
   });
 
+  // 1b. Other document expiries ≤7 days
+  const EXPIRY_FOCUS_FIELDS = [
+    { key: "fssai_expiry",         label: "FSSAI License" },
+    { key: "shop_estab_expiry",    label: "Shop & Establishment" },
+    { key: "trade_license_expiry", label: "Trade License" },
+    { key: "insurance_renewal",    label: "Insurance Policy" },
+    { key: "iec_expiry",           label: "IEC" },
+    { key: "drug_license_expiry",  label: "Drug License" },
+  ];
+  (expiryClients ?? []).forEach((c: any) => {
+    EXPIRY_FOCUS_FIELDS.forEach(f => {
+      if (!c[f.key]) return;
+      const days = differenceInCalendarDays(startOfDay(new Date(c[f.key])), today);
+      if (days <= 7) {
+        todaysFocus.push({
+          id: `expiry-${c.id}-${f.key}`,
+          priority: days < 0 ? "critical" : "attention",
+          type: "dsc",
+          clientName: c.name,
+          description: days < 0
+            ? `${f.label} expired ${Math.abs(days)}d ago`
+            : days === 0 ? `${f.label} expires today!`
+            : `${f.label} expires in ${days}d`,
+          href: "/clients",
+          action: "View",
+          waPhone: c.phone ?? "",
+        });
+      }
+    });
+  });
+
   // 2. Overdue invoices
   (invoices ?? []).filter((inv: any) => {
     if (!inv.due_date || (inv.status ?? "").toLowerCase() === "paid") return false;
@@ -710,7 +766,7 @@ function Dashboard() {
       id: `doc-${eng.engId}`, priority: "attention", type: "document",
       clientName: eng.clientName,
       description: `${eng.count} mandatory doc${eng.count > 1 ? "s" : ""} pending — blocking "${eng.title}"`,
-      href: "/engagements", action: "View",
+      href: "/documents", action: "View",
       waPhone: eng.phone,
     });
   });
