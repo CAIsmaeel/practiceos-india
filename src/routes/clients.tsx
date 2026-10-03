@@ -254,7 +254,7 @@ function ClientsPage() {
     queryFn: async () => {
       const userId = await getCurrentUserId();
       const { data } = await supabase.from("clients")
-        .select("id, name, firm_name, phone, email, dsc_expiry_date, fssai_expiry, shop_estab_expiry, trade_license_expiry, insurance_renewal, iec_expiry, drug_license_expiry")
+        .select("id, name, firm_name, phone, email, dsc_expiry_date, fssai_expiry, shop_estab_expiry, trade_license_expiry, insurance_renewal, iec_expiry, drug_license_expiry, other_doc_name, other_doc_expiry")
         .eq("user_id", userId ?? "").eq("status", "active").order("name");
       return (data ?? []) as any[];
     },
@@ -681,24 +681,27 @@ export const EXPIRY_FIELDS = [
   { key: "drug_license_expiry",  label: "Drug License",         icon: "💊" },
 ];
 
-function getExpiryColor(days: number) {
-  if (days < 0)   return { row: "border-l-4 border-red-500 bg-red-50/40",    badge: "bg-red-100 text-red-700 border-red-300" };
-  if (days <= 7)  return { row: "border-l-4 border-red-400 bg-red-50/20",    badge: "bg-red-100 text-red-700 border-red-300" };
-  if (days <= 30) return { row: "border-l-4 border-amber-400 bg-amber-50/20",badge: "bg-amber-100 text-amber-700 border-amber-300" };
-  if (days <= 90) return { row: "border-l-4 border-yellow-400 bg-yellow-50/10", badge: "bg-yellow-100 text-yellow-700 border-yellow-300" };
-  return { row: "", badge: "bg-green-100 text-green-700 border-green-300" };
+function getExpiryBadge(days: number) {
+  if (days < 0)   return "bg-red-100 text-red-700 border-red-300";
+  if (days <= 7)  return "bg-red-100 text-red-600 border-red-300";
+  if (days <= 30) return "bg-amber-100 text-amber-700 border-amber-300";
+  if (days <= 90) return "bg-yellow-100 text-yellow-700 border-yellow-300";
+  return "bg-green-100 text-green-700 border-green-300";
 }
 
 function getExpiryLabel(days: number) {
-  if (days < 0)  return `Expired ${Math.abs(days)}d ago`;
+  if (days < 0)   return `Expired ${Math.abs(days)}d ago`;
   if (days === 0) return "Expires today!";
   return `${days}d left`;
 }
 
+const ALL_EXPIRY_FIELDS = [
+  ...EXPIRY_FIELDS,
+  { key: "other_doc_expiry", label: "Other Document", icon: "📄" },
+];
+
 function ExpiryTracker({ clients }: { clients: any[] }) {
   const today = new Date();
-  const [filter, setFilter] = useState<"all" | "expired" | "30" | "90">("all");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { data: firmSettings } = useQuery({
     queryKey: ["firm-settings-expiry"],
@@ -711,61 +714,57 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
   const emailProvider = firmSettings?.email_provider ?? "default";
   const emailCustomUrl = firmSettings?.email_custom_url ?? "";
 
-  // Group by client, attach their docs
-  const grouped = clients.map(c => {
-    const docs = EXPIRY_FIELDS.flatMap(f => {
+  // Flat entries sorted by daysLeft
+  const allEntries = clients.flatMap(c =>
+    ALL_EXPIRY_FIELDS.flatMap(f => {
       const val = c[f.key];
       if (!val) return [];
       const expiry = new Date(val);
       const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return [{ field: f, expiry, daysLeft }];
-    }).sort((a, b) => a.daysLeft - b.daysLeft);
-    return { ...c, docs };
-  }).filter(c => c.docs.length > 0);
+      const label = f.key === "other_doc_expiry" ? (c.other_doc_name ?? "Other Document") : f.label;
+      return [{ clientId: c.id, clientName: c.name, firmName: c.firm_name, phone: c.phone, email: c.email, field: { ...f, label }, expiry, daysLeft }];
+    })
+  ).sort((a, b) => a.daysLeft - b.daysLeft);
 
-  // Apply filter
-  const filteredGroups = grouped.map(c => ({
-    ...c,
-    docs: c.docs.filter((d: any) => {
-      if (filter === "expired") return d.daysLeft < 0;
-      if (filter === "30")      return d.daysLeft >= 0 && d.daysLeft <= 30;
-      if (filter === "90")      return d.daysLeft >= 0 && d.daysLeft <= 90;
-      return true;
-    }),
-  })).filter(c => c.docs.length > 0);
+  const expiredEntries  = allEntries.filter(e => e.daysLeft < 0);
+  const due7Entries     = allEntries.filter(e => e.daysLeft >= 0 && e.daysLeft <= 7);
+  const due30Entries    = allEntries.filter(e => e.daysLeft > 7 && e.daysLeft <= 30);
+  const due90Entries    = allEntries.filter(e => e.daysLeft > 30 && e.daysLeft <= 90);
+  const okEntries       = allEntries.filter(e => e.daysLeft > 90);
 
-  const allDocs = grouped.flatMap((c: any) => c.docs);
-  const expiredCount = allDocs.filter((d: any) => d.daysLeft < 0).length;
-  const due30Count   = allDocs.filter((d: any) => d.daysLeft >= 0 && d.daysLeft <= 30).length;
-  const due90Count   = allDocs.filter((d: any) => d.daysLeft >= 0 && d.daysLeft <= 90).length;
+  const TIMELINE_GROUPS = [
+    { label: "🔴 Expired",         entries: expiredEntries,  headerClass: "bg-red-50 border-red-300 text-red-700" },
+    { label: "🚨 Due in 7 days",   entries: due7Entries,     headerClass: "bg-red-50 border-red-200 text-red-600" },
+    { label: "🟠 Due in 30 days",  entries: due30Entries,    headerClass: "bg-amber-50 border-amber-200 text-amber-700" },
+    { label: "🟡 Due in 90 days",  entries: due90Entries,    headerClass: "bg-yellow-50 border-yellow-200 text-yellow-700" },
+    { label: "✅ All Good",         entries: okEntries,       headerClass: "bg-green-50 border-green-200 text-green-700" },
+  ].filter(g => g.entries.length > 0);
 
-  const toggleExpand = (id: string) => setExpanded(prev => {
-    const next = new Set(prev);
-    next.has(id) ? next.delete(id) : next.add(id);
-    return next;
-  });
+  // e = flat entry with clientName, phone, email, field, expiry, daysLeft
+  const buildMsg = (e: any) =>
+    `Dear ${e.clientName},\n\nYour ${e.field.label} is ${e.daysLeft < 0 ? `expired ${Math.abs(e.daysLeft)} days ago` : `expiring in ${e.daysLeft} days`} (${format(e.expiry, "dd MMM yyyy")}).\n\nPlease arrange for renewal at the earliest.\n\nThank you,\n${firmName}`;
 
-  const buildMsg = (c: any, d: any) =>
-    `Dear ${c.name},\n\nYour ${d.field.label} is ${d.daysLeft < 0 ? `expired ${Math.abs(d.daysLeft)} days ago` : `expiring in ${d.daysLeft} days`} (${format(d.expiry, "dd MMM yyyy")}).\n\nPlease arrange for renewal at the earliest.\n\nThank you,\n${firmName}`;
-
-  const sendWA = (c: any, d: any) => {
-    const phone = c.phone?.replace(/\D/g, "") ?? "";
-    const msg = encodeURIComponent(buildMsg(c, d));
+  const sendWA = (e: any, _d?: any) => {
+    const entry = _d ? { ...e, ...{ clientName: e.clientName ?? e.name, field: _d.field, expiry: _d.expiry, daysLeft: _d.daysLeft } } : e;
+    const phone = (e.phone ?? "").replace(/\D/g, "");
+    const msg = encodeURIComponent(buildMsg(entry));
     window.open(phone ? `https://wa.me/91${phone}?text=${msg}` : `https://wa.me/?text=${msg}`, "_blank");
   };
 
-  const sendEmail = (c: any, d: any) => {
-    if (!c.email) { alert("Client ka email nahi mila. Client details mein email add karein."); return; }
-    const subject = encodeURIComponent(`Document Renewal Reminder — ${d.field.label}`);
-    const body = encodeURIComponent(buildMsg(c, d));
-    const to = encodeURIComponent(c.email);
+  const sendEmail = (e: any, _d?: any) => {
+    const email = e.email ?? "";
+    if (!email) { alert("Client ka email nahi mila."); return; }
+    const entry = _d ? { ...e, ...{ clientName: e.clientName ?? e.name, field: _d.field, expiry: _d.expiry, daysLeft: _d.daysLeft } } : e;
+    const subject = encodeURIComponent(`Document Renewal Reminder — ${entry.field.label}`);
+    const body = encodeURIComponent(buildMsg(entry));
+    const to = encodeURIComponent(email);
     let url = "";
     switch (emailProvider) {
       case "gmail":   url = `https://mail.google.com/mail/?view=cm&to=${to}&su=${subject}&body=${body}`; break;
       case "outlook": url = `https://outlook.live.com/mail/0/deeplink/compose?to=${to}&subject=${subject}&body=${body}`; break;
       case "zoho":    url = `https://mail.zoho.in/zm/#compose?to=${to}&subject=${subject}&body=${body}`; break;
-      case "custom":  url = emailCustomUrl ? `${emailCustomUrl.replace(/\/$/, "")}?to=${to}&subject=${subject}&body=${body}` : `mailto:${c.email}?subject=${subject}&body=${body}`; break;
-      default:        url = `mailto:${c.email}?subject=${subject}&body=${body}`;
+      case "custom":  url = emailCustomUrl ? `${emailCustomUrl.replace(/\/$/, "")}?to=${to}&subject=${subject}&body=${body}` : `mailto:${email}?subject=${subject}&body=${body}`; break;
+      default:        url = `mailto:${email}?subject=${subject}&body=${body}`;
     }
     window.open(url, "_blank");
   };
@@ -775,124 +774,71 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
   return (
     <div className="space-y-4">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: "Total Tracked", val: allDocs.length, color: "bg-card border-border text-foreground", f: "all" },
-          { label: "Expired",       val: expiredCount,   color: "bg-red-50 border-red-200 text-red-700",     f: "expired" },
-          { label: "Due in 30 days",val: due30Count,     color: "bg-amber-50 border-amber-200 text-amber-700", f: "30" },
-          { label: "Due in 90 days",val: due90Count,     color: "bg-yellow-50 border-yellow-200 text-yellow-700", f: "90" },
+          { label: "Total", val: allEntries.length, cls: "bg-card border-border text-foreground" },
+          { label: "🔴 Expired", val: expiredEntries.length, cls: "bg-red-50 border-red-200 text-red-700" },
+          { label: "🚨 Due in 7d", val: due7Entries.length, cls: "bg-red-50 border-red-100 text-red-600" },
+          { label: "🟠 Due in 30d", val: due30Entries.length, cls: "bg-amber-50 border-amber-200 text-amber-700" },
+          { label: "🟡 Due in 90d", val: due90Entries.length, cls: "bg-yellow-50 border-yellow-200 text-yellow-700" },
         ].map(s => (
-          <div key={s.f} onClick={() => setFilter(s.f as any)} className={`border rounded-lg p-4 shadow-sm cursor-pointer hover:opacity-80 ${s.color}`}>
-            <p className="text-xs font-medium">{s.label}</p>
+          <div key={s.label} className={`border rounded-lg p-3 shadow-sm ${s.cls}`}>
+            <p className="text-[11px] font-medium">{s.label}</p>
             <p className="text-2xl font-bold mt-1">{s.val}</p>
           </div>
         ))}
       </div>
 
-      {/* Filter pills */}
-      <div className="flex gap-2 flex-wrap text-xs">
-        {[
-          { val: "all", label: "All" },
-          { val: "expired", label: "🔴 Expired" },
-          { val: "30", label: "🟠 Due ≤ 30 days" },
-          { val: "90", label: "🟡 Due ≤ 90 days" },
-        ].map(f => (
-          <button key={f.val} onClick={() => setFilter(f.val as any)}
-            className={`px-3 py-1 rounded-full font-medium border transition-all ${filter === f.val ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-input hover:bg-muted"}`}>
-            {f.label}
-          </button>
-        ))}
-        <span className="ml-2 text-muted-foreground self-center">{filteredGroups.length} client{filteredGroups.length !== 1 ? "s" : ""}</span>
-      </div>
-
-      {/* Grouped by client — like compliance */}
-      {filteredGroups.length === 0 && (
+      {allEntries.length === 0 && (
         <div className="text-center py-12 border border-dashed border-border rounded-lg">
-          <p className="text-sm text-muted-foreground">{filter === "expired" ? "No expired documents 🎉" : "No documents in this range."}</p>
-          <p className="text-xs text-muted-foreground mt-1">Edit a client to add DSC, FSSAI, Shop License expiry dates.</p>
+          <p className="text-sm text-muted-foreground">No expiry dates tracked yet.</p>
+          <p className="text-xs text-muted-foreground mt-1">Edit a client and add DSC, FSSAI, Shop License expiry dates.</p>
         </div>
       )}
 
-      <div className="space-y-2">
-        {filteredGroups.map((c: any) => {
-          const isOpen = expanded.has(c.id);
-          const worstDays = Math.min(...c.docs.map((d: any) => d.daysLeft));
-          const { row } = getExpiryColor(worstDays);
-          const expiredDocs = c.docs.filter((d: any) => d.daysLeft < 0).length;
-          const soonDocs = c.docs.filter((d: any) => d.daysLeft >= 0 && d.daysLeft <= 30).length;
-
-          return (
-            <div key={c.id} className={`rounded-lg border border-border bg-card shadow-sm overflow-hidden ${row}`}>
-              {/* Client header row */}
-              <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-black/5 select-none" onClick={() => toggleExpand(c.id)}>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-foreground text-sm">{c.name}</p>
-                    {c.firm_name && <span className="text-xs text-muted-foreground">· {c.firm_name}</span>}
-                    {expiredDocs > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">{expiredDocs} expired</span>}
-                    {soonDocs > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{soonDocs} due soon</span>}
+      {/* Timeline sections */}
+      {TIMELINE_GROUPS.map(group => (
+        <div key={group.label} className="rounded-lg border border-border shadow-sm overflow-hidden">
+          <div className={`px-4 py-2.5 border-b border-border font-semibold text-sm ${group.headerClass}`}>
+            {group.label} — {group.entries.length} document{group.entries.length !== 1 ? "s" : ""}
+          </div>
+          <div className="divide-y divide-border">
+            {group.entries.map((e, i) => (
+              <div key={i} className="flex items-center justify-between px-5 py-3 bg-card hover:bg-muted/40">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span className="text-lg shrink-0">{e.field.icon}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-foreground">{e.field.label}</p>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <p className="text-sm text-muted-foreground">{e.clientName}</p>
+                      {e.firmName && <span className="text-xs text-muted-foreground">({e.firmName})</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{format(e.expiry, "dd MMM yyyy")}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {c.docs.map((d: any) => d.field.icon).join(" ")} · {c.docs.length} document{c.docs.length !== 1 ? "s" : ""}
-                  </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {c.phone && (
-                    <button onClick={e => { e.stopPropagation(); sendWA(c, c.docs[0]); }}
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${getExpiryBadge(e.daysLeft)}`}>
+                    {getExpiryLabel(e.daysLeft)}
+                  </span>
+                  {e.phone && (
+                    <button onClick={() => sendWA(e, { field: e.field, expiry: e.expiry, daysLeft: e.daysLeft })}
                       className="text-xs text-green-700 border border-green-200 px-2 py-1 rounded-md hover:bg-green-50 font-medium">
                       💬 WA
                     </button>
                   )}
-                  {c.email && (
-                    <button onClick={e => { e.stopPropagation(); sendEmail(c, c.docs[0]); }}
+                  {e.email && (
+                    <button onClick={() => sendEmail(e, { field: e.field, expiry: e.expiry, daysLeft: e.daysLeft })}
                       className="text-xs text-blue-700 border border-blue-200 px-2 py-1 rounded-md hover:bg-blue-50 font-medium">
                       ✉️ Email
                     </button>
                   )}
-                  <span className="text-muted-foreground text-xs w-3">{isOpen ? "▲" : "▼"}</span>
                 </div>
               </div>
-
-              {/* Expanded doc rows */}
-              {isOpen && (
-                <div className="border-t border-border/40 divide-y divide-border/30">
-                  {c.docs.map((d: any, i: number) => {
-                    const { badge } = getExpiryColor(d.daysLeft);
-                    return (
-                      <div key={i} className="flex items-center justify-between px-6 py-2.5 bg-background/50">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-base">{d.field.icon}</span>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{d.field.label}</p>
-                            <p className="text-xs text-muted-foreground">{format(d.expiry, "dd MMM yyyy")}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${badge}`}>
-                            {getExpiryLabel(d.daysLeft)}
-                          </span>
-                          {c.phone && (
-                            <button onClick={() => sendWA(c, d)}
-                              className="text-xs text-green-700 border border-green-200 px-2 py-1 rounded-md hover:bg-green-50 font-medium">
-                              💬 WA
-                            </button>
-                          )}
-                          {c.email && (
-                            <button onClick={() => sendEmail(c, d)}
-                              className="text-xs text-blue-700 border border-blue-200 px-2 py-1 rounded-md hover:bg-blue-50 font-medium">
-                              ✉️ Email
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -926,6 +872,8 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
     insurance_renewal:    (initialClient as any)?.insurance_renewal     ?? "",
     iec_expiry:           (initialClient as any)?.iec_expiry            ?? "",
     drug_license_expiry:  (initialClient as any)?.drug_license_expiry   ?? "",
+    other_doc_name:       (initialClient as any)?.other_doc_name        ?? "",
+    other_doc_expiry:     (initialClient as any)?.other_doc_expiry      ?? "",
   });
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }));
@@ -1048,6 +996,12 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
                 <input type="date" value={form.iec_expiry} onChange={e => set("iec_expiry", e.target.value)} className={inputClass} /></div>
               <div><label className="block text-xs font-medium text-muted-foreground mb-1">💊 Drug License Expiry</label>
                 <input type="date" value={form.drug_license_expiry} onChange={e => set("drug_license_expiry", e.target.value)} className={inputClass} /></div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">📄 Other Document Name</label>
+                <input type="text" value={form.other_doc_name} onChange={e => set("other_doc_name", e.target.value)} placeholder="e.g. RERA Certificate, Drug License, PCB Consent..." className={inputClass} />
+              </div>
+              <div><label className="block text-xs font-medium text-muted-foreground mb-1">📄 Other Document Expiry</label>
+                <input type="date" value={form.other_doc_expiry} onChange={e => set("other_doc_expiry", e.target.value)} className={inputClass} /></div>
             </div>
           </div>
 
