@@ -108,7 +108,7 @@ export function Sidebar({ firmName = "CA Practice Manager", onLogout }: { firmNa
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5 min-h-0">
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
           {navItems.map(item => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return <NavLink key={item.to} to={item.to} label={item.label} icon={item.icon} active={active} onClick={() => setOpen(false)} />;
