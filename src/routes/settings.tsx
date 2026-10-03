@@ -266,7 +266,7 @@ function SettingsPage() {
   };
 
   const inputClass = "w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
-  const websiteLink = currentUserId ? `https://practiceos-landing.vercel.app?ca=${currentUserId}` : "";
+  const websiteLink = currentUserId ? `https://caclient-landing.vercel.app?ca=${currentUserId}` : "";
 
   return (
     <div className="space-y-6 max-w-3xl pb-48">
