@@ -96,6 +96,12 @@ function RoleManagerModal({ roles, onClose, onSave }: {
             </button>
           </div>
           <div className="flex justify-end gap-2 pt-1">
+            <button
+              onClick={() => { if (confirm("Replace this list with the standard firm designations (Partner → Intern)?")) setList([...DEFAULT_ROLES]); }}
+              className="mr-auto px-3 py-2 text-xs border border-amber-300 text-amber-700 rounded-md hover:bg-amber-50 font-medium"
+            >
+              ↺ Reset to default
+            </button>
             <button onClick={onClose} className="px-4 py-2 text-sm border border-input rounded-md text-foreground hover:bg-muted">Cancel</button>
             <button onClick={() => onSave(list)} className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90">Save</button>
           </div>
