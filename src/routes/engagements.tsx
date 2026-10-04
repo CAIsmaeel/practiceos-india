@@ -26,14 +26,12 @@ const statusColors: Record<string, string> = {
   on_hold: "bg-muted text-foreground",
 };
 
-const CHECKER_ROLES = [
-  "Partner / Managing Partner",
-  "Director / Executive Director",
-  "Senior Manager / Associate Director",
-  "Manager",
-  "Assistant Manager / Deputy Manager",
-  "Admin",
-];
+// Approvers = levels 1–5 + Admin (matched by keyword so custom/edited names still work)
+const APPROVER_KEYWORDS = ["partner", "director", "senior manager", "manager", "admin"];
+const canApprove = (role?: string | null) => {
+  const r = (role ?? "").toLowerCase();
+  return APPROVER_KEYWORDS.some(k => r.includes(k));
+};
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   started:   { label: "Work started",        color: "text-blue-600" },
@@ -183,7 +181,7 @@ function EngagementsPage() {
     queryKey: ["staff"],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      const { data } = await supabase.from("staff").select("id, name, role").eq("user_id", userId ?? "").eq("is_active", true).order("name");
+      const { data } = await supabase.from("staff").select("id, name, role").eq("user_id", userId ?? "").order("name");
       return data ?? [];
     },
   });
@@ -785,7 +783,7 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
   }).length;
 
   const makerStaff = staffList ?? [];
-  const checkerStaff = (staffList ?? []).filter((s: any) => CHECKER_ROLES.includes(s.role));
+  const checkerStaff = (staffList ?? []).filter((s: any) => canApprove(s.role));
 
   const CONDITION_FLAGS = [
     { key: "has_capital_gains",  label: "Has Capital Gains this year" },
@@ -904,7 +902,7 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Reviewed By (Checker)
-                <span className="ml-1 text-purple-600 font-normal">— Qualified CA, Manager, Partner, Admin only</span>
+                <span className="ml-1 text-purple-600 font-normal">— Levels 1–5 (Partner to Assistant Manager) & Admin only</span>
               </label>
               {checkerStaff.length > 0 ? (
                 <select value={form.reviewed_by} onChange={e => setForm({ ...form, reviewed_by: e.target.value })} className={inputClass}>
@@ -914,7 +912,7 @@ function EngagementModal({ mode, initialEngagement, clients, staffList, onClose,
               ) : (
                 <div>
                   <input value={form.reviewed_by} onChange={e => setForm({ ...form, reviewed_by: e.target.value })} placeholder="No eligible checker found" className={inputClass} />
-                  <p className="text-xs text-amber-600 mt-1">⚠ Add staff with role Qualified CA, Manager or Partner to use dropdown.</p>
+                  <p className="text-xs text-amber-600 mt-1">⚠ No approver found. Add a staff member with a Partner / Director / Manager / Assistant Manager / Admin designation in the Staff page.</p>
                 </div>
               )}
             </div>

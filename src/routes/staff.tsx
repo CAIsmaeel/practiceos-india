@@ -10,25 +10,24 @@ export const Route = createFileRoute("/staff")({
   component: StaffPage,
 });
 
-// Levels 1–10 (+ Admin / Other). Levels 1–5 can approve (Checker).
+// Firm designations (levels 1–10 + Junior Accountant + Admin). Levels 1–5 + Admin can approve (Checker).
 const DEFAULT_ROLES = [
-  "Partner / Managing Partner",
-  "Director / Executive Director",
-  "Senior Manager / Associate Director",
-  "Manager",
-  "Assistant Manager / Deputy Manager",
-  "Senior Associate / Senior Executive / Senior Accountant",
-  "Associate / Executive",
-  "Junior Accountant",
-  "Article Assistant",
-  "Audit Assistant / Accounts Assistant / Tax Assistant",
-  "Intern / Trainee",
+  "Partner / Managing Partner",                              // 1
+  "Director / Executive Director",                           // 2
+  "Senior Manager / Associate Director",                     // 3
+  "Manager",                                                 // 4
+  "Assistant Manager / Deputy Manager",                      // 5 — usually where Qualified CAs start
+  "Senior Associate / Senior Executive / Senior Accountant", // 6
+  "Associate / Executive",                                   // 7
+  "Junior Accountant",                                       // 7
+  "Article Assistant",                                       // 8
+  "Audit Assistant / Accounts Assistant / Tax Assistant",    // 9
+  "Intern / Trainee",                                        // 10
   "Admin",
-  "Other",
 ];
 
-// Old default list — if a firm's saved roles are exactly this, upgrade to new defaults
-const OLD_DEFAULT_ROLES = ["Article Assistant", "Semi-Qualified", "Qualified CA", "Manager", "Partner", "Admin", "Other"];
+// Saved lists from the old version (contain these) are replaced by the new defaults
+const LEGACY_ROLE_MARKERS = ["Qualified CA", "Semi-Qualified"];
 
 type Staff = {
   id: string;
@@ -337,7 +336,7 @@ function StaffPage() {
 
   // Effective roles — custom if set, else defaults
   const savedRoleNames = (customRoles ?? []).map(r => r.role_name);
-  const isOldDefault = savedRoleNames.length === OLD_DEFAULT_ROLES.length && savedRoleNames.every(r => OLD_DEFAULT_ROLES.includes(r));
+  const isOldDefault = savedRoleNames.some(r => LEGACY_ROLE_MARKERS.includes(r));
   const effectiveRoles = savedRoleNames.length > 0 && !isOldDefault ? savedRoleNames : DEFAULT_ROLES;
 
   const saveRolesMutation = useMutation({
