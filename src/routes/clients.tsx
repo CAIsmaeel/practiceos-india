@@ -995,7 +995,7 @@ function ClientModal({ mode, initialClient, onClose, onSubmit, pending }: {
           <h2 className="font-semibold text-foreground">{mode === "edit" ? "Edit Client" : "Add Client"}</h2>
           <button onClick={onClose}><X size={18} /></button>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, status: initialClient?.status ?? "active" }); }} className="p-5 space-y-5">
+        <form autoComplete="off" onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, status: initialClient?.status ?? "active" }); }} className="p-5 space-y-5">
 
           {/* Basic Info */}
           <div>

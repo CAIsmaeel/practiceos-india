@@ -44,7 +44,19 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const { triggerEvent } = useTour();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates" | "email-templates">("firm");
+  const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates" | "email-templates">(() => {
+    if (typeof window === "undefined") return "firm";
+    const hash = window.location.hash;
+    if (hash === "#website") return "website";
+    if (hash === "#templates") return "templates";
+    return "firm";
+  });
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === "#website") setActiveTab("website");
+    if (hash === "#templates") setActiveTab("templates");
+  }, []);
   const [copied, setCopied] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -72,7 +84,7 @@ function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([SERVICE_CATEGORIES[0].category]);
 
   // Templates
   const [selectedServiceType, setSelectedServiceType] = useState<string>(ENGAGEMENT_TYPES[0]);
@@ -396,7 +408,10 @@ function SettingsPage() {
             </div>
 
             <div className="bg-card border border-border rounded-lg shadow-sm p-6 space-y-4">
-              <div><h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Services Offered</h2><p className="text-xs text-muted-foreground mt-1">{selectedServices.length} selected</p></div>
+              <div>
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Services Offered on Client Website</h2>
+                <p className="text-xs text-muted-foreground mt-1">Select services to display on your client-facing website · {selectedServices.length} selected</p>
+              </div>
               <div className="space-y-3">
                 {SERVICE_CATEGORIES.map(cat => {
                   const isExpanded = expandedCategories.includes(cat.category);

@@ -26,7 +26,14 @@ const statusColors: Record<string, string> = {
   on_hold: "bg-muted text-foreground",
 };
 
-const CHECKER_ROLES = ["Qualified CA", "Manager", "Partner", "Admin"];
+const CHECKER_ROLES = [
+  "Partner / Managing Partner",
+  "Director / Executive Director",
+  "Senior Manager / Associate Director",
+  "Manager",
+  "Assistant Manager / Deputy Manager",
+  "Admin",
+];
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   started:   { label: "Work started",        color: "text-blue-600" },
@@ -949,6 +956,14 @@ function RejectModal({ engTitle, onConfirm, onCancel, pending }: { engTitle: str
 
 function ApproveModal({ engTitle, onConfirm, onCancel, pending }: { engTitle: string; onConfirm: (n: string) => void; onCancel: () => void; pending: boolean; }) {
   const [notes, setNotes] = useState("");
+  const [password, setPassword] = useState("");
+  const [wrongPass, setWrongPass] = useState(false);
+  const APPROVAL_PASSWORD = "approve123"; // CA can change this in settings later
+
+  const handleApprove = () => {
+    if (password !== APPROVAL_PASSWORD) { setWrongPass(true); return; }
+    onConfirm(notes.trim());
+  };
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
       <div className="bg-card rounded-lg shadow-xl w-full max-w-sm">
@@ -959,10 +974,16 @@ function ApproveModal({ engTitle, onConfirm, onCancel, pending }: { engTitle: st
             <label className="block text-sm font-medium text-foreground mb-1">Reviewer Note <span className="text-xs text-muted-foreground">(optional)</span></label>
             <textarea autoFocus value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Verified with client, all figures match..." rows={2} className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Approval Password <span className="text-red-500">*</span></label>
+            <input type="password" value={password} onChange={e => { setPassword(e.target.value); setWrongPass(false); }} placeholder="Enter approval password" className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${wrongPass ? "border-red-500" : "border-input"}`} />
+            {wrongPass && <p className="text-xs text-red-500 mt-1">Incorrect password. Only authorised reviewers can approve.</p>}
+            <p className="text-xs text-muted-foreground mt-1">Default password: <code className="bg-muted px-1 rounded">approve123</code> — change in Settings later.</p>
+          </div>
         </div>
         <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onCancel} className="px-4 py-2 text-sm rounded-md border border-input text-foreground hover:bg-muted">Cancel</button>
-          <button disabled={pending} onClick={() => onConfirm(notes.trim())} className="px-4 py-2 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">{pending ? "Approving..." : "Approve ✓"}</button>
+          <button disabled={pending || !password} onClick={handleApprove} className="px-4 py-2 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">{pending ? "Approving..." : "Approve ✓"}</button>
         </div>
       </div>
     </div>
