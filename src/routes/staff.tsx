@@ -144,12 +144,27 @@ function StaffPage() {
           <h1 className="text-2xl font-bold text-foreground">Staff</h1>
           <p className="text-muted-foreground text-sm">Manage your team members and their workload</p>
         </div>
-        <button
-          onClick={() => setModalState({ mode: "create" })}
-          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
-        >
-          <Plus size={16} /> Add Staff Member
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => {
+              const csv = "name,role,email,phone\nJohn Doe,Associate / Executive,john@firm.com,9999999999";
+              const blob = new Blob([csv], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url; a.download = "staff_import_template.csv"; a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border border-input bg-card text-foreground hover:bg-muted"
+          >
+            📥 Import Template
+          </button>
+          <button
+            onClick={() => setModalState({ mode: "create" })}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
+          >
+            <Plus size={16} /> Add Staff Member
+          </button>
+        </div>
       </div>
 
       {/* Summary cards */}

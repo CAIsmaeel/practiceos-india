@@ -35,7 +35,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/settings#templates",
     title: "Step 3 — Customise your checklists",
     description: "Edit the documents you request from clients for each service type. Add your own service types like FSSAI or RERA. Hit Save Template when done.",
-    action: "Edit Checklists",
+    action: "Go to Checklist Templates",
     trigger: "manual",
   },
   {
@@ -58,7 +58,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 6,
     path: "/staff",
     title: "Step 6 — Add your team (Maker-Checker)",
-    description: "Add your staff members here. Every engagement has a Maker (who does the work) and a Checker (who reviews it). Only senior roles — Qualified CA, Manager, Partner — can be Checkers. This ensures quality control on every assignment.",
+    description: "Add your staff members here. Every engagement has a Maker (who does the work) and a Checker (who reviews it). Only levels 1–5 — Partner, Director, Senior Manager, Manager, Assistant Manager — can approve. This ensures quality control on every assignment.",
     action: "Add Staff",
     trigger: "manual",
   },
@@ -238,7 +238,8 @@ export function TourCard() {
   if (!step) return null;
 
   // Check if user is on correct page
-  const onCorrectPage = pathname === step.path || (step.path !== "/" && pathname.startsWith(step.path));
+  const stepBasePath = step.path.split("#")[0];
+  const onCorrectPage = pathname === stepBasePath || (stepBasePath !== "/" && pathname.startsWith(stepBasePath));
 
   const isLast = currentStep === totalSteps;
   const pct = Math.round((currentStep / totalSteps) * 100);
@@ -308,7 +309,14 @@ export function TourCard() {
                 {/* Navigate to correct page */}
                 {!onCorrectPage && (
                   <button
-                    onClick={() => navigate({ to: step.path as any })}
+                    onClick={() => {
+                      // Use window.location for hash URLs, router for plain paths
+                      if (step.path.includes("#")) {
+                        window.location.href = step.path;
+                      } else {
+                        navigate({ to: step.path as any });
+                      }
+                    }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                   >
                     {step.action} <ChevronRight size={15} />

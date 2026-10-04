@@ -77,7 +77,9 @@ function SettingsPage() {
     email_provider: "default", email_custom_url: "",
   });
 
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>(
+    SERVICE_CATEGORIES.flatMap(c => c.services) // all services selected by default
+  );
   const [selectedClientTypes, setSelectedClientTypes] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
