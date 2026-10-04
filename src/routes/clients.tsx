@@ -725,6 +725,18 @@ const ALL_EXPIRY_FIELDS = [
 function ExpiryTracker({ clients }: { clients: any[] }) {
   const today = new Date();
   const qc = useQueryClient();
+  const [showRenewed, setShowRenewed] = useState(false);
+
+  const { data: renewals } = useQuery({
+    queryKey: ["document-renewals"],
+    queryFn: async () => {
+      const userId = await getCurrentUserId();
+      const { data } = await supabase.from("document_renewals")
+        .select("id, client_id, field_key, expiry_date, renewed_at")
+        .eq("user_id", userId ?? "");
+      return data ?? [];
+    },
+  });
 
   const { data: firmSettings } = useQuery({
     queryKey: ["firm-settings-expiry"],
@@ -745,15 +757,23 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
       const expiry = new Date(val);
       const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       const label = f.key === "other_doc_expiry" ? (c.other_doc_name ?? "Other Document") : f.label;
-      return [{ clientId: c.id, clientName: c.name, firmName: c.firm_name, phone: c.phone, email: c.email, field: { ...f, label }, expiry, daysLeft }];
+      return [{ clientId: c.id, clientName: c.name, firmName: c.firm_name, phone: c.phone, email: c.email, field: { ...f, label }, expiry, expiryRaw: String(val).slice(0, 10), daysLeft }];
     })
   ).sort((a, b) => a.daysLeft - b.daysLeft);
 
-  const expiredEntries  = allEntries.filter(e => e.daysLeft < 0);
-  const due7Entries     = allEntries.filter(e => e.daysLeft >= 0 && e.daysLeft <= 7);
-  const due30Entries    = allEntries.filter(e => e.daysLeft > 7 && e.daysLeft <= 30);
-  const due90Entries    = allEntries.filter(e => e.daysLeft > 30 && e.daysLeft <= 90);
-  const okEntries       = allEntries.filter(e => e.daysLeft > 90);
+  // Renewed docs (marked by CA) — hidden from timeline, shown in "Renewed" section with Undo
+  const renewalKey = (clientId: string, fieldKey: string, date: string) => `${clientId}|${fieldKey}|${date}`;
+  const renewalMap = new Map((renewals ?? []).map((r: any) => [renewalKey(r.client_id, r.field_key, String(r.expiry_date).slice(0, 10)), r]));
+  const renewedEntries = allEntries
+    .filter(e => renewalMap.has(renewalKey(e.clientId, e.field.key, e.expiryRaw)))
+    .map(e => ({ ...e, renewal: renewalMap.get(renewalKey(e.clientId, e.field.key, e.expiryRaw)) as any }));
+  const activeEntries = allEntries.filter(e => !renewalMap.has(renewalKey(e.clientId, e.field.key, e.expiryRaw)));
+
+  const expiredEntries  = activeEntries.filter(e => e.daysLeft < 0);
+  const due7Entries     = activeEntries.filter(e => e.daysLeft >= 0 && e.daysLeft <= 7);
+  const due30Entries    = activeEntries.filter(e => e.daysLeft > 7 && e.daysLeft <= 30);
+  const due90Entries    = activeEntries.filter(e => e.daysLeft > 30 && e.daysLeft <= 90);
+  const okEntries       = activeEntries.filter(e => e.daysLeft > 90);
 
   const TIMELINE_GROUPS = [
     { label: "🔴 Expired",         entries: expiredEntries,  headerClass: "bg-red-50 border-red-300 text-red-700" },
@@ -764,11 +784,18 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
   ].filter(g => g.entries.length > 0);
 
   const renewDoc = async (e: any) => {
-    const newDate = prompt(`Enter new expiry date for ${e.field.label} (${e.clientName}):\nFormat: YYYY-MM-DD`);
-    if (!newDate || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) { alert("Invalid date format. Use YYYY-MM-DD"); return; }
-    const { error } = await supabase.from("clients").update({ [e.field.key]: newDate }).eq("id", e.clientId);
-    if (error) { alert("Could not update: " + error.message); return; }
-    qc.invalidateQueries({ queryKey: ["clients-expiry"] });
+    const userId = await getCurrentUserId();
+    const { error } = await supabase.from("document_renewals").insert({
+      user_id: userId, client_id: e.clientId, field_key: e.field.key, expiry_date: e.expiryRaw,
+    });
+    if (error) { alert("Could not mark renewed: " + error.message); return; }
+    qc.invalidateQueries({ queryKey: ["document-renewals"] });
+  };
+
+  const undoRenew = async (renewalId: string) => {
+    const { error } = await supabase.from("document_renewals").delete().eq("id", renewalId);
+    if (error) { alert("Could not undo: " + error.message); return; }
+    qc.invalidateQueries({ queryKey: ["document-renewals"] });
   };
 
   // e = flat entry with clientName, phone, email, field, expiry, daysLeft
@@ -807,7 +834,7 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: "Total", val: allEntries.length, cls: "bg-card border-border text-foreground" },
+          { label: "Total", val: activeEntries.length, cls: "bg-card border-border text-foreground" },
           { label: "🔴 Expired", val: expiredEntries.length, cls: "bg-red-50 border-red-200 text-red-700" },
           { label: "🚨 Due in 7d", val: due7Entries.length, cls: "bg-red-50 border-red-100 text-red-600" },
           { label: "🟠 Due in 30d", val: due30Entries.length, cls: "bg-amber-50 border-amber-200 text-amber-700" },
@@ -854,7 +881,7 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
                   </span>
                   <button onClick={() => renewDoc(e)}
                     className="text-xs text-purple-700 border border-purple-200 px-2 py-1 rounded-md hover:bg-purple-50 font-medium">
-                    🔄 Renewed
+                    ✓ Mark Renewed
                   </button>
                   {e.phone && (
                     <button onClick={() => sendWA(e, { field: e.field, expiry: e.expiry, daysLeft: e.daysLeft })}
@@ -871,6 +898,39 @@ function ExpiryTracker({ clients }: { clients: any[] }) {
                 </div>
               </div>
             ))}
+
+      {/* Renewed documents — with Undo */}
+      {renewedEntries.length > 0 && (
+        <div className="rounded-lg border border-purple-200 shadow-sm overflow-hidden">
+          <button type="button" onClick={() => setShowRenewed(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-purple-50 text-purple-700 font-semibold text-sm">
+            <span>🔄 Renewed — {renewedEntries.length} document{renewedEntries.length !== 1 ? "s" : ""}</span>
+            <span className="text-xs">{showRenewed ? "Hide ▲" : "Show ▼"}</span>
+          </button>
+          {showRenewed && (
+            <div className="divide-y divide-border">
+              {renewedEntries.map((e, i) => (
+                <div key={i} className="flex items-center justify-between px-5 py-3 bg-card">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-lg shrink-0">{e.field.icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{e.field.label} <span className="font-normal text-muted-foreground">· {e.clientName}</span></p>
+                      <p className="text-xs text-muted-foreground">Expiry {format(e.expiry, "dd MMM yyyy")} · Marked renewed {format(new Date(e.renewal.renewed_at), "dd MMM yyyy")}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => undoRenew(e.renewal.id)}
+                    className="text-xs text-muted-foreground border border-input px-2 py-1 rounded-md hover:bg-muted font-medium shrink-0">
+                    ↩ Undo
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="px-4 py-2 text-[11px] text-muted-foreground bg-purple-50/40 border-t border-purple-100">
+            Tip: Update the new expiry date in the client's profile (Edit Client) so the next renewal is tracked.
+          </p>
+        </div>
+      )}
           </div>
         </div>
       ))}

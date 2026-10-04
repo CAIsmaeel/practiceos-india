@@ -443,10 +443,32 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
     queryKey: ["compliance-for-invoice", clientId],
     enabled: !!clientId,
     queryFn: async () => {
-      const { data } = await supabase.from("compliance_items").select("id, compliance_type, due_date").eq("client_id", clientId).eq("status", "pending").order("due_date", { ascending: true }).limit(20);
+      const { data } = await supabase.from("compliance_items").select("id, compliance_type, due_date, status").eq("client_id", clientId).in("status", ["pending", "filed"]).order("due_date", { ascending: false }).limit(20);
       return data ?? [];
     },
   });
+
+  const { data: clientEngagements } = useQuery({
+    queryKey: ["engagements-for-invoice", clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data } = await supabase.from("engagements").select("id, title, type, status").eq("client_id", clientId).neq("status", "billed").limit(20);
+      return data ?? [];
+    },
+  });
+
+  // Suggested services: engagements + compliance for this client, else common services
+  const COMMON_SERVICES = ["GST Return Filing", "ITR Filing", "TDS Return", "Tax Audit", "Bookkeeping / Accounting", "ROC Filing", "Professional Fees"];
+  type Suggestion = { key: string; label: string; hint?: string };
+  const suggestions: Suggestion[] = (() => {
+    const list: Suggestion[] = [];
+    (clientEngagements ?? []).forEach((e: any) => list.push({ key: `eng-${e.id}`, label: e.title || e.type, hint: "Engagement" }));
+    (complianceItems ?? []).forEach((c: any) => list.push({ key: `cmp-${c.id}`, label: c.compliance_type, hint: c.due_date ? format(new Date(c.due_date), "dd MMM") : undefined }));
+    const seen = new Set<string>();
+    const unique = list.filter(x => { const k = x.label.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    return unique.length > 0 ? unique : COMMON_SERVICES.map((l): Suggestion => ({ key: `common-${l}`, label: l }));
+  })();
+  const alreadyAdded = (label: string) => lines.some(l => l.description.trim().toLowerCase() === label.toLowerCase());
 
   const updateLine = (i: number, field: keyof LineItem, value: string | number) => {
     setLines(prev => {
@@ -459,7 +481,12 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
 
   const addLine = () => setLines(p => [...p, emptyLine()]);
   const removeLine = (i: number) => setLines(p => p.filter((_, idx) => idx !== i));
-  const addComplianceLine = (type: string) => setLines(p => [...p, calcLine({ description: type, base_amount: 0, gst_rate: 18, gst_amount: 0, total_amount: 0 })]);
+  const addComplianceLine = (type: string) => setLines(p => {
+    const newLine = calcLine({ description: type, base_amount: 0, gst_rate: 18, gst_amount: 0, total_amount: 0 });
+    // If the only line is still empty, fill it instead of adding a new one
+    if (p.length === 1 && !p[0].description.trim() && !p[0].base_amount) return [newLine];
+    return [...p, newLine];
+  });
 
   const totals = useMemo(() => ({
     base: lines.reduce((s, l) => s + l.base_amount, 0),
@@ -491,15 +518,19 @@ function InvoiceModal({ clients, mode, initialInvoice, onClose, onSubmit, pendin
             </div>
           </div>
 
-          {clientId && complianceItems && complianceItems.length > 0 && (
+          {clientId && suggestions.length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs font-semibold text-blue-700 mb-2">⚡ Quick Add — Pending Compliance</p>
+              <p className="text-xs font-semibold text-blue-700 mb-2">⚡ Suggested Services — click to add as a line item</p>
               <div className="flex flex-wrap gap-2">
-                {complianceItems.map((item: any) => (
-                  <button key={item.id} type="button" onClick={() => addComplianceLine(item.compliance_type)} className="text-xs bg-white border border-blue-300 text-blue-700 px-2 py-1 rounded hover:bg-blue-100">
-                    + {item.compliance_type}{item.due_date ? ` (${format(new Date(item.due_date), "dd MMM")})` : ""}
-                  </button>
-                ))}
+                {suggestions.map(sg => {
+                  const added = alreadyAdded(sg.label);
+                  return (
+                    <button key={sg.key} type="button" disabled={added} onClick={() => addComplianceLine(sg.label)}
+                      className={`text-xs border px-2 py-1 rounded ${added ? "bg-green-50 border-green-300 text-green-700 cursor-default" : "bg-white border-blue-300 text-blue-700 hover:bg-blue-100"}`}>
+                      {added ? "✓ " : "+ "}{sg.label}{sg.hint ? ` (${sg.hint})` : ""}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

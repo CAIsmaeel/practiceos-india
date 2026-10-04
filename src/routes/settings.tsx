@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, type FirmSettings } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
@@ -44,19 +44,21 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const { triggerEvent } = useTour();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<"firm" | "website" | "templates" | "email-templates">(() => {
-    if (typeof window === "undefined") return "firm";
-    const hash = window.location.hash;
-    if (hash === "#website") return "website";
-    if (hash === "#templates") return "templates";
-    return "firm";
-  });
+  type SettingsTab = "firm" | "website" | "templates" | "email-templates";
+  const navigate = useNavigate();
+  const routeHash = useRouterState({ select: s => (s.location.hash ?? "").replace(/^#/, "") });
+  const tabFromHash = (h: string): SettingsTab =>
+    h === "website" || h === "templates" || h === "email-templates" ? h : "firm";
+  const [activeTab, setActiveTabState] = useState<SettingsTab>(() => tabFromHash(routeHash));
 
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === "#website") setActiveTab("website");
-    if (hash === "#templates") setActiveTab("templates");
-  }, []);
+  // URL hash → tab (works for tour navigation, even when already on /settings)
+  useEffect(() => { setActiveTabState(tabFromHash(routeHash)); }, [routeHash]);
+
+  // Tab click → URL hash (keeps tour + tab in sync)
+  const setActiveTab = (tab: SettingsTab) => {
+    setActiveTabState(tab);
+    navigate({ to: "/settings", hash: tab === "firm" ? undefined : tab, replace: true } as any);
+  };
   const [copied, setCopied] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -156,7 +158,8 @@ function SettingsPage() {
         email_provider: r.email_provider ?? "default", email_custom_url: r.email_custom_url ?? "",
       });
       if (r.logo_url) setLogoPreview(r.logo_url);
-      if (Array.isArray(r.website_services)) setSelectedServices(r.website_services);
+      // Saved list wins; empty/never-saved → all services ticked by default
+      if (Array.isArray(r.website_services) && r.website_services.length > 0) setSelectedServices(r.website_services);
       if (Array.isArray(r.website_client_types)) setSelectedClientTypes(r.website_client_types);
     }
   }, [firmSettingsRow]);

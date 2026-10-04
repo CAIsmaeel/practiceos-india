@@ -106,6 +106,12 @@ const TOUR_STEPS: TourStep[] = [
 
 const STORAGE_KEY = "firmora_tour_step"; // current step (1-based), "done" if complete
 
+// Navigate to "/path#hash" — router-aware so same-page hash changes also switch tabs
+function goPath(navigate: ReturnType<typeof useNavigate>, path: string) {
+  const [to, hash] = path.split("#");
+  navigate({ to: to as any, hash: hash || undefined } as any);
+}
+
 // ─── Context ──────────────────────────────────────────────────────────────────
 type TourContextType = {
   currentStep: number | null;
@@ -162,7 +168,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (!s) return;
     setCurrentStep(step);
     saveStep(step);
-    navigate({ to: s.path as any });
+    goPath(navigate, s.path);
   }, [navigate]);
 
   const next = useCallback(() => {
@@ -229,6 +235,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 export function TourCard() {
   const { currentStep, totalSteps, isActive, next, prev, skip } = useTour();
   const pathname = useRouterState({ select: s => s.location.pathname });
+  const currentHash = useRouterState({ select: s => (s.location.hash ?? "").replace(/^#/, "") });
   const navigate = useNavigate();
   const [minimised, setMinimised] = useState(false);
 
@@ -238,8 +245,10 @@ export function TourCard() {
   if (!step) return null;
 
   // Check if user is on correct page
-  const stepBasePath = step.path.split("#")[0];
-  const onCorrectPage = pathname === stepBasePath || (stepBasePath !== "/" && pathname.startsWith(stepBasePath));
+  const [stepBasePath, stepHash] = step.path.split("#");
+  const onCorrectPath = pathname === stepBasePath || (stepBasePath !== "/" && pathname.startsWith(stepBasePath));
+  const onCorrectTab = !stepHash || currentHash === stepHash;
+  const onCorrectPage = onCorrectPath && onCorrectTab;
 
   const isLast = currentStep === totalSteps;
   const pct = Math.round((currentStep / totalSteps) * 100);
@@ -309,14 +318,7 @@ export function TourCard() {
                 {/* Navigate to correct page */}
                 {!onCorrectPage && (
                   <button
-                    onClick={() => {
-                      // Use window.location for hash URLs, router for plain paths
-                      if (step.path.includes("#")) {
-                        window.location.href = step.path;
-                      } else {
-                        navigate({ to: step.path as any });
-                      }
-                    }}
+                    onClick={() => goPath(navigate, step.path)}
                     className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                   >
                     {step.action} <ChevronRight size={15} />
