@@ -565,7 +565,21 @@ function ClientsPage() {
           initialClient={modalState.client ?? undefined}
           onClose={() => setModalState(null)}
           onSubmit={(payload) => {
-            const cleaned = { ...payload, dsc_expiry_date: payload.dsc_expiry_date || null, dsc_location: payload.dsc_location || null, pan_number: payload.pan_number ? payload.pan_number.toUpperCase() : null };
+            const nullDate = (v: any) => v || null;
+            const cleaned = {
+              ...payload,
+              pan_number:           payload.pan_number ? payload.pan_number.toUpperCase() : null,
+              dsc_expiry_date:      nullDate(payload.dsc_expiry_date),
+              dsc_location:         payload.dsc_location || null,
+              fssai_expiry:         nullDate(payload.fssai_expiry),
+              shop_estab_expiry:    nullDate(payload.shop_estab_expiry),
+              trade_license_expiry: nullDate(payload.trade_license_expiry),
+              insurance_renewal:    nullDate(payload.insurance_renewal),
+              iec_expiry:           nullDate(payload.iec_expiry),
+              drug_license_expiry:  nullDate(payload.drug_license_expiry),
+              other_doc_expiry:     nullDate(payload.other_doc_expiry),
+              other_doc_name:       payload.other_doc_name || null,
+            };
             if (modalState.mode === "edit" && modalState.client?.id) { updateMutation.mutate({ id: modalState.client.id, payload: cleaned }); return; }
             addMutation.mutate(cleaned);
           }}
